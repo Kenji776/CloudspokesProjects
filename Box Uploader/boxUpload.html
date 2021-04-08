@@ -1,0 +1,121 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Kunoichi Deom - The Javascript Box.com Uploader</title>
+<link rel="icon" 
+      type="image/png" 
+      href="shuriken_grey_bg.png">
+</head>
+
+<body>
+<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/ui-darkness/jquery-ui.css"/>
+<link rel="stylesheet" href="styleFile/css/enhanced.css" />
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>
+<script src="styleFile/js/jQuery.fileinput.js"></script>
+<script src="jquery.kunoichi.min.js"></script>
+<script src="jquery.cookie.js"></script>
+<style>
+body {
+    font-size: 12px;
+}
+div
+{
+	padding:10px;
+}
+label
+{
+	display:block;	
+}
+</style>
+<script>
+	$(function() {
+
+		/* Just some style stuff. Feel free to remove/ignore */
+	    $( "input[type=submit], a, button" ).button().click(function( event ) {
+			event.preventDefault();
+		});
+		$('#uploadFormContainer').tabs();
+		$('input:text, input:password').button().css({
+			  'font' : 'inherit',
+			 'color' : 'inherit',
+			'text-align' : 'left',
+			'outline' : 'none',
+			'cursor' : 'text'
+		})			
+		
+		$('#uploadFile').customFileInput();
+
+
+		$( "#dialog" ).dialog({
+				autoOpen: false,
+				modal: true,
+				title: 'Alert!',
+				buttons: { "Ok": function() { $(this).dialog("close"); } }
+		});
+
+		
+		/* actual plugin invocation */
+		$('#uploadForm').kunoichi({
+	  		apiKey: 'j19t7wyi9cjxrqcfquhfe9wnyb9z01qk',
+			folderId: 0,
+			uploadComplete: function(fileData){		
+				if($('#myFileDesc').val().length > 0)
+				{
+					//once the upload is complete, set the description on the file	
+					$.fn.kunoichi.setFileDescription(fileData.id,$('#myFileDesc').val(),function(data){
+						//once the description is set, go ahead and let the user know the process is done.
+						$( "#dialog" ).html('File uploaded with id ' + fileData.id + ' with description ' + $('#myFileDesc').val());
+						$( "#dialog" ).dialog('open');
+					})
+				}
+				else
+				{
+						$( "#dialog" ).html('File uploaded with id ' + fileData.id);
+						$( "#dialog" ).dialog('open');					
+				}
+			},
+			error: function(error){
+				console.log(error);
+				$( "#dialog" ).html(error.message);
+				$( "#dialog" ).dialog('open');
+			}
+		});
+
+	
+	});
+</script>
+
+
+<div id="uploadFormContainer">
+	<div id="startup">
+    <h3><img src="shuriken_grey_bg.png" width="23" height="23" hspace="5" style="float:left;vertical-align:middle;margin-top:-2px;"/>Kunoichi - Box.com File Upload jQuery Plugin</h3>
+    <p>
+        Before we can start uploading files to box, you'll need to authenticate. You will be presented a login window (you may need to allow pop ups). Please login and authorize 
+        the application. Once you have authorized it, please close the window (closing the window lets the uploader know it can move onto the next stage). Once you have logged the 
+        authorization token will be rembebered so you shouldn't have to log in again. Kunoichi can live anywhere as it requires you to install NO server side proxies. That's right this thing
+        is completely javascript based. Install it on Heroku, Salesforce sites, your enterprise server, or a mobile phone running a websever, wherever, it doesn't matter.
+    </p>
+	</div>
+
+    <form id="uploadForm">
+		<div class="ui-widget">
+        	<label for="uploadFile">Select File: </label>
+            <input type="file" name="uploadFile" id="uploadFile">
+        </div>​  
+            
+		<div class="ui-widget">
+        	<label for="myFileDesc">File Description:</label>
+        	<input type="text" tagFor="myFile" id="myFileDesc"/>
+             <input type="submit" name="sumit" value="Upload"/>
+        </div>       
+    </form>
+    
+    <p>Tested on Google Chrome 22.0.1229.94 m. Author: Kenji776</p>
+</div>
+
+<div id="dialog"></div>
+</body>
+</html>

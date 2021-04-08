@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Captions for an image</description>
+    <enableActivities>false</enableActivities>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <fields>
+        <fullName>ArtMash_Picture__c</fullName>
+        <description>Picture this caption is for</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Picture this caption is for</inlineHelpText>
+        <label>ArtMash Picture</label>
+        <referenceTo>ArtMash_Picture__c</referenceTo>
+        <relationshipLabel>Captions</relationshipLabel>
+        <relationshipName>ArtMash_Captions</relationshipName>
+        <relationshipOrder>0</relationshipOrder>
+        <type>MasterDetail</type>
+        <writeRequiresMasterRead>false</writeRequiresMasterRead>
+    </fields>
+    <fields>
+        <fullName>Caption_Title__c</fullName>
+        <externalId>false</externalId>
+        <label>Caption Title</label>
+        <length>50</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Caption__c</fullName>
+        <description>What is the caption?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>What is the caption?</inlineHelpText>
+        <label>Caption</label>
+        <length>32768</length>
+        <type>LongTextArea</type>
+        <visibleLines>5</visibleLines>
+    </fields>
+    <fields>
+        <fullName>Submitter_Email__c</fullName>
+        <description>the email address of the submitter</description>
+        <externalId>false</externalId>
+        <inlineHelpText>the email address of the submitter</inlineHelpText>
+        <label>Submitter Email</label>
+        <required>false</required>
+        <type>Email</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Submitter_Name__c</fullName>
+        <description>who submitted this caption?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>who submitted this caption?</inlineHelpText>
+        <label>Submitter Name</label>
+        <length>50</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <label>ArtMash Caption</label>
+    <listViews>
+        <fullName>All</fullName>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <displayFormat>CN-{00000}</displayFormat>
+        <label>Caption Number</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>ArtMash Captions</pluralLabel>
+    <searchLayouts/>
+    <sharingModel>ControlledByParent</sharingModel>
+</CustomObject>

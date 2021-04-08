@@ -1,0 +1,9 @@
+<apex:page showHeader="false"  sidebar="false" title="partyForce" standardStylesheets="false">
+   <center>
+   <span class="title">Party Map - Where the Parties are at!</span>
+   <div id="map_canvas" style="width: 550px; height: 350px"></div>
+   </center>
+   <script>      
+       drawPartyMap();
+   </script> 
+</apex:page>

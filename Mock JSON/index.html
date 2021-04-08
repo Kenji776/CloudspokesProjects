@@ -1,0 +1,108 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Sample Page of imposter.js</title>
+
+<style>
+.code {
+margin: 15px;
+font-family: Andale Mono, Lucida Console, Monaco, fixed, monospace;
+color: #000000;
+background-color: #eee;
+font-size: 12px;
+border: 1px dashed #999999;
+line-height: 14px;
+padding: 5px;
+overflow: auto;
+width: 95%;
+white-space: pre-wrap;
+white-space: -moz-pre-wrap !important;
+white-space: -pre-wrap;
+white-space: -o-pre-wrap;
+word-wrap: break-word;
+height: 400px;
+}
+</style>
+
+
+</head>
+
+<body>
+
+
+</body>
+<!--- Include the imposter core library --->
+<script src="js/imposter/imposter.js" type="text/javascript"></script>
+
+<!--- Include any other API libraries you want --->
+<script src="js/imposter/plugins/box/imposter.box.js" type="text/javascript"></script>
+
+<script>
+
+//create an instance of imposter.
+var imposter = imposter.createImposter();
+
+testImposter();
+
+//this is just a basic demo function of creating http requsts that imposter can intercept and respond to. Any headers, body data, etc you include
+//in your request will be intercepted by imposter and forwarded on to the plugin class and the proper handler method. So you can get as specific as you
+//want during testing.
+function httpReq(theUrl,verb)
+{
+	var xmlHttp = null;
+
+	xmlHttp = new XMLHttpRequest();
+	xmlHttp.setRequestHeader('Authorization','MyDemoAuthToken');
+	xmlHttp.open( verb, theUrl, false );
+	xmlHttp.send( null );
+	return xmlHttp;
+}
+
+function testImposter()
+{
+	createResultBox(httpReq('https://api.box.com/2.0/folders/1234/items?limit=100&offset=10','GET'),'Box Get Folders');
+	createResultBox(httpReq('https://api.box.com/2.0/folders','POST'),'Box Create Folder');
+	createResultBox(httpReq('https://api.box.com/2.0/folders/FOLDER_ID/items?limit=2&offset=0','PATCH'),'Box Patch Folder');
+	createResultBox(httpReq('https://api.box.com/2.0/folders/FOLDER_ID/items?limit=2&offset=0','DELETE'),'Box Delete Folder');
+}
+
+function createResultBox(request,title)
+{
+	var response = request.responseText;
+	delete request.responseText;
+	
+	var containerDiv = document.createElement('div');
+	containerDiv.innerHTML = '<h1>'+title+'</h1>';
+	var requestDiv = document.createElement('div');
+	requestDiv.setAttribute('class','code');
+
+	requestDiv.innerHTML = '<h1>Request</h1> <br/>' + JSON.stringify(request, null, '\t');
+	
+	containerDiv.appendChild(requestDiv, document.body.firstChild);
+	
+		
+	var responseDiv = document.createElement('div');
+	responseDiv.setAttribute('class','code');
+	responseDiv.innerHTML = '<h1>Response</h1><br/>' + JSON.stringify(JSON.parse(response), null, '\t');
+
+    containerDiv.appendChild(responseDiv, document.body.firstChild);
+	
+	var unitTestDiv = document.createElement('div');
+	unitTestDiv.setAttribute('class','code');
+	var sourceJsonTemplte = request.endpoint.namespace + '.' + request.loadedTemplate;
+	unitTestDiv.innerHTML = '<h1>Unit Tests </h1><br/>' + JSON.stringify(imposter.runUnitTest(sourceJsonTemplte,response), null, '\t');
+
+    containerDiv.appendChild(unitTestDiv, document.body.firstChild);
+	
+	document.body.appendChild(containerDiv, document.body.firstChild);
+
+	
+}
+
+</script>
+
+
+
+
+</html>

@@ -1,0 +1,4 @@
+Package Name	Uploader
+Version Number	1.0
+Version Name	Version 1
+https://login.salesforce.com/packaging/installPackage.apexp?p0=04tE0000000PcVa

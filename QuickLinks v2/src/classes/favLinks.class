@@ -1,0 +1,64 @@
+global class favLinks
+{
+    @RemoteAction
+    public static list<favLink__c> getLinks()
+    {
+        list<favLink__c> links = [select id, name, location__c, Search_Tags__c, owner__c, clicks__c from favLink__c where owner__c = :UserInfo.getUserId() order by clicks__c desc, name];
+        return links;
+    }
+    
+    @RemoteAction
+    public static boolean addClick(string linkId, integer clicks)
+    {
+        favLink__c thisLink = new favLink__c(id=linkId,clicks__c=clicks+1);
+        update thisLink;
+        return true;
+    }
+    
+    
+    @RemoteAction
+    webservice static favLink__c createLink(string url, string title, string tags)
+    {
+          favLink__c thisLink = new favLink__c();
+          try
+          {             
+               thisLink.location__c = url;
+               thisLink.name = title;
+               thisLink.owner__c = UserInfo.getUserId();
+               thisLink.Search_Tags__c = tags;
+               insert thisLink;
+           }
+           catch(Exception e)
+           {
+               system.debug('Error adding link: ' + e.getMessage());
+           }    
+           return thisLink;
+    }
+ 
+    @RemoteAction
+    webservice static favLink__c updateLink(favLink__c favLink)
+    {
+           update favLink;
+           return favLink;
+    }
+        
+    @RemoteAction
+    public static boolean deleteLink(id linkId)
+    {
+        favLink__c thisLink = new favLink__c(id=linkId);
+        delete thisLink;
+        return true;
+    }
+    
+    static testMethod void testfavLinks()
+    {
+        User thisUser = [select id from user limit 1];
+
+               
+        favLink__c myLink = createLink('http://www.google.com',   'testLink', 'search,find,google');
+        list<favLink__c> link = getLinks();
+        boolean clickAdded = addClick(myLink.id, 0);
+        boolean deleteLink = deleteLink(myLink.id);
+    }
+    
+}

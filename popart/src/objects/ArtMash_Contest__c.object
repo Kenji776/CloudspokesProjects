@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Setting and configurations for an ArtMash caption contest.</description>
+    <enableActivities>false</enableActivities>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <fields>
+        <fullName>Active__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Is this ArtMash contest active and available to see on the website?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Is this ArtMash contest active and available to see on the website?</inlineHelpText>
+        <label>Active</label>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Picasa_Dropbox_Email__c</fullName>
+        <description>What url to mail the images to. Really this could be any email i suppose.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>What url to mail the images to. Really this could be any email i suppose.</inlineHelpText>
+        <label>Picasa Dropbox Email</label>
+        <required>false</required>
+        <type>Email</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Picasa_Dropbox_URL__c</fullName>
+        <description>What is the URL of the picasa gallery users can go to to view their image?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>What is the URL of the picasa gallery users can go to to view their image?</inlineHelpText>
+        <label>Picasa Dropbox URL</label>
+        <required>false</required>
+        <type>Url</type>
+    </fields>
+    <label>ArtMash Contest</label>
+    <listViews>
+        <fullName>All</fullName>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>ArtMash Contest Name</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>ArtMash Contests</pluralLabel>
+    <searchLayouts/>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>

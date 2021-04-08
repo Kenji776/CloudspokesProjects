@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>A record of a company sponsoring and event, their unique code, etc.</description>
+    <enableActivities>false</enableActivities>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <fields>
+        <fullName>Company__c</fullName>
+        <description>Which company is this for?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Which company is this for?</inlineHelpText>
+        <label>Company</label>
+        <referenceTo>Account</referenceTo>
+        <relationshipLabel>Sponsorships</relationshipLabel>
+        <relationshipName>Sponsorships</relationshipName>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Event__c</fullName>
+        <description>Which event is this sponsorship for?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Which event is this sponsorship for?</inlineHelpText>
+        <label>Event</label>
+        <referenceTo>Event__c</referenceTo>
+        <relationshipLabel>Sponsorships</relationshipLabel>
+        <relationshipName>Sponsorships</relationshipName>
+        <relationshipOrder>0</relationshipOrder>
+        <type>MasterDetail</type>
+        <writeRequiresMasterRead>false</writeRequiresMasterRead>
+    </fields>
+    <fields>
+        <fullName>Is_Stamp_Provider__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Does this sponsor provide stamps? Can event attendees get a stamp from this sponsor?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Does this sponsor provide stamps? Can event attendees get a stamp from this sponsor?</inlineHelpText>
+        <label>Is Stamp Provider</label>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Location_Description__c</fullName>
+        <description>Where should an attendee go to get this badge?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Where should an attendee go to get this badge?</inlineHelpText>
+        <label>Location Description</label>
+        <required>false</required>
+        <type>TextArea</type>
+    </fields>
+    <fields>
+        <fullName>Sponsor_Code__c</fullName>
+        <caseSensitive>false</caseSensitive>
+        <description>Up to a 5 character code for this sponsor that will be used in stamp generation.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Up to a 5 character code for this sponsor that will be used in stamp generation.</inlineHelpText>
+        <label>Sponsor Code</label>
+        <length>5</length>
+        <required>true</required>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <fields>
+        <fullName>Stamp_Action_Description__c</fullName>
+        <defaultValue>&quot;Simply show up&quot;</defaultValue>
+        <description>What must a user do to get this stamp?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>What must a user do to get this stamp?</inlineHelpText>
+        <label>Stamp Action Description</label>
+        <required>false</required>
+        <type>TextArea</type>
+    </fields>
+    <fields>
+        <fullName>Stamp_Image_URL__c</fullName>
+        <description>An option URL for an image to use for this sponsors stamp.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>An option URL for an image to use for this sponsors stamp.</inlineHelpText>
+        <label>Stamp Image URL</label>
+        <required>true</required>
+        <type>Url</type>
+    </fields>
+    <label>Sponsorship</label>
+    <listViews>
+        <fullName>All</fullName>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <displayFormat>SPON-{0000000}</displayFormat>
+        <label>Sponsorship Id</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Sponsorships</pluralLabel>
+    <searchLayouts/>
+    <sharingModel>ControlledByParent</sharingModel>
+</CustomObject>

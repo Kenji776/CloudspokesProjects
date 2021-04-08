@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Create Salesforce Content from Attachments</fullName>
+    <description>Create Salesforce Content from Attachments</description>
+    <types>
+        <members>MoveAttachments_Con</members>
+        <members>Test_MoveAttachment_Con</members>
+        <name>ApexClass</name>
+    </types>
+    <types>
+        <members>MoveAttachments</members>
+        <name>ApexPage</name>
+    </types>
+    <types>
+        <members>jQuery</members>
+        <name>StaticResource</name>
+    </types>
+    <types>
+        <members>Account.Move_Attachments_to_Content</members>
+        <name>WebLink</name>
+    </types>
+    <version>20.0</version>
+</Package>

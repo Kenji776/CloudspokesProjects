@@ -1,0 +1,29 @@
+Knowledge - Custom Visualforce Knowledge Article Report
+Kenji776
+
+Knowledge is a visualforce/jQuery powered application to report on, and export knowledge articles from salesforce.
+It supports data categories and article types for filtering, as well as as many custom filters as you like.
+
+To install, simple copy the pages, static resource, and class into your org. Sorry, due to a salseforce limitation, no
+package is available at this time.
+
+Once installed, just navigate to /apex/knowledge in your org. The program should detect all categories, types, and available fields.
+You may need to allow it to access unsecured resources so it can get the jQuery ui styles.
+
+You may include as many data categories in the filtering as you like, and with the live query editor you can customize the selection criteria to 
+exactly what you'd like.
+
+You can also export the category types related to knowledge articles by dragging them onto the report. Finding the categories for an article
+is a processing intensive task, so it is not recommended to be added unless required. When reporting on the categories for articles the articleType
+field is required and will be added automatically. If it is removed from the report all category fields will be removed as well. 
+
+-Benefits
+1) Live query interface
+2) Drag and drop columns
+3) Super easy PDF and CSV export
+4) Themeable using jQuery ui
+5) Adjustable filter statments
+6) Sort using interface on table, instead of field
+7) Added infinite category filtering support
+8) Added category display ability on report.
+

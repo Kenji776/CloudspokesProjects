@@ -1,0 +1,58 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Flexible Filter UI Components</title>
+
+<!--- use any jQuery ui theme you like here, or even make your own ---->
+<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/themes/flick/jquery-ui.css" type="text/css" media="all" />
+<link rel="stylesheet" href="flexiFilter/css/flexiFilter.css" type="text/css" media="all" /> 
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.17/jquery-ui.min.js"></script>
+<script src="flexiFilter/js/flexiFilter.min.js"></script>
+<script>
+$(document).ready(function() {
+	
+	$('#flexiFilterContainer').flexiFilter({
+		source: 'screener_input_v2.json', //where is the source json. Must be in the same domain. Won't work if running locally. Must be on webserver!
+		enhanceUI: true, //enhance the UI elements using jQuery UI and a few custom UI add ons
+		resultHandler: function(data) //what to do with the data it gets back after the user clicks submit.
+		{
+			//simple function call that takes a div and uses the resulting search data
+			//to create a table and puts it in the div.
+			$('#searchResults').flexiResultTable({
+				data: data
+			})	
+		}
+	});
+	
+
+
+});
+</script>
+
+</head>
+
+<body>
+
+
+
+	<div id="flexiFilterContainer"></div>
+
+	<div id="searchResults" class="ui-widget-content ui-corner-bottom ui-corner-top"></div>
+    
+
+    <div class="clear"></div>
+    
+    
+	<h3>Loaded JSON Data (If empty, your JSON has not loaded)</h3>
+	<div class="code" id="sourceJSONContent"></div>
+
+	<h3>Sent Search JSON (will populate when search is clicked)</h3>
+	<div class="code" id="sentSearchJson"></div>    
+
+	<h3>Returned Search JSON(will populate when search is clicked)</h3>
+	<div class="code" id="returnSearchJson"></div>      
+</body>
+</html>

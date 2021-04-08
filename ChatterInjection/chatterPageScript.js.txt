@@ -1,0 +1,68 @@
+//The URL that is hosting the page that will deliver the content to the chatter page. This can be any URL
+//since JSOP is utilized. The page (whatever it is, must deliver JSON content, with a single key named 
+//"content" with the HTML to be injected contained in that value. EX
+//{"content": "<h2>Im some content! 2011-04-12 20:50:04</h2>"}
+
+var url = 'http://fpitesters.testbed.cs2.force.com/webServices/chatterContent'; 	
+
+//We want to use jQuery to make our JSONP request. So we need to insert a request to include the jQuery library. 
+	function appendScript()
+	{
+		var head= document.getElementsByTagName('head')[0];
+		var script= document.createElement('script');
+		script.type= 'text/javascript';
+		script.src= 'https://ajax.googleapis.com/ajax/libs/jquery/1.5.2/jquery.min.js';
+		head.appendChild(script);
+
+		//It takes a second to load, so put in a delay (we don't want to try and reference the 		
+		//script before it is actually loaded.		
+		setTimeout("loadContent()", 1000);
+	}
+	
+	function isjQueryLoaded()
+	{
+		return jQuery;
+	}
+
+
+	//Function to read URL variables (used to extracting the userId from the chatter page URL
+	function getUrlVars()
+	{
+		var vars = [], hash;
+		var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+		for(var i = 0; i < hashes.length; i++)
+		{
+			hash = hashes[i].split('=');
+			vars.push(hash[0]);
+			vars[hash[0]] = hash[1];
+		}
+		return vars;
+	}
+	
+	//This function actual does the heavy lifting. Gets content, and loads it.
+	function loadContent()
+	{
+		//Loop that gets broken when if it detected the jQuery has loaded
+		while(true)
+		{
+			if(isjQueryLoaded())
+			{
+				break;
+			}
+			
+			setTimeout("isjQueryLoaded()", 1000);	
+		}
+		//Make JSONP request to get JSON data and insert it into a new DIV that comes after 
+		//the recent files panel.
+		jQuery.getJSON(url+'?userId='+userId+'&callback=?',function(data)
+		{
+			jQuery(data.content).insertAfter('#recentFilesPanel');
+		});
+	}
+	
+	//Find the user ID of this chatter user (it's in the URL, unless the person is looking at their 
+	//own chatter page.
+	var userId = getUrlVars()['u']; 
+	
+	//Actually call the script that gets everything started.
+	appendScript();	

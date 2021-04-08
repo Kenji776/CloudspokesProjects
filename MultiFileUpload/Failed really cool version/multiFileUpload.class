@@ -1,0 +1,120 @@
+global class multiFileUpload
+{
+    public static string jsonString {get;set;}
+    
+     
+    public void deleteObject()
+    {
+        Map<string,string> params = ApexPages.currentPage().getParameters();
+        if(params.get('Id') != null) 
+        {
+            Id attachmentId = params.get('Id');
+            Attachment a = new Attachment(Id = attachmentId);
+            delete a;
+            attachToObject();
+        }    
+    }
+    
+    public void attachToObject()
+    {
+        Map<string,string> params = ApexPages.currentPage().getParameters();
+        jsonString = '';
+        
+        
+        //We only want to attempt to upload files if there is a file reference in the post request
+        if(params.get('Files') != null)
+        {
+            
+            try
+            {
+                blob fileContent = blob.valueOf(params.get('Files'));      
+                          
+                Attachment a = new Attachment(parentId = params.get('Id'));
+                a.body = blob.valueOf(params.get('Files'));
+                a.description = 'File Data\r\n';
+                
+                for(String p : params.keySet()) 
+                {
+                   a.description += p +': ' + params.get(p) + '\r\n' ;
+                }
+
+                a.name = params.get('files.filename');
+                insert a;
+                
+                String fullFileURL = URL.getSalesforceBaseUrl().toExternalForm() +   '/' + a.id;
+                jsonString = '[{"delete_url":"multi_upload_delete_file?id='+a.id+'","thumbnail_url":"http://www.wiebetech.com/whitepapers/file_icon.jpg","name":"' + params.get('files.filename') +'","delete_type":"POST","url":"'+fullFileURL+'","size":'+fileContent.size()+'}]';
+        
+            }
+            catch(Exception e)
+            {
+                jsonString = '[{"delete_url":"NONE","thumbnail_url":"http://icons.iconarchive.com/icons/kyo-tux/phuzion/64/Sign-Error-icon.png","name":"'+e.getMessage()+'","delete_type":"POST","url":"","size":0}]';
+            }
+           
+        }
+        //if no files are present in the post, odds are this is a get, and it's trying to figure out
+        //which files already are present on this object. So query for all attachments and json encode them.
+        else
+        {
+          if(params.get('Id') != null) 
+          {
+              getAttachments();
+          } 
+        }  
+    }
+    
+    public  void getAttachments()
+    {
+        Map<string,string> params = ApexPages.currentPage().getParameters();
+        list<Attachment> attachments = [select name, id, bodyLength from attachment where parentId = :params.get('Id')];
+        
+        jsonString = '[';
+        
+        if(!attachments.isEmpty())
+        {
+            for(attachment a : attachments)
+            {
+                String fullFileURL = URL.getSalesforceBaseUrl().toExternalForm() +   '/' + a.id;
+                jsonString += '{"delete_url":"multi_upload_delete_file?id='+a.id+'","thumbnail_url":"http://www.wiebetech.com/whitepapers/file_icon.jpg","name":"'+a.name+'","delete_type":"POST","url":"'+fullFileURL+'","size":'+a.bodyLength+'},';
+            }
+            
+            jsonString = jsonString.substring(0, jsonString.length() - 1);
+        }
+
+        jsonString += ']';
+    }
+    
+    public String getResult() 
+    {
+       return jsonString.trim();     
+    }    
+    
+    @isTest 
+    public  static void testUpload()
+    {
+            Contact testContact = new Contact();
+            testContact.firstname = 'Frank';
+            testContact.lastname = 'Jones';
+            insert testContact;
+            
+            
+            PageReference indexPage = Page.multi_upload;
+            system.test.setCurrentPageReference(indexPage);                
+            ApexPages.currentPage().getParameters().put('Id',testContact.id);
+            ApexPages.currentPage().getParameters().put('Files.filename','Test File');
+            ApexPages.currentPage().getParameters().put('Files','Im a file');   
+            ApexPages.currentPage().getParameters().put('data','woot');  
+            ApexPages.currentPage().getParameters().put('moredata','woot');  
+            
+            multiFileUpload Ctlr = new multiFileUpload();          
+                                   
+            ctlr.attachToObject();               
+            ctlr.getAttachments();             
+            
+            Attachment thisAttachment = [select id from Attachment where parentId = :testContact.id];
+            ApexPages.currentPage().getParameters().put('Id',thisAttachment.id);
+            Ctlr = new multiFileUpload();  
+            ctlr.deleteObject();  
+            
+             string result =   ctlr.getResult() ;        
+    }
+}

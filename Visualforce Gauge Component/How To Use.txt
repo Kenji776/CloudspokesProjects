@@ -1,0 +1,15 @@
+To begin using the visualforce gauge component: 
+
+1) Upload the static resource into your org. Call it 'vf_guage' (without quotes).
+2) Create a component and put the code from the component file in there.
+3) Create a visualforce page, use the included page as an example. Simply set the standard controller as whatever object you want this 
+component to be on. Include values for the arguments (maximum and current value will likeyl be taken from the object).
+4) Edit the page layout of the object. The visualforce page section should be available. Drag the page into the page layout.
+
+Your visualforce page should now show the gauge component.
+
+One thing to note:
+Only attributes without default values can be passed in dynamically. Meaning if you want to pass in a value to the component 
+(like we do with the maximum, minimum and current values) you must not have a default on the attribute tag in the component. So
+go to the component and remove the default value attribute, then you should be able to pass in a value from the visualforce page
+using {!objectType.field}.

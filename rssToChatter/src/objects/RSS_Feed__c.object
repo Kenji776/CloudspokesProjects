@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <enableActivities>false</enableActivities>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <fields>
+        <fullName>Active__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Should this feed be active?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Should this feed be active?</inlineHelpText>
+        <label>Active</label>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Chatter_Group_ID__c</fullName>
+        <description>What chatter group to post to</description>
+        <externalId>true</externalId>
+        <inlineHelpText>What chatter group to post to</inlineHelpText>
+        <label>Chatter Group ID</label>
+        <length>18</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Last_Run_Result__c</fullName>
+        <description>Any errors or logging from the last run of this RSS feed.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Any errors or logging from the last run of this RSS feed.</inlineHelpText>
+        <label>Last Run Result</label>
+        <length>32000</length>
+        <type>LongTextArea</type>
+        <visibleLines>8</visibleLines>
+    </fields>
+    <fields>
+        <fullName>Last_Run__c</fullName>
+        <defaultValue>NOW()</defaultValue>
+        <description>When was this RSS Feed last updated?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>When was this RSS Feed last updated?</inlineHelpText>
+        <label>Last Run</label>
+        <required>true</required>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>RSS_Feed_URL__c</fullName>
+        <description>Where is the RSS feed located?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Where is the RSS feed located?</inlineHelpText>
+        <label>RSS Feed URL</label>
+        <required>false</required>
+        <type>Url</type>
+    </fields>
+    <label>RSS Feed</label>
+    <listViews>
+        <fullName>All</fullName>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <displayFormat>RSS-{00000}</displayFormat>
+        <label>RSS Feed Name</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>RSS Feeds</pluralLabel>
+    <searchLayouts/>
+    <sharingModel>ReadWrite</sharingModel>
+    <webLinks>
+        <fullName>Get_RSS_Now</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <linkType>javascript</linkType>
+        <masterLabel>Get RSS Now</masterLabel>
+        <openType>onClickJavaScript</openType>
+        <protected>false</protected>
+        <url>{!REQUIRESCRIPT(&quot;/soap/ajax/10.0/connection.js&quot;)}
+{!REQUIRESCRIPT(&quot;/soap/ajax/10.0/apex.js&quot;)}
+sforce.apex.execute(&quot;rssToChatter&quot;,&quot;updateFeeds&quot;, {});
+window.alert(&quot;Posting new RSS feed items in Chatter group. Check last run result for details&quot; );
+window.location.reload();</url>
+    </webLinks>
+</CustomObject>

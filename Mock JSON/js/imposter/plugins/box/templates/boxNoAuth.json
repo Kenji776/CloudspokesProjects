@@ -1,0 +1,8 @@
+{
+    "type":"error",
+    "status":401,
+    "code":"unauthorized",
+    "help_url":"",
+    "message":"Unauthorized Request",
+    "request_id":"7522414694f97d171b6aea"
+}

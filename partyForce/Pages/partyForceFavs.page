@@ -1,0 +1,21 @@
+<apex:page showHeader="false"  sidebar="false" title="partyForce" standardStylesheets="false">
+    <span class="title">Upcoming Events</span>
+    <div id="searchResults"></div>
+
+    <div id="noResults" class="siteNotice">
+        <img src="{!URLFOR($Resource.partyForce, 'error.png')}" />Hm, bummer. Doesn't look like you have any events scheduled. Why don't you head over the search page and find some? Or if all else fails make your own event and have your own party!
+    </div>
+    Remember, only upcoming events will be displayed. No use knowing about old parties right?
+    <script>
+        if('Id' in userData)
+        {
+            map.setCenter(new google.maps.LatLng(coords.lat, coords.lng), 10);
+            getUserEventsList(userData.Id);
+        }
+        else
+        {
+            loadPage('partyForce/partyForceNotAuthed');
+        }
+
+    </script>
+</apex:page>

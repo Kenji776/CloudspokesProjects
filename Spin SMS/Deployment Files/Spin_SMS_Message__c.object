@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>the logs for individual messages send and received.</description>
+    <enableActivities>false</enableActivities>
+    <enableEnhancedLookup>false</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <fields>
+        <fullName>Contact_Allows_SMS__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Does this contact allow for SMS?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Does this contact allow for SMS?</inlineHelpText>
+        <label>Contact Allows SMS</label>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Contact__c</fullName>
+        <description>The recipient (if outbound) or sender (if inbound) of this message.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The recipient (if outbound) or sender (if inbound) of this message.</inlineHelpText>
+        <label>Contact</label>
+        <referenceTo>Contact</referenceTo>
+        <relationshipLabel>SMS Messages</relationshipLabel>
+        <relationshipName>Spin_SMS_Messages</relationshipName>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>HTTP_Response__c</fullName>
+        <externalId>false</externalId>
+        <label>HTTP Response</label>
+        <length>32000</length>
+        <type>LongTextArea</type>
+        <visibleLines>3</visibleLines>
+    </fields>
+    <fields>
+        <fullName>Inbound_From_City__c</fullName>
+        <description>What city did this inbound message originate from?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>What city did this inbound message originate from?</inlineHelpText>
+        <label>Inbound From City</label>
+        <length>50</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Inbound_From_Country__c</fullName>
+        <description>What country did this inbound message originate from?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>What country did this inbound message originate from?</inlineHelpText>
+        <label>Inbound From Country</label>
+        <length>50</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Inbound_From_State__c</fullName>
+        <description>What state did this inbound message originate from?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>What state did this inbound message originate from?</inlineHelpText>
+        <label>Inbound From State</label>
+        <length>3</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Inbound_From_Zip__c</fullName>
+        <description>What zip/postal code did this inbound message originate from?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>What zip/postal did this inbound message originate from?</inlineHelpText>
+        <label>Inbound From Zip</label>
+        <length>10</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>MatchingPhone__c</fullName>
+        <description>Phone number with symbols removed for easy matching</description>
+        <externalId>false</externalId>
+        <formula>SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(SUBSTITUTE(Recipient_Phone_Number__c,&quot;(&quot;,&quot;&quot;) ,&quot;)&quot;,&quot;&quot;),&quot;-&quot;,&quot;&quot;),&quot; &quot;,&quot;&quot;)</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <inlineHelpText>Phone number with symbols removed for easy matching</inlineHelpText>
+        <label>MatchingPhone</label>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Message_Body__c</fullName>
+        <description>The SMS message text to send to the recipient. Must be 160 characters or fewer.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The SMS message text to send to the recipient. Must be 160 characters or fewer.</inlineHelpText>
+        <label>Message Body</label>
+        <required>true</required>
+        <type>TextArea</type>
+    </fields>
+    <fields>
+        <fullName>Message_Cost__c</fullName>
+        <defaultValue>0.02000</defaultValue>
+        <description>How much did it cost to send this message (returned from Twilio)</description>
+        <externalId>false</externalId>
+        <inlineHelpText>How much did it cost to send this message (returned from Twilio)</inlineHelpText>
+        <label>Message Cost</label>
+        <precision>15</precision>
+        <required>false</required>
+        <scale>5</scale>
+        <type>Currency</type>
+    </fields>
+    <fields>
+        <fullName>Message_Direction__c</fullName>
+        <description>The direction of this message.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The direction of this message.</inlineHelpText>
+        <label>Message Direction</label>
+        <picklist>
+            <picklistValues>
+                <fullName>Outbound</fullName>
+                <default>true</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Inbound</fullName>
+                <default>false</default>
+            </picklistValues>
+            <sorted>false</sorted>
+        </picklist>
+        <type>Picklist</type>
+    </fields>
+    <fields>
+        <fullName>Message_Status__c</fullName>
+        <description>The Twilio API status message for this message</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The Twilio API status message for this message</inlineHelpText>
+        <label>Message Status</label>
+        <length>40</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Recipient_Phone_Number__c</fullName>
+        <description>The phone number this message will be sent to</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The phone number this message will be sent to</inlineHelpText>
+        <label>Recipient Phone Number</label>
+        <required>true</required>
+        <type>Phone</type>
+    </fields>
+    <fields>
+        <fullName>Spin_SMS_Config__c</fullName>
+        <description>the configuration used to send this message</description>
+        <externalId>false</externalId>
+        <inlineHelpText>the configuration used to send this message</inlineHelpText>
+        <label>Spin SMS Config</label>
+        <referenceTo>Spin_SMS_Config__c</referenceTo>
+        <relationshipLabel>Spin SMS Messages</relationshipLabel>
+        <relationshipName>Spin_SMS_Messages1</relationshipName>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Twilio_Account_ID__c</fullName>
+        <description>The Id of the Twilio account used to send this message</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The Id of the Twilio account used to send this message</inlineHelpText>
+        <label>Twilio Account ID</label>
+        <length>40</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Twilio_Message_Id__c</fullName>
+        <description>The Id of this message in the Twilio system</description>
+        <externalId>true</externalId>
+        <inlineHelpText>The Id of this message in the Twilio system</inlineHelpText>
+        <label>Twilio Message Id</label>
+        <length>40</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Twilio_Response_Message__c</fullName>
+        <description>If Twilio responds with an error message, it will be included here.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>If Twilio responds with an error message, it will be included here.</inlineHelpText>
+        <label>Twilio Response Message</label>
+        <length>50</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <label>Spin SMS Message</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Contact__c</columns>
+        <columns>Message_Direction__c</columns>
+        <columns>Message_Body__c</columns>
+        <columns>Recipient_Phone_Number__c</columns>
+        <columns>CREATED_DATE</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <listViews>
+        <fullName>All1</fullName>
+        <columns>Contact__c</columns>
+        <columns>Message_Body__c</columns>
+        <columns>Message_Direction__c</columns>
+        <columns>CREATED_DATE</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <displayFormat>SSMS-{00000000}</displayFormat>
+        <label>Spin SMS Messages Name</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Spin SMS Messages</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Contact__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Message_Body__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Recipient_Phone_Number__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Spin_SMS_Config__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Twilio_Message_Id__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Message_Direction__c</customTabListAdditionalFields>
+        <lookupDialogsAdditionalFields>Contact__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Message_Direction__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Message_Status__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Recipient_Phone_Number__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Spin_SMS_Config__c</lookupDialogsAdditionalFields>
+        <lookupDialogsAdditionalFields>Twilio_Message_Id__c</lookupDialogsAdditionalFields>
+        <searchResultsAdditionalFields>Contact__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Message_Direction__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Recipient_Phone_Number__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Spin_SMS_Config__c</searchResultsAdditionalFields>
+        <searchResultsAdditionalFields>Twilio_Account_ID__c</searchResultsAdditionalFields>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>

@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>A record of a contact being present at an event.</description>
+    <enableActivities>false</enableActivities>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <fields>
+        <fullName>Event__c</fullName>
+        <description>Which even is this attendance record for?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Which even is this attendance record for?</inlineHelpText>
+        <label>Event</label>
+        <referenceTo>Event__c</referenceTo>
+        <relationshipLabel>Attendances</relationshipLabel>
+        <relationshipName>Attendances</relationshipName>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Send_Reward_Email__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Should this person receive their reward email? This is checked automatically by a rule when they collected all available stamps.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Should this person receive their reward email? This is checked automatically by a rule when they collected all available stamps.</inlineHelpText>
+        <label>Send Reward Email</label>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Stampforce_User__c</fullName>
+        <description>Which user is attending this event?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Which user is attending this event?</inlineHelpText>
+        <label>Stampforce User</label>
+        <referenceTo>Stampforce_User__c</referenceTo>
+        <relationshipLabel>Attendances</relationshipLabel>
+        <relationshipName>Attendances</relationshipName>
+        <relationshipOrder>0</relationshipOrder>
+        <type>MasterDetail</type>
+        <writeRequiresMasterRead>false</writeRequiresMasterRead>
+    </fields>
+    <fields>
+        <fullName>Stamps_Collected__c</fullName>
+        <description>How many stamps has this user collected at this event?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>How many stamps has this user collected at this event?</inlineHelpText>
+        <label>Stamps Collected</label>
+        <summaryFilterItems>
+            <field>Stamp__c.Status__c</field>
+            <operation>equals</operation>
+            <value>Confirmed</value>
+        </summaryFilterItems>
+        <summaryForeignKey>Stamp__c.Attendee__c</summaryForeignKey>
+        <summaryOperation>count</summaryOperation>
+        <type>Summary</type>
+    </fields>
+    <fields>
+        <fullName>Stamps_Remaining__c</fullName>
+        <description>How many stamps left does this person have left to collect at this event?</description>
+        <externalId>false</externalId>
+        <formula>Total_Stamps_Available__c - Stamps_Collected__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <inlineHelpText>How many stamps left does this person have left to collect at this event?</inlineHelpText>
+        <label>Stamps Remaining</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Total_Stamps_Available__c</fullName>
+        <description>How many stamps are available at this event?</description>
+        <externalId>false</externalId>
+        <formula>Event__r.Number_of_Stamps_Available__c</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <inlineHelpText>How many stamps are available at this event?</inlineHelpText>
+        <label>Total Stamps Available</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <label>Attendance</label>
+    <nameField>
+        <displayFormat>A-{0000000}</displayFormat>
+        <label>Attendance Id</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Attendances</pluralLabel>
+    <searchLayouts/>
+    <sharingModel>ControlledByParent</sharingModel>
+</CustomObject>

@@ -1,0 +1,126 @@
+global class chatterPhoto implements Messaging.InboundEmailHandler {
+ 
+    public class customException extends Exception {}
+    
+    global Messaging.InboundEmailResult handleInboundEmail(Messaging.InboundEmail email, Messaging.InboundEnvelope envelope)
+    {
+        Messaging.InboundEmailResult result = new Messaging.InboundEmailresult();
+        try
+        {   
+            list<string> contactName = email.subject.trim().split(' ');
+            
+            //Since it doesn't seem possible currently to set the author of the chatter post, this part has been commented out
+            /*
+            list<user> postingUser = [select id from user where email = :email.FromAddress];
+            if(postingUser.isEmpty())
+            {
+                throw new customException('Could not locate a user in Salesforce with email address: '+email.FromAddress+'. Posting could not be completed' );
+            }
+            */
+            
+            //find the conatct to post chatter feed item to. If none found, throw an error.
+            list<contact> postToContact = [select id from contact where firstname = :contactName[0] and lastname = :contactName[1]];
+            if(postToContact.isEmpty())
+            {
+                  throw new customException('No contact could be found by the name ' + email.subject );
+            }
+     
+            //list of feed items to insert
+            list<FeedItem> feedItems = new list<FeedItem>();
+            
+            //loop over attachments if there are any
+            if (email.binaryAttachments != null && email.binaryAttachments.size() > 0)
+            {
+              
+                for (integer i = 0 ; i < email.binaryAttachments.size() ; i++) 
+                {
+                    //create feeditem, set it's contents and add it to the list
+                    feedItem thisItem = new feedItem();
+                    thisItem.body = email.plainTextBody;
+                    thisItem.type = 'ContentPost';
+                    thisItem.contentData = email.binaryAttachments[i].body;
+                    thisItem.ContentFileName = email.binaryAttachments[i].filename;
+                    //thisItem.InsertedById = postingUser[0].id;
+                    thisItem.parentId = postToContact[0].id; 
+                    feedItems.add(thisItem);
+                }
+            }
+            //insert the items
+            insert feedItems;
+            
+            //get a reference to the parent object id
+            String fullFileURL = URL.getSalesforceBaseUrl().toExternalForm() +'/' +postToContact[0].id;
+            
+            //send email to let user know their shit uploaded
+            sendErrorEmail(email.replyTo, 'Your content has been posted to chatter. You can see your content at '+fullFileURL, 'Chatter Photo Post Created!' );
+        }
+        catch(Exception e)
+        {
+            sendErrorEmail(email.replyTo, 'Error creating chatter post on contact' +e.getMessage(), 'Error During Chatter Photo Post' );
+        }     
+        return result;
+    }
+    
+    public static void sendErrorEmail(string sendTo, string emailBody, string emailTitle)
+    {
+        Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+        //Set email address
+        list<string> toAddresses = new list<string>();
+        toAddresses.add(sendTo);
+        mail.setToAddresses(toAddresses);
+        mail.setReplyTo('noreply@salesforce.com'); //the reply address doesn't matter
+        mail.setSubject(emailTitle);
+        mail.setBccSender(false);  //we don't want to Bcc ourselves on this
+        mail.setPlainTextBody(emailbody);
+   
+        
+        Messaging.sendEmail(new Messaging.SingleEmailMessage[] { mail }); //send the email    
+    }
+    
+    static testMethod void testChatterPhoto() 
+    {
+     
+      // create a new email and envelope object
+      Messaging.InboundEmail email = new Messaging.InboundEmail() ;
+      Messaging.InboundEnvelope env = new Messaging.InboundEnvelope();
+     
+     Account testAccount = new Account();
+     testAccount.name = 'test';
+     insert testAccount;
+     
+     contact thisContact = new contact();
+     thisContact.accountid = testAccount.id; 
+     thisContact.firstname = 'Test';
+     thisContact.lastname = 'Guy';
+     thisContact.email = 'testguy@testtesttesttest.com';
+     
+     insert thisContact;
+     
+      User thisUser = [select email, id from user where id = :UserInfo.getUserId()];
+      thisUser.email = 'aaaaaaaaaaaaaaaaaaaaa@dfasdfasdfsadfsdfsfsad.com';
+      update thisUser;
+      
+      // setup the data for the email
+      email.subject =thisContact.firstname + ' ' + thisContact.lastname;
+      email.fromname = 'FirstName LastName';
+      email.replyTo = thisUser.email;
+      email.plainTextBody = 'test';
+      env.fromAddress =  thisUser.email;
+     
+      // add an attachment
+      Messaging.InboundEmail.BinaryAttachment attachment = new Messaging.InboundEmail.BinaryAttachment();
+      attachment.body = blob.valueOf('my attachment text');
+      attachment.fileName = 'textfile.txt';
+      attachment.mimeTypeSubType = 'text/plain';
+     
+      email.binaryAttachments = new Messaging.inboundEmail.BinaryAttachment[] { attachment };
+       
+
+        // call the email service class and test it with the data in the testMethod
+        chatterPhoto emailProcess = new chatterPhoto();
+        emailProcess.handleInboundEmail(email, env);
+        
+        email.subject = 'Invalid contact name';
+        emailProcess.handleInboundEmail(email, env);   
+        }
+}

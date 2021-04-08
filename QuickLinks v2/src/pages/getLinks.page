@@ -1,0 +1,310 @@
+<apex:page controller="favLinks" showHeader="false" sidebar="false" standardStylesheets="false">
+    <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/smoothness/jquery-ui.css" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.16/jquery-ui.min.js"></script>    
+   
+   
+   <style>
+
+       #menu 
+       {
+          padding:0;
+          margin:0;
+       }
+       #menu li 
+       {
+          list-style-type:none;
+       }
+       .navButton
+       {
+           cursor: pointer;
+           width: 155px;
+           text-align:left;
+           height: 60px;
+       }
+       .ui-dialog-title
+       {
+           font-size: 12px;
+       }
+       .ui-button-text
+       {
+           font-size:12px;
+           text-align:left;
+       }
+       .toolbarButton
+       {
+           cursor: pointer;
+           margin-left:1px;
+           margin-right:1px; 
+           height:20px;
+           width:15px;
+       }
+
+       #links
+       {
+           overflow:hidden;
+           height:315px;
+       }
+       #toolbar
+       {        
+           height:30px;
+           position: absolute; bottom: 0; left: 10; 
+       }
+       
+       #searchBox
+       {
+           width:178px;
+           height:20px;
+           margin-bottom:10px;
+           font-size:12px;
+           border-radius: 15px;
+           border : solid;
+           border-thickness: thin;
+           padding-left: 25px;
+           background:#FFFFFF url(http://media.kentucky.com/mistatic/images/search/magnifying_glass_icon.png) no-repeat 4px 4px;
+           border-color: #999999;          
+       }
+       
+       .ui-menu 
+       { 
+           position: absolute; 
+           width: 120px; 
+           border-radius: 15px;
+           font-size:11px;
+           z-index:100;
+           text-align:left;
+       }
+       .ui-menu .ui-menu-item a
+       {
+           padding-bottom: 5px;
+           text-align:left;
+       }
+       
+       label
+       {
+           font-size:10px;
+           display:block;
+       }
+       
+       input
+       {
+           font-family:  Verdana, Arial, Helvetica, sans-serif;
+           font-size:  60%
+           line-height:10px;
+           width:200px;
+       }
+       
+       .linkControlButtons
+       {
+           float:left;
+           width: 51px;
+           height: 60px;
+       }
+       
+       .navButtonElm
+       {
+           margin:2px;
+       }
+       .detailText
+       {
+           font-size:10px;
+       }
+
+        .ui-widget input, .ui-widget select, .ui-widget textarea, .ui-widget button {
+        font-family: Arial, sans-serif;
+        font-size: 11px;
+        }       
+   </style>
+<script>      
+        $(document).ready(function()
+        {
+            $(window).resize(function() {
+               $( "#links" ).height(parseInt($(window).height()-85,10));
+            });
+                    
+           getLinks();
+           $( "#addLinkDialog" ).dialog({width:240,autoOpen:false, show: 'slide'});   
+           $( "#updateLinkDialog" ).dialog({width:240,autoOpen:false, show: 'slide'});   
+           
+           
+           
+           $( "#helpText" ).dialog({width:200, height: 100, autoOpen:false, show: 'slide', hide: 'slide', minHeight: 100, minWidth: 189,});
+
+           $("#addLinkButton").button({ icons: {primary: "ui-icon-circle-plus" },text: false}); 
+           $("#helpButton").button({ icons: {primary: "ui-icon-help" },text: false});
+           $("#refreshButton").button({ icons: {primary: "ui-icon-refresh" },text: false});
+           $("#submitAddButton").click(function() 
+           {               
+               favLinks.createLink($( "#location" ).val(), $( "#name" ).val(), $( "#tags" ).val(),  function(result, event)
+                {
+                    if (event.status)
+                    {
+                          $( "#addLinkDialog" ).dialog('close');
+                           getLinks();
+                    } 
+        
+                }, {escape:true});             
+           });             
+           $("#addLinkButton").click(function () { 
+                $( "#addLinkDialog" ).dialog('open');                
+            });
+
+           $("#submitEditButton").click(function () { 
+               editLink();                
+            });
+            
+           $("#helpButton").click(function () { 
+                $( "#helpText" ).dialog('open');                
+            });
+                        
+           $('#submitAddButton').button();
+           $('#submitEditButton').button(); 
+        });
+ 
+       
+       
+       function getLinks()
+       {       
+           favLinks.getLinks(function(result, event)
+            {
+                if (event.status)
+                {
+                     html = '<ul id="menu">';
+                     for(var i = 0; i<result.length;  i++)
+                     {
+                         html+= '<li><div name="'+result[i].Name+'" title="'+result[i].Name+ ' ' + result[i].Search_Tags__c +'" class="navButtonElm" ><button class="navButton" onClick="openLink(this)"; alt = "'+result[i].Location__c+'" title="' + result[i].Search_Tags__c +'"  linkid="'+result[i].Id+'"  id="'+result[i].Id+'" name="'+result[i].Name+'" clicks="'+result[i].Clicks__c+'" >'+result[i].Name+'</button> <div class="linkControlButtons"> <button class="editButton" onClick="showEditLink(\''+result[i].Id+'\');">Edit</button><br><button class="trashButton" onClick="deleteLink(\''+result[i].Id+'\');">Deleted</button> </div> </div></li>';
+                     }
+                     html+='</ul>';
+                    $( "#links" ).html(html);
+                    $(".navButton").button();
+                    $(".trashButton").button({ icons: {primary: "ui-icon-trash" },text: false});
+                    $(".editButton").button({ icons: {primary: "ui-icon-gear" },text: false});
+                } 
+    
+            }, {escape:true}); 
+        }    
+        
+        function editLink()
+        {
+            var linkObject = new Object();
+            linkObject.Id = $('#editId').val();
+            linkObject.Name = $('#editName').val();
+            linkObject.location__c = $('#editLocation').val();
+            linkObject.Search_Tags__c = $('#editTags').val();
+            
+            console.log(linkObject.Id);
+                    
+           favLinks.updateLink(linkObject, function(result, event)
+           {
+                if (event.status)
+                {
+                     getLinks();         
+                     $('#updateLinkDialog').dialog('close');           
+                } 
+    
+           }, {escape:true});          
+        }
+        
+        function deleteLink(linkId)
+        {
+           favLinks.deleteLink(linkId, function(result, event)
+           {
+                if (event.status)
+                {
+                     getLinks();                  
+                } 
+    
+           }, {escape:true});  
+        }
+        
+        function showEditLink(buttonId)
+        { 
+            var buttonObj = $('#'+buttonId);
+            $('#editName').val(buttonObj[0].getAttribute('name'));
+            $('#editLocation').val(buttonObj[0].getAttribute('alt'));
+            $('#editTags').val(buttonObj[0].getAttribute('title'));
+            $('#editId').val(buttonObj[0].getAttribute('id'));        
+            $('#updateLinkDialog').dialog('open');     
+        }
+        
+        function openLink(buttonObj)
+        {
+           var clicks = buttonObj.getAttribute('clicks');
+           var linkid = buttonObj.getAttribute('linkid');
+           var url = buttonObj.getAttribute('alt');
+           window.open(url, 'myWindow');
+           
+           favLinks.addClick(linkid, clicks, function(result, event)
+           {
+                if (event.status)
+                {
+                     getLinks();
+                     
+                } 
+    
+           }, {escape:true});                  
+        }
+        
+        function filterList(filter)
+        {
+              filter = filter.toLowerCase();
+              $('.navButtonElm').each(function()
+              {
+                  var linkName = this.getAttribute('name').toLowerCase();
+                  var linkTags = this.getAttribute('title').toLowerCase();
+                  /*
+                  if (linkName.substring(0, filter.length) == filter)
+                  {
+                      jQuery(this).show();
+                  }
+                  */
+                  if (linkName.indexOf(filter) > -1 || linkTags.indexOf(filter) > -1)
+                  {
+                      jQuery(this).show();
+                  }                  
+                  else
+                  {
+                      jQuery(this).hide();
+                  }
+              });
+              
+        }
+ 
+                        
+</script>
+
+    
+
+<div id="addLinkDialog" title="Add Link">
+    <label for="name">Name</label><input type="text" name="name" id="name" />
+    <label for="location">Location</label><input type="text" id="location" name="location" /> 
+    <label for="tags">Tags</label><input type="text" id="tags" name="tags" /> 
+    <center><button id="submitAddButton"><b>Add</b></button></center>
+</div>
+
+<div id="updateLinkDialog" title="Update Link">
+    <label for="editName">Name</label><input type="text" name="editName" id="editName" />
+    <label for="editLocation">Location</label><input type="text" id="editLocation" name="editLocation" /> 
+    <label for="editTags">Tags</label><input type="text" id="editTags" name="editTags" /> 
+    <input type="hidden" id="editId" name="editId" /> 
+    <center><button id="submitEditButton"><b>Update</b></button></center>
+</div>
+
+<div id="helpText" title="About FavLinks">
+    <span class="detailText">Favlinks by Kenji776.  Tagging enabled Salesforce bookmark utility. </span>
+</div>
+
+<div id="search">
+    <input type="text" name="search" id="searchBox" onKeyUp="javascript:filterList(this.value);" />
+</div>
+
+<div id="links"></div>
+
+<div id="toolbar">
+    <center>
+        <button id="addLinkButton" class="toolbarButton"></button>
+        <button id="helpButton" class="toolbarButton" ></button>
+        <button id="refreshButton" class="toolbarButton" onClick="javascript:getLinks();"></button>
+    </center>
+</div>
+</apex:page>

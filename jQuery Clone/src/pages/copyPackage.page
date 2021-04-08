@@ -1,0 +1,108 @@
+<apex:page extensions="packageClasses" action="{!getPackage}" standardController="Package__c">
+
+    
+    <link type="text/css" rel="stylesheet" href="{!URLFOR($Resource.multiSelect, 'css/themes/smoothness/jquery-ui-1.7.1.custom.css')}" />
+    <link type="text/css" href="{!URLFOR($Resource.multiSelect, 'css/ui.multiselect.css')}" rel="stylesheet" />
+    <script type="text/javascript" src="{!URLFOR($Resource.multiSelect, 'js/jquery-1.4.2.min.js')}"></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.multiSelect, 'js/jquery-ui-1.8.custom.min.js')}"></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.multiSelect, 'js/plugins/localisation/jquery.localisation-min.js')}"></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.multiSelect, 'js/plugins/tmpl/jquery.tmpl.1.1.1.js')}"></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.multiSelect, 'js/plugins/blockUI/jquery.blockUI.js')}"></script>
+    <script type="text/javascript" src="{!URLFOR($Resource.multiSelect, 'js/ui.multiselect.js')}"></script>
+       
+ 
+    <script type="text/javascript">
+        var selectOptions = '';
+        var selectedProvisions = new Array();
+        $(function()
+        {
+            packageClasses.getAssignedProvisions( "{!activePackage.id}", function(result, event)
+            {
+                if (event.status)
+                {                  
+                    for(var i =0; i < result.length; i++)
+                    {
+                         selectOptions +='<option value="'+ result[i].Provision__c +'" selected="selected">'+  result[i].Provision__r.Name +'</option>';
+                         selectedProvisions.push(result[i].Provision__r.Id);
+                    }                                                        
+                    packageClasses.getAvailableProvisions( selectedProvisions, function(result, event)
+                    {
+                        if (event.status)
+                        {
+                            for(var i =0; i < result.length; i++)
+                            {
+                                 selectOptions +='<option value="'+ result[i].Id +'" >'+  result[i].Name +'</option>';
+                            }                         
+                            $('#provisions').html( selectOptions);      
+                            $(".multiselect").multiselect();
+                            $('.multiselect').multiselect({ deselected: function(event, ui) { removePackageProvisionJS($(ui.option).val(), '{!activePackage.id}'); } });
+                            $('.multiselect').multiselect({ selected: function(event, ui) {addPackageProvisionJS($(ui.option).val(), '{!activePackage.id}');} });                                              
+                        }
+                    }, {escape:true})
+                          
+                }
+            }, {escape:true});       
+        });
+        
+        function addPackageProvisionJS(provisionId, packageId)
+        {
+            packageClasses.addPackageProvision( provisionId, packageId, function(result, event)
+            {
+                if (event.status)
+                {
+                                                        
+                }
+            }, {escape:true})            
+        }
+
+        function removePackageProvisionJS(provisionId, packageId)
+        {
+            packageClasses.removePackageProvision( provisionId, packageId, function(result, event)
+            {
+                if (event.status)
+                {
+                                                      
+                }
+            }, {escape:true})        
+        }        
+        
+    </script>
+    <style>
+        #provisions
+        {
+            width:80%;
+            height:200px;
+            border-color: #CFEEF8;
+        }
+    </style>    
+    <apex:form >
+        <apex:pageBlock title="{!mode} Package '{!activePackage.name}'" mode="edit">
+            <apex:pageBlockButtons >
+                <apex:commandButton action="{!save}" value="Save"/>
+                <apex:commandButton action="{!cancel}" value="Cancel" rendered="{!IF(isClone, true, false)}" />
+            </apex:pageBlockButtons>
+             <apex:pageBlockSection title="Package Data" columns="2">
+             
+                    <apex:pageBlockSection columns="1">
+                        <apex:inputField value="{!activePackage.name}" label="Package Name"/>
+                        <apex:inputField value="{!activePackage.Segment__c}" label="Segment"/>
+                        <apex:inputField value="{!activePackage.Policy_Holder__c}" label="Policy Holder"/>
+                        <apex:inputField value="{!activePackage.Trust_Type__c }" label="Trust Type"/>
+                    </apex:pageBlockSection>
+    
+                    <apex:pageBlockSection columns="1" >
+                        <apex:inputTextArea value="{!activePackage.Description__c}" label="Description" style="width:300px; height: 100px;"/>
+                    </apex:pageBlockSection>    
+            </apex:pageBlockSection>  
+            <apex:pageBlockSection title="Choose Package Provisions" columns="1">
+             
+                  <select id="provisions" class="multiselect" multiple="multiple" name="provisions[]" >
+                                               
+                  </select>
+   
+                           
+            </apex:pageBlockSection>                                    
+        </apex:pageBlock>
+
+    </apex:form>
+</apex:page>

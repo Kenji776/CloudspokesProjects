@@ -1,0 +1,1 @@
+<iframe src="/apex/chatterSwaggerScoreComponent?core.apexpages.devmode.url=0" style="border:0px"  width="175" height="175" scrolling="no"  hspace="0" vspace="0" marginheight="0" marginwidth="0"  frameborder="0"></iframe>

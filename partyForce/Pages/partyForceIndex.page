@@ -1,0 +1,338 @@
+<apex:page showHeader="false" sidebar="false" controller="partyForce" title="partyForce" standardStylesheets="false">
+    <script src="{!URLFOR($Resource.partyForce, 'jquery.min.js')}" type="text/javascript" />
+    <script src="{!URLFOR($Resource.partyForce, 'jquery-ui.js')}" type="text/javascript" />
+    <script src="{!URLFOR($Resource.partyForce, 'plugins.js')}"></script>
+
+      
+    <link rel="stylesheet" href="{!URLFOR($Resource.partyForce, 'tableStyle.css')}" />
+    <link rel="stylesheet" href="{!URLFOR($Resource.partyForce, 'jquery-ui.css')}" />
+    <script src="http://maps.googleapis.com/maps/api/js?sensor=false" type="text/javascript"></script>
+
+   
+    <c:partyForce ></c:partyForce>
+    <style>
+        html
+        {
+            height: 100%;
+            color:white;
+            
+        }
+        body
+        {
+            margin:0;
+            padding:0px;        
+            height:100%;
+            background-repeat: no-repeat;
+            font-size:12px;         
+            background: #528ac7; /* Old browsers */
+            background: -moz-linear-gradient(top, #528ac7 0%, #528ac7 30%, #548cc7 32%, #6194cd 38%, #6194cb 38%, #6396cf 39%, #6497cc 40%, #699bd0 42%, #6c9bd1 42%, #6c9bcf 42%, #76a2d3 46%, #75a4d2 46%, #78a4d3 46%, #87aed7 51%, #8cb1db 52%, #8eb4d9 54%, #92b5dd 54%, #9ebfe0 58%, #aac5e3 60%, #a8c5e3 61%, #c8daee 69%, #ccdded 71%, #ceddf0 71%, #d6e3f3 73%, #eef3f9 81%, #fefeff 89%, #ffffff 100%); /* FF3.6+ */
+            background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#528ac7), color-stop(30%,#528ac7), color-stop(32%,#548cc7), color-stop(38%,#6194cd), color-stop(38%,#6194cb), color-stop(39%,#6396cf), color-stop(40%,#6497cc), color-stop(42%,#699bd0), color-stop(42%,#6c9bd1), color-stop(42%,#6c9bcf), color-stop(46%,#76a2d3), color-stop(46%,#75a4d2), color-stop(46%,#78a4d3), color-stop(51%,#87aed7), color-stop(52%,#8cb1db), color-stop(54%,#8eb4d9), color-stop(54%,#92b5dd), color-stop(58%,#9ebfe0), color-stop(60%,#aac5e3), color-stop(61%,#a8c5e3), color-stop(69%,#c8daee), color-stop(71%,#ccdded), color-stop(71%,#ceddf0), color-stop(73%,#d6e3f3), color-stop(81%,#eef3f9), color-stop(89%,#fefeff), color-stop(100%,#ffffff)); /* Chrome,Safari4+ */
+            background: -webkit-linear-gradient(top, #528ac7 0%,#528ac7 30%,#548cc7 32%,#6194cd 38%,#6194cb 38%,#6396cf 39%,#6497cc 40%,#699bd0 42%,#6c9bd1 42%,#6c9bcf 42%,#76a2d3 46%,#75a4d2 46%,#78a4d3 46%,#87aed7 51%,#8cb1db 52%,#8eb4d9 54%,#92b5dd 54%,#9ebfe0 58%,#aac5e3 60%,#a8c5e3 61%,#c8daee 69%,#ccdded 71%,#ceddf0 71%,#d6e3f3 73%,#eef3f9 81%,#fefeff 89%,#ffffff 100%); /* Chrome10+,Safari5.1+ */
+            background: -o-linear-gradient(top, #528ac7 0%,#528ac7 30%,#548cc7 32%,#6194cd 38%,#6194cb 38%,#6396cf 39%,#6497cc 40%,#699bd0 42%,#6c9bd1 42%,#6c9bcf 42%,#76a2d3 46%,#75a4d2 46%,#78a4d3 46%,#87aed7 51%,#8cb1db 52%,#8eb4d9 54%,#92b5dd 54%,#9ebfe0 58%,#aac5e3 60%,#a8c5e3 61%,#c8daee 69%,#ccdded 71%,#ceddf0 71%,#d6e3f3 73%,#eef3f9 81%,#fefeff 89%,#ffffff 100%); /* Opera11.10+ */
+            background: -ms-linear-gradient(top, #528ac7 0%,#528ac7 30%,#548cc7 32%,#6194cd 38%,#6194cb 38%,#6396cf 39%,#6497cc 40%,#699bd0 42%,#6c9bd1 42%,#6c9bcf 42%,#76a2d3 46%,#75a4d2 46%,#78a4d3 46%,#87aed7 51%,#8cb1db 52%,#8eb4d9 54%,#92b5dd 54%,#9ebfe0 58%,#aac5e3 60%,#a8c5e3 61%,#c8daee 69%,#ccdded 71%,#ceddf0 71%,#d6e3f3 73%,#eef3f9 81%,#fefeff 89%,#ffffff 100%); /* IE10+ */
+            filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#528ac7', endColorstr='#ffffff',GradientType=0 ); /* IE6-9 */
+            background: linear-gradient(top, #528ac7 0%,#528ac7 30%,#548cc7 32%,#6194cd 38%,#6194cb 38%,#6396cf 39%,#6497cc 40%,#699bd0 42%,#6c9bd1 42%,#6c9bcf 42%,#76a2d3 46%,#75a4d2 46%,#78a4d3 46%,#87aed7 51%,#8cb1db 52%,#8eb4d9 54%,#92b5dd 54%,#9ebfe0 58%,#aac5e3 60%,#a8c5e3 61%,#c8daee 69%,#ccdded 71%,#ceddf0 71%,#d6e3f3 73%,#eef3f9 81%,#fefeff 89%,#ffffff 100%); /* W3C */
+        
+        }
+        
+        ul
+        {
+            list-style-type: none;
+        }
+        label
+        {
+            display:block;
+        }
+
+        #header
+        {
+            margin-left:auto;
+            margin-right:auto;            
+            width:800px;
+            height:35px; 
+            padding-top:20px;
+            text-align:bottom;          
+        }
+        
+        #logo
+        {
+            float:left;
+            display:inline;
+            width:200px; 
+            color:white;
+            font-size:32px;  
+            cursor: pointer; 
+        }
+        #loader
+        {
+
+            width:35px;
+            height:35px;
+            background-image:url('{!URLFOR($Resource.partyForce, 'ajax-loader.gif')}');
+            display:inline;
+            float:left;
+            background-repeat:none;
+            display:none;
+        }                   
+
+        #linkBlock
+        {
+            width:500px;
+            float:right;
+            display:inline;   
+            text-align: right;                 
+        }
+        
+        #footer
+        {
+            margin:0px;
+            padding:0px;            
+            height:300px;
+            width:100%;
+            position: absolute; 
+            bottom: 0; left: 0;
+            background-image: url('http://xerointeractive.com/SKY.png');
+            z-index:-1;
+            
+
+         
+        } 
+               
+        #pageContainer
+        {
+            margin-top: 15px; 
+            width:90%;
+            margin-left:auto;
+            margin-right:auto;            
+        }
+        
+        .siteNotice
+        {
+            display:none;
+            margin:15px;
+            display:block; 
+            font-weight:bold;
+        }
+        .siteNotice img
+        {
+            float: left;
+            margin: 5px;
+            maring-right: 15px;
+            border: 0;
+        }
+        #gpsFixInfo
+        {
+           padding:15px;
+            margin-left:auto;
+            margin-right:auto;            
+            margin-top:-35px;
+            position: relative; 
+            width:780px; 
+            color:#3d3d3d;     
+            font-family:"Verdana";         
+        }
+
+        #content
+        {           
+            padding:15px;
+            margin-left:auto;
+            margin-right:auto;            
+            height: 465px;           
+            margin-top:-500px; 
+            position: relative; 
+            width:765px; 
+            color:white;     
+            font-family:"Tahoma"; 
+            overflow:auto;                         
+        }
+
+        #contentFrame
+        {
+            margin-left:auto;
+            margin-right:auto; 
+          -moz-border-radius: 15px;
+            border-radius: 15px;   
+            background-color:white;         
+            height: 500px;           
+            width:800px; 
+            padding-top:5px;
+            z-index:10;
+        }
+        
+        #contentBackground
+        {
+            background-color: white;
+            
+            -moz-border-radius: 15px;
+            border-radius: 15px;              
+            margin-left:auto;
+            margin-right:auto; 
+            padding-top:5px;           
+            height: 490px; 
+            width:790px; 
+            background-color:#5c84ad;
+            
+  
+                                 
+        }        
+
+        /* css for timepicker */
+        .ui-timepicker-div .ui-widget-header{ margin-bottom: 8px; }
+        .ui-timepicker-div dl{ text-align: left; }
+        .ui-timepicker-div dl dt{ height: 25px; }
+        .ui-timepicker-div dl dd{ margin: -25px 0 10px 65px; }
+        .ui-timepicker-div td { font-size: 90%; }
+        
+        .dataBlock
+        {
+            float:left;
+            margin:5px;
+            width:48%;
+        }
+        
+        .title
+        {
+            display:block;
+            font-size:18px;         
+            margin:10px;
+            color:#white;
+            font-family:"Cooper Std Black";
+        }
+        .subHead
+        {
+            font-weight:bold;
+            font-size:14px;
+        }
+
+        #searchForm
+        {
+            float:right;
+            margin:15px;
+        }
+        
+        #partyLogoText
+        {
+            font-family:"Cooper Std Black";
+        }
+
+        #forceLogoText
+        {
+             font-family:"Arial";  
+        } 
+ 
+         .ui-button .ui-icon.refresh-gps {
+            background-image: url({!URLFOR($Resource.partyForce, 'world.png')});
+        }
+         .ui-button .ui-icon.faves {
+            background-image: url({!URLFOR($Resource.partyForce, 'heart.png')});
+        }       
+     
+         .ui-button .ui-icon.login {
+            background-image: url({!URLFOR($Resource.partyForce, 'lock_open.png')});
+        } 
+
+         .ui-button .ui-icon.logout {
+            background-image: url({!URLFOR($Resource.partyForce, 'lock.png')});
+        }     
+
+         .ui-button .ui-icon.map {
+            background-image: url({!URLFOR($Resource.partyForce, 'map.png')});
+        }   
+                
+        .popup
+        {
+            display:none;
+            
+        }
+        input 
+        { 
+            -webkit-border-radius: 5px; 
+            -moz-border-radius: 5px; 
+            border-radius: 5px; 
+            margin:5px;
+        }
+        
+        textarea
+        { 
+            -webkit-border-radius: 5px; 
+            -moz-border-radius: 5px; 
+            border-radius: 5px; 
+            margin:5px;
+        }   
+        button
+        {
+            margin-left:5px;
+            margin-right:5px;
+        }     
+ 
+    </style>
+    
+   
+        
+         <div id="header">
+             <div id="logo" onClick="loadPage('partyForceHome');"><span id="partyLogoText">Party</span><span id="forceLogoText">Force</span></div>
+             <div id="loader"></div>
+             <div id="linkBlock">
+                 
+                 <button id="refreshBtn">Refresh GPS Coordinates</button>
+                                  
+                 <button id="loginBtn">Login</button>
+                 <button id="logoutBtn">Logout</button>  
+                 <button id="favesBtn" onClick="loadPage('partyForceFavs');">My Events</button> 
+                  <button id="mapBtn">Party Map</button>                          
+                 <button id="searchBtn" onClick="loadPage('partyForceSearch');" >Search</button>
+                 <button id="createBtn"  onClick="loadPage('partyForceCreateEvent');" >Create</button>
+                
+
+                 
+                 <div id="twitPic" style="float:right; margin-left:3px; width:35px;">
+                     <img id="twitPicImg" width="35" height="35"  />
+                 </div>
+             </div>
+        
+        </div>
+          
+    <div id="pageContainer">
+        <div id="footer"></div> 
+        <div id="contentFrame">
+            <div id="contentBackground"></div>
+        </div>
+        <div id="content">
+
+        </div>
+        
+        
+    </div>
+    
+     <div id="gpsInfo" title="Address and Coordinates" class="popup">
+         <div id="gpsCoordsInfo"></div>
+     </div>
+    <div id="loginDiv" title="Login" class="popup">
+                  <form id="loginForm">
+             <p>Login to begin registering for events, see your agenda and more!</p>
+             <ul class="formList">
+                 <li>
+                     <label>Email:</label>
+                     <input type="text" name="email" maxlength="30"  class="required email" minlength="2" />
+                 </li>
+                 <li>
+                     <label>Password:</label>
+                     <input type="password" name="PartyForce_Password__c" maxlength="30" class="required" minlength="5"/>
+                 </li>  
+                 <li>
+                     <input type="button" id="loginSubmit" name="submit" value="Login"  onClick="loginUser();"/> <input type="button" value="Join" onClick="loadPage('partyForceSignUp');  $( '#loginDiv' ).dialog( 'close' );" /> 
+                 </li>             
+                                              
+             </ul>
+         </form>
+     
+         <div id="loginStatusDiv"></div>
+            
+    </div>
+  
+    <div id="map_container" title="Location Map">    
+     <div id="map_canvas" style="width:100%;height:100%;"></div>
+    </div>
+      
+
+</apex:page>

@@ -1,0 +1,42 @@
+<apex:page showHeader="false"  sidebar="false" title="partyForce" standardStylesheets="false">
+     <form id="form">
+         <p>Sign up with PartyForce to being RSVPing to events and find the hottest events going on during Dreamforce. Don't get stuck alone at your hotel, register now and get partying!</p>
+         <ul class="formList">
+             <li>
+                 <label>First name:</label>
+                 <input type="text" name="firstname" maxlength="30"  class="required" minlength="2" />
+             </li>
+             <li>
+                 <label>Last name:</label>
+                 <input type="text" name="lastname" maxlength="30" class="required" minlength="2"/>
+             </li>
+             <li>
+                 <label>Password:</label>
+                 <input type="password" name="PartyForce_Password__c" maxlength="30" class="required" minlength="6"/>
+             </li>             
+             <li>
+                 <label>Mobile Phone:</label>
+                 <input type="text" name="mobilephone" maxlength="30" class="required" minlength="2"/>
+             </li>
+             <li>
+                 <label>Email:</label>
+                 <input type="text" name="email" maxlength="30" class="required" minlength="6"/>
+             </li>
+             <li>
+                 <label>Twitter Name:</label>
+                 <input type="text" name="Twitter_Name__c" maxlength="30"/>
+             </li>             
+             <li>
+                 <label>Company:</label>
+                 <input type="text" name="accountname" maxlength="30" class="required" minlength="2" />
+             </li>     
+             <li>
+                 <input type="button" id="submit" name="submit" value="submit"  onClick="registerUser();"/>
+             </li>                                               
+         </ul>
+     </form>
+     
+     <div id="statusDiv"></div>
+     
+     
+</apex:page>

@@ -1,0 +1,921 @@
+<apex:page sidebar="false" controller="knowledge" >
+ <link type="text/css" rel="stylesheet" href="{!URLFOR($Resource.knowledgeExport, '/css/ui/style.css')}" />
+ <link rel="stylesheet" href=" http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/themes/flick/jquery-ui.css" type="text/css" media="all" />
+ <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+ <script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.9.0/jquery-ui.min.js"></script>
+ 
+ <script src="{!URLFOR($Resource.knowledgeExport, 'table2CSV.js')}"></script>
+ <script src="{!URLFOR($Resource.knowledgeExport, '/js/jquery.tablesorter.min.js')}"></script>
+ <script src="{!URLFOR($Resource.knowledgeExport, '/js/jquery.tablesorter.widgets.min.js')}"></script> 
+
+ <style>
+     #dataArea
+     {
+         width:100%;
+         
+     }
+     #filterPicker
+     {
+         display:block;
+         min-height: 100px;
+         margin-bottom:15px;
+     }
+
+     #fieldPicker
+     {
+         float:left;
+         width:205px;
+         min-height:500px;
+         height:500px;
+         overflow:auto;
+         font-size:10px;
+     }
+     #sampleReportTable
+     {
+         min-height:500px;
+         height:500px;
+         overflow:auto;
+     }
+   
+     .break
+     {
+         clear:both;
+     }
+
+     ul
+     {
+         list-style-type: none;
+         margin: 0px;
+         padding: 0px;
+         margin-left:5px;
+     }     
+     ul li
+     {
+         margin-left:0px;
+     }
+     .fieldItem, .fieldCategory
+     {
+         width: 170px;
+         height: 25px;
+         border-style:solid;
+         border-width:1px;
+         text-align:center;
+         line-height:25px;
+         font-weight:bold;
+         -moz-border-radius: 15px;
+         border-radius: 15px;      
+         margin-top:5px;   
+         border-color:#DDD;
+         cursor:pointer;
+     }
+     table.tablesorter
+     {
+         display:block;
+         padding-top:0px;
+         margin-left:15px;
+         margin-top:0px;
+         width:98%;
+     }
+
+    .ui-button .ui-button-text
+    {
+       padding:10px;
+    }
+    
+    #responseErrors
+    {
+        float:right;
+        color:red;
+        font-weight:bold;
+        width:400px;
+    }     
+ </style>
+ 
+ <script>
+    var selectedFieldList = new Object();
+    var selectedCategoryList = new Object();
+    var allFieldList = new Object();
+    var articles = new Array();
+    var queryFilters = new Object();
+    var queryLogicals = new Array();
+    var namespace = 'XeroInteractive__';
+
+    function camelCase (string) {
+        string = string.charAt(0).toUpperCase() + string.slice(1);
+        
+        string =string.replace( /_([a-z])/ig, function( all, letter ) {
+            return '_'+letter.toUpperCase();
+        });
+        
+        string = string.replace('Kav','kav');
+        
+        return string;
+    }
+    
+    var testString = 'product_information__kav';
+    
+    $(document).ready(function() {
+
+          
+      //Find all the defined article types
+      getArticleTypes(function(result,event){
+          setArticleTypeSelect(result);
+          loadArticleConfigData(result[0]);
+      });
+    
+           
+      
+      getCategoryTypes(function(result,event){
+          setCategoryTypesSelect(result);
+          loadArticleConfigData($('#articleTypeSelect').val());
+          
+      });
+            
+      
+      $('#exportCSVButton').click(function(){
+  
+            var iframe = $('<iframe id="upload_iframe" width="0" height="00" border="0" style="width: 0; height: 0; border: none;"></iframe>');
+            $('#dataArea').append(iframe);   
+            var iframe_form = $('<form method="post"  action="{!LEFT($CurrentPage.URL,FIND('/',$CurrentPage.URL,9))}apex/knowledgeExportCSV?core.apexpages.devmode.url=1"><textarea id="CSVContentTextArea" name="CSVContentTextArea">'+getCSVContent()+'</textarea>');
+            iframe.contents().find('body').append(iframe_form);
+            iframe_form.submit();
+                  
+            //$("#submitCSVFrame").contents().find('form').submit()
+      });
+
+      $('#exportPDFButton').click(function(){
+  
+            $('#PDFContentTextArea').val($('#sampleReportTable').html());
+            $('#pdfExportForm').submit();
+      });
+            
+      $('#sampleReport').droppable({
+          accept: ".fieldItem, .fieldCategory",
+          drop: function( event, ui ) {
+      
+              if($(ui.draggable).hasClass('fieldItem'))
+              {
+                  selectedFieldList[$(ui.draggable).attr('field')]=true;
+              }
+              else if($(ui.draggable).hasClass('fieldCategory'))
+              {
+                  selectedFieldList.ArticleType = true;
+                  $('#field_select_ArticleType').hide();
+                  
+                  selectedCategoryList[$(ui.draggable).attr('category')]=true;
+              }
+              getArticles();             
+              $(ui.draggable).hide();
+
+          }
+      });
+
+      
+      $('#categorySubSelectDialog').dialog({
+          autoOpen:false,
+          buttons: {
+                "Ok": function() {
+                    $( this ).dialog( "close" );
+                    var list = $(':checkbox[name="categories"]:checked').map(function(){
+                      return $(this).val(); // value will be in the returned array
+                    })
+                    .get() // extract the new array from the jQuery object
+                    .join(',');                           
+                    
+                    $('#filter_'+$(this).data('category')).val(list);
+                    buildQueryFilter(queryFilters,queryLogicals);           
+                },
+                Cancel: function() {
+                    $( this ).dialog( "close" );
+                }
+          },
+          open: function(event,ui)
+          {
+              var categoryName = $(this).data('category');
+              getCategoryItems(categoryName,function(result,event){
+                  $('#categorySubSelectList').empty();
+                  for(category in result)
+                  {
+                      var checked = "";
+                      if( $('#filter_'+categoryName).val().indexOf(category+'__c') > -1)
+                      {
+                          checked = "checked=checked";
+                      }
+                      $('#categorySubSelectList').append('<li><input name="categories" id="chkbx_'+category+'" type="checkbox" value="'+category+'__c" '+checked+'><label for="chkbx_'+category+'">'+result[category]+'</label></li>');
+                  }
+              });              
+          }
+                    
+      });
+      $('#fieldPicker').droppable({
+          accept: ".tablesorter-header",
+          drop: function( event, ui ) {
+
+              if(selectedFieldList.hasOwnProperty($(ui.draggable).text()))
+              {
+                  selectedFieldList[$(ui.draggable).text()]=false;
+                  
+                  if($(ui.draggable).text() == 'ArticleType')
+                  {
+                      for(cat in selectedCategoryList)
+                      {
+                          selectedCategoryList[cat]=false;
+                          $('.fieldCategory').show();
+                      }
+                  }
+                  $('#field_select_'+$(ui.draggable).text()).show();
+              }
+              else if(selectedCategoryList.hasOwnProperty($(ui.draggable).text()))
+              {
+                  selectedCategoryList[$(ui.draggable).text()]=false;
+                  $('#category_select_'+$(ui.draggable).text()).show();
+              }
+              
+              getArticles();             
+
+          }
+      });
+            
+      $('#filterPicker').tabs();
+      
+      $('button').button();
+      
+      $('#addFilterDialog').dialog({
+          autoOpen:false,
+          modal:true,
+          width:550
+      });
+      
+      $('#addFilter').click(function(){
+          addFilterRow(null,null,null,true);
+          drawFilters();
+      });
+      
+      $('#articleTypeSelect').change(function(){
+          buildQueryFilter(queryFilters,queryLogicals);
+      });      
+     
+      
+      $('#searchButton').click(function(){
+          getArticles();
+      });
+          
+      drawFilters();
+      
+     
+    });
+
+    function loadArticleConfigData(objectType)
+    {
+      //now get all the fields for this article Type and populate the select list
+      getObjectFieldList(objectType,function(result,event){
+            
+            if (event.status) 
+            {    
+                queryFilters = new Object();      
+                selectedFieldList = new Object();
+                allFieldList = new Object();                
+                $('#filterTableBody').empty();  
+                $('#selectedFieldList').empty();    
+                for(field in result)
+                {
+                    selectedFieldList[field] = false;
+                }
+                selectedFieldList.Id = true;
+                selectedFieldList.Title = true;
+
+      
+                addFilterRow('PublishStatus','=','online');
+                addFilterRow('Language','=','en_US'); 
+                      
+                allFieldList = result;
+                drawFieldList(result);
+                populateFilterFieldSelect(result);
+                drawFilters();
+                
+                buildQueryFilter(queryFilters,queryLogicals);
+               
+                getArticles();
+                buildQueryFilter(queryFilters,queryLogicals);
+            } 
+            else
+            {
+                $("#responseErrors").html(event.message);
+            }      
+      
+      });    
+    }
+    
+    function getArticleTypes(callback)
+    {
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.knowledge.getArticleTypes}',
+            function(result, event)
+            {
+                callback(result,event);
+            }, 
+            {escape: true});  
+    }
+    
+    function setArticleTypeSelect(aTypes)
+    {
+        $('#articleTypeSelect').append('');
+        for(articleType in aTypes)
+        {
+            $('#articleTypeSelect').append('<option value="'+camelCase(articleType)+'">'+aTypes[articleType]+'</option>');
+        }
+        
+        return true;
+    }
+    function populateFilterFieldSelect(options)
+    {
+        $.each(options, function(key, value) {   
+             $('#fieldFilterSelect')
+                 .append($("<option></option>")
+                 .attr("value",key)
+                 .text(value.label)); 
+        });    
+    }
+    function getselectedFieldListString()
+    {
+        var list = '';
+        for(key in selectedFieldList)
+        {
+            if(selectedFieldList[key])
+            {
+                list+= key+',';
+            }                      
+        }
+        
+        if(list.length == 0)
+        {
+            list = 'Id,Title';
+            selectedFieldList['Id'] = true;
+            selectedFieldList['Title'] = true;
+        }
+        else
+        {
+            list=list.substring(0,list.length-1);
+        }
+        return list;
+    }
+    
+
+    
+    function getArticles()
+    {
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.knowledge.getArticles}',
+            getselectedFieldListString(),$('#queryFilterDisplay').val(),
+            function(result, event)
+            {
+                articles = result;
+                if (event.status) 
+                {    
+                    drawArticleTable(articles); 
+                } 
+                else
+                {
+                    $("#responseErrors").html(event.message);
+                }
+            }, 
+            {escape: true});     
+    }
+    
+    function getCategoryTypes(callback)
+    {
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.knowledge.getKnowledgeCategories}',
+            function(result, event)
+            {
+                callback(result,event);
+            }, 
+            {escape: true});     
+    }
+
+    function setCategoryTypesSelect(cTypes)
+    {
+        $('#categoryTableBody').empty();
+        $('#selectCategoryList').empty();
+        selectedCategoryList = new Object();
+        
+        var active=false;
+        
+        for(categoryType in cTypes)
+        {
+            selectedCategoryList[camelCase(cTypes[categoryType])] = false;
+            $('#selectCategoryList').append('<li><div id="category_select_'+camelCase(cTypes[categoryType])+'" class="fieldCategory" category="'+camelCase(cTypes[categoryType])+'" active="'+active+'">'+categoryType+'</div></li>');
+            $('#categoryTableBody').append('<tr><td>'+categoryType+'</td><td><button category="'+camelCase(cTypes[categoryType])+'" class="searchButton"></button><input type="text" size="50" category="'+camelCase(cTypes[categoryType])+'" id="filter_'+camelCase(cTypes[categoryType])+'" class="categoryFilter" /></td></tr>');
+        }  
+    
+        $( ".searchButton" ).button({
+            icons: {
+                primary: "ui-icon-search"
+            },
+            text: false
+        }).click(function(){
+            $('#categorySubSelectDialog').data('category', $(this).attr('category')).dialog('open');
+            
+        }).css('top','7px');  
+        
+        $('.categoryFilter').keyup(function(){
+           buildQueryFilter(queryFilters,queryLogicals);
+        });  
+
+        $('.fieldCategory').draggable({
+            cancel: "a.ui-icon", // clicking an icon wont initiate dragging
+            revert: "invalid", // when not dropped, the item will revert back to its initial position
+            containment: "document",
+            helper: "clone",
+            cursor: "move"});
+                    
+        return true;      
+    }
+    function getObjectFieldList(articleType,callback)
+    {
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.knowledge.getObjectFields}',
+            'faq__kav',
+            function(result, event)
+            {
+                callback(result,event);
+            }, 
+            {escape: true}); 
+    } 
+    
+    function getCategoryItems(category,callback)
+    {
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.knowledge.getCategoryOptions}',
+            category,
+            function(result, event)
+            {
+                callback(result,event);
+            }, 
+            {escape: true});     
+    }   
+    
+    function getArticleDataCategories(articleType,articleId,parentCategory,callback)
+    {
+        Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.knowledge.getArticleDataCategories}',
+            articleType,
+            articleId,
+            function(result, event)
+            {
+                var returnObj = new Object();
+                returnObj.articleType = articleType;
+                returnObj.articleId = articleId;
+                returnObj.parentCategory = parentCategory;
+                 
+                var categories = new Array();
+                
+                for(var i = 0; i < result.length; i++)
+                {
+                    if(result[i].DataCategoryGroupName == parentCategory)
+                    {                      
+                        categories.push(result[i].DataCategoryName);
+                    }
+                } 
+                
+                returnObj.categories = categories;           
+                callback(returnObj);
+            }, 
+            {escape: true}); 
+    }
+    
+    function drawArticleTable(articlesList)
+    {
+        
+        var tableHtml = '<table id="articlesTable" class="tablesorter" cellspacing="2" cellpadding="2"  width="100%"><thead>';
+        if(articlesList.length > 0)
+        {
+            tableHtml += '<tr>';
+            for(fieldName in selectedFieldList)
+            {
+                if(selectedFieldList[fieldName] == true)
+                {
+                    tableHtml+= '<th>'+fieldName+'</th>';
+                }
+            }    
+                       
+            for(cat in selectedCategoryList)
+            {
+                if(selectedCategoryList[cat] == true)
+                {
+                    tableHtml+= '<th>'+cat+'</th>';
+                }
+            }             
+            tableHtml += '</tr></thead><tbody>';   
+            
+            for(var i = 0; i < articlesList.length; i++)
+            {
+                tableHtml += '<tr>';
+                for(fieldName in selectedFieldList)
+                {
+                 if(selectedFieldList[fieldName] == true && articlesList[i].hasOwnProperty(fieldName))
+                 {
+                     if(articlesList[i][fieldName] == true)
+                     {
+                         tableHtml +='<td><span style="display:none">true</span><span class="ui-icon ui-icon-circle-check"></span></td>';
+                     }
+                     else if(articlesList[i][fieldName] == false)
+                     {
+                         tableHtml +='<td><span style="display:none">false</span><span class="ui-icon ui-icon-circle-close"></span></td>';
+                     }
+                     else
+                     {
+                         tableHtml += '<td>' + articlesList[i][fieldName] + '</td>';
+                     }
+                 }
+                 else if(selectedFieldList[fieldName] == true)
+                 {
+                     tableHtml += '<td> </td>';
+                 }     
+                }
+                for(category in selectedCategoryList)
+                {
+                    if(selectedCategoryList[category] == true)
+                    {
+                        tableHtml += '<td id="'+articlesList[i].Id+'_'+category+'">Loading...</td>';
+                        
+                        getArticleDataCategories(articlesList[i].ArticleType.replace('__kav',''),articlesList[i].Id,category,function(result){
+                            $('#'+result.articleId+'_'+result.parentCategory).html(result.categories.toString());
+                        });
+                    }
+                }
+                tableHtml += '</tr>';
+            }
+            tableHtml += '</tbody></table>';
+
+            
+        }  
+        else
+        {
+            tableHtml += '<tr><td>No Matching Articles found</td></tr></thead>';
+        }  
+        $('#sampleReportTable').html(tableHtml);
+        
+        tableSortify('#articlesTable');                
+        
+    }
+
+    //creates the list of fields that can be drug into the report area
+    function drawFieldList(fieldList)
+    {
+        $('#selectedFieldList').empty();
+        var listHtml = '';
+        
+        for(field in fieldList)
+        {
+            var active = false;
+            if(selectedFieldList.hasOwnProperty(field) && selectedFieldList[field] == true)
+            {
+                active = true;
+            }
+            listHtml += '<li><div id="field_select_'+field+'" class="fieldItem" field="'+field.replace('.','\\\\.')+'" active="'+active+'">'+fieldList[field].label+'</div></li>';
+            for(dataPoint in fieldList[field])
+            {
+                $('#field_select_'+field).data(dataPoint,fieldList[field][dataPoint]);
+            }
+            
+        }
+        $('#selectedFieldList').html(listHtml);
+        $('.fieldItem[active=true]').parent().hide();
+        
+        $('.fieldItem').draggable({
+            cancel: "a.ui-icon", // clicking an icon wont initiate dragging
+            revert: "invalid", // when not dropped, the item will revert back to its initial position
+            containment: "document",
+            helper: "clone",
+            cursor: "move"});
+    }
+    
+    function getCSVContent()
+    {
+        var csv = $('#articlesTable').table2CSV({
+                delivery:'value'
+            });    
+        return(csv);    
+    }
+    
+    function buildQueryFilter(filtersArray,logicalsArray)
+    {
+    
+        var queryFilter = 'where ';
+        var counter = 0;
+        if($('#articleTypeSelect').val() != '*')
+        {
+            if(namespace.length > 0)
+            {
+                queryFilter += "ArticleType = '"+namespace+""+$('#articleTypeSelect').val()+"' and ";
+            }
+            else
+            {
+                queryFilter += "ArticleType = '"+$('#articleTypeSelect').val()+"' and ";
+            }
+            
+        }
+        
+
+        
+        for(filter in filtersArray)
+        {
+            var fieldData = allFieldList[filtersArray[filter].field];
+            queryFilter += filtersArray[filter].field + ' ' + filtersArray[filter].logical + ' ';
+            
+            if(!fieldData.hasOwnProperty('soapType') || fieldData.soapType.toLowerCase() == 'string')
+            {
+                queryFilter += "'" + filtersArray[filter].fieldValue + "'";
+            }
+            else
+            {
+                queryFilter += filtersArray[filter].fieldValue;
+            }
+            if(logicalsArray.length > counter)
+            {
+                queryFilter += ' ' + logicalsArray[i] + ' ';
+            }
+            else if(Object.keys(filtersArray).length-1 > counter)
+            {
+                queryFilter += ' and '; 
+            }
+            counter++;
+        }
+
+        var categoryDefined = false;
+        $('.categoryFilter').each(function(index){
+            if($(this).val().length > 0)
+            {
+                if(categoryDefined)
+                {
+                    queryFilter += " AND ";
+                }
+                else
+                {
+                    queryFilter += " WITH DATA CATEGORY "
+                    categoryDefined = true;
+                    
+                }
+                queryFilter += $(this).attr('category')+"__c AT ("+$(this).val()+")";
+            }
+        });
+              
+
+        $('#queryFilterDisplay').val(queryFilter);
+        
+        return queryFilter;   
+    }
+    
+    function addFilterRow(field,logical,fieldValue,removeable)
+    {
+        
+        thisFilter = new Object();
+        thisFilter.field = field;
+        thisFilter.logical = logical;
+        thisFilter.fieldValue = fieldValue;
+        thisFilter.removeable = removeable;
+        queryFilters[GUID()] = thisFilter;
+         
+    }
+    
+    function removeFilterRow(filterId)
+    {
+        delete queryFilters[filterId];
+        
+        $('#tr_'+filterId).remove();
+        
+        buildQueryFilter(queryFilters,queryLogicals);
+    }
+    
+
+    
+    function drawFilters()
+    {
+        
+        for(filter in queryFilters)
+        {
+            if($('#tr_'+filter).length == 0)
+            {
+                $('#filterTableBody').append('<tr id="tr_'+filter+'"><td><button class="removeFilterButton" filterId="'+filter+'" id="remove_button_'+filter+'" ></button></td><td>'+buildFieldSelectList(filter)+'</td><td>'+buildLogicalSelectList(filter)+'</td><td><input type="text" class="filterValueField" filterId="'+filter+'" value="'+queryFilters[filter].fieldValue+'" /></td></tr>');
+                
+                $('.filterValueField').keyup(function(){
+                    queryFilters[$(this).attr('filterId')].fieldValue = $(this).val();
+                    buildQueryFilter(queryFilters,queryLogicals);
+                });
+                
+                $('#field_select_'+filter).val(queryFilters[filter].field).change(function(){
+                    queryFilters[$(this).attr('filterId')].field = $(this).val();
+                    buildQueryFilter(queryFilters,queryLogicals);
+                });
+                $('#logical_select_'+filter).val(queryFilters[filter].logical).change(function(){
+                    queryFilters[$(this).attr('filterId')].logical = $(this).val();
+                    buildQueryFilter(queryFilters,queryLogicals);
+                });
+                if(!queryFilters[filter].removeable)
+                {
+                    $('#field_select_'+filter).attr('disabled','disabled');
+                    $('#remove_button_'+filter).attr('disabled','disabled');
+                }            
+            }
+        }
+        
+        $( ".removeFilterButton" ).button({
+            icons: {
+                primary: "ui-icon-circle-close"
+            },
+            text: false
+        }).click(function(){
+            removeFilterRow($(this).attr('filterId'));
+        });     
+        
+
+    }
+    
+    function buildFieldSelectList(filterId)
+    {
+        var selectListHtml = '<select filterId="'+filterId+'" id="field_select_'+filterId+'" class="filterFieldSelect">';
+        for(field in allFieldList) 
+        {
+            selectListHtml += '<option value="'+field+'">'+allFieldList[field].label+'</option>';
+        }
+        selectListHtml +='</select>';
+        return selectListHtml;
+    }
+    
+    function buildLogicalSelectList(filterId)
+    {
+        var selectListHtml = '<select filterId="'+filterId+'" id="logical_select_'+filterId+'" class="filterFieldSelect">';
+        selectListHtml += '<option value="=">Equals</option>';
+        selectListHtml += '<option value="!=">Not Equals</option>';
+        selectListHtml += '<option value=">">Greater Than</option>';
+        selectListHtml += '<option value="<">Less Than</option>';
+        selectListHtml += '<option value=">=">Greater or Equal</option>';
+        selectListHtml += '<option value="<=">Less or Equal</option>';
+        selectListHtml += '<option value="contains">Contains</option>';
+        selectListHtml += '<option value="not contains">Doesnt Contain</option>';
+        selectListHtml += '<option value="like">Like</option>';         
+        selectListHtml +='</select>';
+        return selectListHtml;    
+    }
+    
+    function GUID()
+    {
+        var S4 = function ()
+        {
+            return Math.floor(
+                    Math.random() * 0x10000 /* 65536 */
+                ).toString(16);
+        };
+    
+        return (
+                S4() + S4() + "-" +
+                S4() + "-" +
+                S4() + "-" +
+                S4() + "-" +
+                S4() + S4() + S4()
+            );
+    }    
+    function tableSortify(tableId)
+    {
+        $(tableId).tablesorter({
+            widthFixed: true,     
+            // widget code now contained in the jquery.tablesorter.widgets.js file
+            widgets : ['uitheme', 'zebra'],
+    
+            widgetOptions : {
+                // adding zebra striping, using content and default styles - the ui css removes the background from default
+                // even and odd class names included for this demo to allow switching themes
+                zebra   : ["ui-widget-content even", "ui-state-default odd"],
+    
+                // change default uitheme icons - find the full list of icons here: http://jqueryui.com/themeroller/ (hover over them for their name)
+                // default icons: ["ui-icon-arrowthick-2-n-s", "ui-icon-arrowthick-1-s", "ui-icon-arrowthick-1-n"]
+                // ["up/down arrow (cssHeaders/unsorted)", "down arrow (cssDesc/descending)", "up arrow (cssAsc/ascending)" ]
+                uitheme : ["ui-icon-carat-2-n-s", "ui-icon-carat-1-s", "ui-icon-carat-1-n"]
+            }
+        });
+        
+        $('.tablesorter-header').draggable({
+            cancel: "a.ui-icon", // clicking an icon wont initiate dragging
+            revert: "invalid", // when not dropped, the item will revert back to its initial position
+            containment: "document",
+            helper: "clone",
+            cursor: "move"});        
+    }   
+    
+    /*
+    getArticleDataCategories('XeroInteractive__Product_Information','ka1E0000000LJckIAG',function(data){
+        var categories = new Object();
+        for(var i = 0; i < data.length; i++)
+        {
+            if(!categories.hasOwnProperty(data[i].DataCategoryGroupName))
+            {
+                categories[data[i].DataCategoryGroupName] = new Array();
+            }
+            categories[data[i].DataCategoryGroupName].push(data[i].DataCategoryName);
+        }
+    });
+    */
+ </script>
+
+ 
+ <div id="dataArea">
+     
+     <div id="filterPicker">
+         <label for="articleTypeSelect">Article Type</label>
+         <select id="articleTypeSelect" name="articleTypeSelect"></select>         
+
+         <div class="buttons" style="float:right">
+             <button id="addFilter">Add Filter</button>
+             <button id="searchButton">Search</button>
+             <button id="exportCSVButton">Export CSV</button>
+             <button id="exportPDFButton">Export PDF</button>
+             <br />
+             <div id="responseErrors"></div>
+         </div>
+
+         <div id="categoryList">
+             <table id="categoryTable">
+                 <thead>
+                     <tr>
+                         <th width="100">Category</th>
+                         <th width="400">Selected Cateogory Types</th>
+                     </tr>        
+                 </thead>
+                 <tbody id="categoryTableBody">
+                 
+                 </tbody>
+             </table>
+            
+         </div>
+                             
+         <div id="filtersList">
+             <table id="filtersTable">
+                 <thead>
+                     <tr>
+                         <td></td>
+                         <th>Field</th>
+                         <th>Logical</th>
+                         <th>Value</th>
+                     </tr>        
+                 </thead>
+                 <tbody id="filterTableBody">
+                 
+                 </tbody>
+             </table>
+            
+         </div>
+         
+         <textarea id="queryFilterDisplay" rows="2" cols="180"></textarea>
+
+              
+
+     </div>
+     
+     <div class="break"></div>
+     
+     <div id="fieldPicker" class="ui-widget ui-widget-content ui-corner-all">
+         <center>
+         <h3>Available Fields</h3>
+         <p>Drag onto report to add</p>
+         </center>
+         <ul id="selectedFieldList">
+         
+         </ul>
+         
+         <hr />
+         <center>
+         <h3>Categories</h3>
+         <p>Drag onto report to add</p>
+         </center>
+         <ul id="selectCategoryList">
+         
+         </ul>
+     </div>
+     
+     <div id="sampleReport" >
+         <div id="tableContainer">
+             
+             <div id="sampleReportTable"></div>
+         </div>
+     </div>     
+     
+     <div class="break"></div>
+ </div>
+
+ 
+
+ 
+ <form style="display:none" method="post" target="_blank"  action="{!LEFT($CurrentPage.URL,FIND('/',$CurrentPage.URL,9))}apex/knowledgeExportPDF?core.apexpages.devmode.url=1" id="pdfExportForm">
+     <textarea id="PDFContentTextArea" name="PDFContentTextArea"></textarea> 
+ </form>
+ 
+ <div id="categorySubSelectDialog" title="Select Sub Categories">
+    <ul id="categorySubSelectList">
+    
+    </ul>
+ </div>
+
+
+ 
+</apex:page>

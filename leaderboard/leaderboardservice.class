@@ -1,0 +1,356 @@
+@RestResource(urlMapping='/v.9/leaderboard/*') 
+global with sharing class leaderboardService 
+{
+
+	//accepts filters
+	//technology (string): limit learderboard results to a given technology type
+	//maxrows (integer): maximum number of leaderboard results to query for
+	//pagesize (integer): number of leaderboard results on a page
+	//pagenum (integer): the number of the page of data to get
+	//challenge_date (date literal keyword): a date keyword that will only find challenges matching that keyword.
+	
+	@HttpGet
+	global static map<string,string> doGet(RestRequest req, RestResponse res) 
+	{
+		string leaderBoardEntries = '[';
+		string dateKeyword;
+		string technology;
+		boolean success = true;
+		integer pageCounter = 0;
+		integer pagenum = 1;
+		integer pagesize = 10;		
+		integer numEntries = 10;
+		string message = 'Query Ran';
+		integer pageResults = 0;
+		map<string,string> returnMap = new map<string,string>();
+		map<id,set<String>> challenges = new map<id,set<String>>();
+		map<Id,list<Challenge_Participant__c>> memberParticipations = new map<Id,list<Challenge_Participant__c>>();		
+		map<Id,decimal> memberTotalMap = new map<Id,decimal>();
+		map<Id,decimal> memberPointsMap = new map<Id,decimal>();
+		
+		//Just as a nice usability thing, lets make the case not matter for our keys so users don't have
+		//to worry about getting the right case for our filtering params.
+		map<string,string> paramVals = new map<string,string>();	
+		for(string param : req.params.keySet())
+		{
+			string val = req.params.get(param);
+			paramVals.put(param.toLowerCase(),val);
+		}
+		for(string param : paramVals.keySet())
+		{
+			req.params.put(param,paramVals.get(param));
+		}
+		//if the user only wants the top X entries for a given leaderboard, set it here
+		
+		
+		if(req.params.containsKey('maxrows'))
+		{
+			numEntries = integer.valueOf(req.params.get('maxrows'));
+		}
+
+		//if the user only wants to override the pagesize
+		if(req.params.containsKey('pagesize'))
+		{
+			pagesize = integer.valueOf(req.params.get('pagesize'));
+		}
+
+		//if the user only wants to override the pagesize
+		if(req.params.containsKey('pagenum'))
+		{
+			pagenum = integer.valueOf(req.params.get('pagenum'));
+		}
+
+		//Set up the paging ranges
+		integer pageEnd = pagenum*pagesize;
+		integer pageStart = pageEnd - pagesize + 1;
+									
+		//setup the basic query
+		string findChallengesQuery = 'select name, id, Category__c, Category__r.name,  Challenge__c from Challenge_Category__c where Challenge__r.Group_Access__c = null and Challenge__r.Display_Leaderboard__c = true ';	
+			
+		try
+		{	
+			//if a date range filter is specified, then append it to the query, and make note of it to return to the user
+			//note that this allows for use of any salesforce date litral string
+			if(req.params.containsKey('challenge_date'))
+			{
+				findChallengesQuery += 'and Challenge__r.start_date__c = '+req.params.get('dateRange');
+				dateKeyword = req.params.get('challenge_date'); 	
+			}		
+			
+			//run the query to find all challenge categories that fit the query		
+			Challenge_Category__c[] categories = database.query(findChallengesQuery); 	
+
+								
+			//now we need to iterate over all the challenge categories and create a map that contains the challenge ID, and a set of the names
+			//of the technologies involved. This is done so that we can find only participations in challenges for a given type of technology.
+			//the set part is only really needed if they are doing the technology filtering, but we need the list of challenge Id's regardless
+			//so it's just easier to have one block of logic, even if it is a bit overkill in some situations
+			for(Challenge_Category__c challengeCategory : categories)
+			{
+				//Create a set of technology names
+				set<String> technologiesSet;
+				
+				//If the challenges map already has an entry for this challenge, get the 
+				//existing set of technology names. Otherwise, create a new set.
+				if(challenges.containsKey(challengeCategory.Challenge__c))
+				{
+					technologiesSet = challenges.get(challengeCategory.Challenge__c);					
+				}
+				else
+				{
+					technologiesSet = new set<String>();
+				}
+				
+				//Append this technology name to the set (make it lower case too, to help reduce search issues)
+				technologiesSet.add(challengeCategory.Category__r.name.toLowerCase());
+				
+				//append the modified set to the map of challenges
+				challenges.put(challengeCategory.Challenge__c,technologiesSet);
+			}	
+			
+			//if the user has specified that they only want the leaderboard results for a certain type of technology, we need to do some 
+			//extra processing. We have to build a map of challenges that contains a set of technology names. If they don't have a technology
+			//filter we can just skip over this part and find all the participants of the challenges we already found.
+			if(req.params.containsKey('technology'))
+			{
+				//store the name of the requested technology to filter on in a variable so we don't have to reference the req all the time
+				technology = req.params.get('technology').toLowerCase();				
+				//We now have a list of all the challenges in the given date range with a set of all the technologies involved.
+				//Now we need to remove any challenge that does not contain that technology,
+				//so when we find the particpants we don't end up summing participants for irrelevant challenges.
+				
+				list<String> challengesToRemove = new list<String>();
+				for(Id challenge : challenges.keySet())
+				{
+					//Get the set of challenge categories
+					set<String> technologiesSet = challenges.get(challenge);
+					
+					//if the set of challenge categories does not have an entry
+					//for the technology specified, remove it.
+					if(!technologiesSet.contains(technology))
+					{
+						//challenges.remove(challenge);
+						challengesToRemove.add(challenge);
+					}
+				}
+				for(string c : challengesToRemove)
+				{
+					challenges.remove(c);
+				}
+			}
+			
+			
+			//Okay, now find any of the participation info of the valid challenges
+			Challenge_Participant__c[] participations = [select 
+															Money_Awarded__c,
+															Points_Awarded__c,
+															Member__c,
+															Place__c,
+															Score__c,
+															Member__r.Profile_Pic__c, 
+															Member__r.Username__c, 
+															Member__r.Total_Points__c, 
+															Member__r.Email__c, 
+															Member__r.First_Name__c, 
+															Member__r.Last_Name__c, 
+															Member__r.Summary_Bio__c,
+															Challenge__r.name 
+														from 
+															Challenge_Participant__c 
+														Where 
+															Challenge__c in :challenges.keySet()
+														Order by Member__r.Total_Money__c
+														Limit :numEntries];	
+			
+			
+															
+			for(Challenge_Participant__c part : participations)			
+			{
+				
+				//Create a decimal to hold the running total
+				decimal total;
+				decimal points;
+				list<Challenge_Participant__c> thisMembersParticipations;
+				
+				//If the member map already has a total, get it, otherwise set the total to 0
+				if(memberTotalMap.containsKey(part.Member__c))
+				{
+					total = memberTotalMap.get(part.Member__c);
+					points = memberPointsMap.get(part.Member__c);
+					thisMembersParticipations = memberParticipations.get(part.Member__c);
+									
+				}
+				else
+				{
+					total = 0.0;
+					points = 0.0;
+					thisMembersParticipations = new list<Challenge_Participant__c>();
+				}
+				
+				//Append this total to the running total
+				total += part.Money_Awarded__c;
+				points += part.Points_Awarded__c;
+				thisMembersParticipations.add(part);
+				
+				//append the updated total to the map of members
+				memberTotalMap.put(part.Member__c,total);	
+				memberPointsMap.put(part.Member__c,points);				
+				memberParticipations.put(part.member__c,thisMembersParticipations);			
+			}							
+			
+			//okay so now we have all the data we intend to iterate over, but we should really get it in order, so the client
+			//when presenting it doesn't have to try and sort, it will just come in order and they can display it. This is a pretty small
+			//dataset, so this crappy inefficient sorting method should still be fine. If anyone has a better way, I'd love to hear about it.
+			map<decimal,Id> sortCashMap = new map<decimal,id>();
+			for(Id member : memberTotalMap.keySet())
+			{
+				sortCashMap.put(memberTotalMap.get(member),member);
+			}
+			
+			list<decimal> sortedList = new list<decimal>();
+			sortedList.addAll(sortCashMap.keySet());
+			sortedList.sort();			
+			list<Id> sortedMemberList = new list<Id>();
+			for(integer i = sortedList.size()-1; i>=0; i--)
+			{
+				sortedMemberList.add(sortCashMap.get(sortedList.get(i)));
+			}
+
+
+								
+			//build a list of the competators so we can fetch more information about them
+			if(!participations.isEmpty())
+			{			
+				//build the actual JSON string to return
+				for(Id member : sortedMemberList)
+				{
+					pageCounter++;
+				
+					if( (pageCounter >= pageStart && pageCounter <= pageEnd))
+					{
+						pageResults++;	
+						list<Challenge_Participant__c> thisMembersParticipations = memberParticipations.get(member);
+						leaderBoardEntries += '{"total_money": "'+memberTotalMap.get(member)+'", ';
+						leaderBoardEntries += '"rank": '+pageCounter+', ';
+						leaderBoardEntries += '"profile_pic__c": "'+thisMembersParticipations[0].Member__r.Profile_Pic__c+'", ';
+						leaderBoardEntries += '"email__c": "'+thisMembersParticipations[0].Member__r.Email__c+'", ';
+						leaderBoardEntries += '"first_name__c": "'+thisMembersParticipations[0].Member__r.First_Name__c+'", ';
+						leaderBoardEntries += '"last_name__c": "'+thisMembersParticipations[0].Member__r.Last_Name__c+'", ';
+						leaderBoardEntries += '"username__c": "'+thisMembersParticipations[0].Member__r.Username__c+'", ';
+						leaderBoardEntries += '"total_points": "'+memberPointsMap.get(member)+'", ';
+						leaderBoardEntries += '"participations": [';
+						for(Challenge_Participant__c thisPart : memberParticipations.get(member))
+						{
+							leaderBoardEntries += '{"contest_id": "'+thisPart.Challenge__c+'", ';
+							leaderBoardEntries += '"contest_name": "'+thisPart.Challenge__r.name+'", ';
+							leaderBoardEntries += '"place__c": "'+thisPart.Place__c+'", ';
+							leaderBoardEntries += '"score__c": "'+thisPart.Score__c+'", ';
+							leaderBoardEntries += '"money_awarded__c": "'+thisPart.Money_Awarded__c+'", ';
+							leaderBoardEntries += '"points_awarded__c": "'+thisPart.Points_Awarded__c+'", ';
+							leaderBoardEntries += '"place": "'+thisPart.Place__c+'", ';
+							leaderBoardEntries += '"participation_id": "'+thisPart.id+'"},';
+						}
+						leaderBoardEntries = leaderBoardEntries.substring(0,leaderBoardEntries.length()-1);
+						leaderBoardEntries += '], ';
+						
+						leaderBoardEntries += '"member": "'+member+'"},';
+					}
+				}
+				leaderBoardEntries = leaderBoardEntries.substring(0,leaderBoardEntries.length()-1);							
+			}		
+			leaderBoardEntries += ']';
+		}
+		catch(Exception e)
+		{
+			message = e.getMessage();
+			success = false;
+		}				
+
+		decimal totalPages = pageCounter;
+		totalPages=totalPages.divide(pagesize,0,system.roundingmode.ceiling); 
+		
+		returnMap.put('success',string.valueOf(success));
+		returnMap.put('message',message);
+		returnMap.put('page_start_rank',string.valueOf(pageStart));
+		returnMap.put('page_end_rank',string.valueOf(pageEnd));
+		returnMap.put('page_size', string.valueOf(pagesize) );
+		returnMap.put('page_number', string.valueOf(pagenum) );
+		returnMap.put('technology',technology);
+		returnMap.put('date_keyword',dateKeyword);		
+		returnMap.put('total_results', string.valueOf(pageCounter) );
+		returnMap.put('total_pages_available', string.valueOf(totalPages) );
+		returnMap.put('results_on_page', string.valueOf(pageResults) );
+		returnMap.put('data', leaderBoardEntries );
+				
+		return returnMap;
+	}	
+
+    @isTest 
+    public static void unitTests()
+    {
+		DateTime dT = System.now();
+    	Date timeout = date.newinstance(dT.year(), dT.month(), dT.day());
+        	        
+        Challenge__c thisChallenge = new Challenge__c();
+        thisChallenge.name = 'Test Challenge';
+        thisChallenge.Start_Date__c = timeout;
+        thisChallenge.End_Date__c = timeout;
+        thisChallenge.Winner_Announced__c = timeout;
+        
+        insert thisChallenge;
+        
+        Member__c thisMember = new Member__c();
+        thisMember.Name = 'Test Guy';
+        thisMember.Email__c = 'test@test.com';
+        thisMember.Username__c = 'none';
+        insert thisMember;
+        
+        Challenge_Participant__c thisPart = new Challenge_Participant__c();
+        thisPart.Member__c = thisMember.id;
+        thisPart.Challenge__c = thisChallenge.id;
+        thisPart.Score__c = 50;
+        thisPart.Points_Awarded__c = 50;
+        thisPart.Money_Awarded__c = 15.0;
+        insert thisPart;
+  
+
+		Category__c JScategory = new Category__c();
+		JScategory.name = 'MAGIC!';
+		JScategory.Color__c = 'Red';
+		JScategory.SQL_Id__c = 1.0;
+		insert JScategory;
+
+		Category__c SFcategory = new Category__c();
+		SFcategory.name = 'LAME';
+		SFcategory.Color__c = 'Blue';
+		SFcategory.SQL_Id__c = 2.0;
+		insert SFcategory;		
+		
+		Challenge_Category__c cat1 = new Challenge_Category__c();
+		cat1.Category__c = JScategory.id;
+		cat1.Challenge__c = thisChallenge.id;
+		insert cat1;
+
+		Challenge_Category__c cat2 = new Challenge_Category__c();
+		cat2.Category__c = SFcategory.id;
+		cat2.Challenge__c = thisChallenge.id;
+		insert cat2;		
+		
+        RestRequest req = new RestRequest(); 
+        RestResponse res = new RestResponse();
+ 
+	
+ 		//Do a sample request that gets all the leaderboard entries for javascript
+        req.requestURI = 'https://na12.salesforce.com/services/apexrest/v.9/leaderboard';
+        req.httpMethod = 'GET';	 
+        req.addParameter('technology','MAGIC!');
+        req.addParameter('maxrows','5');
+        req.addParameter('pagesize','5');
+        req.addParameter('pagenum','1'); 
+        string jsonData = doGet(req,res).get('data');
+        
+        //make sure our test guy comes back in that result set
+        system.assert(jsonData.contains('"email__c": "test@test.com"'),true);	               
+  
+    }        		
+}

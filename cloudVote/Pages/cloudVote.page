@@ -1,0 +1,618 @@
+<apex:page standardStylesheets="false" showHeader="false" sidebar="false" controller="cloudVote"  action="{!getConfig}" cache="false" expires="1">
+<head>
+     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.0b2/jquery.mobile-1.0b2.min.css" />
+    <script src="{!URLFOR($Resource.stampforce, 'js/jquery-1.6.2.min.js')}"></script>   
+    <script src="{!URLFOR($Resource.stampforce, 'js/jquery.mobile-1.0b2.min.js')}"></script>
+    <script src="{!URLFOR($Resource.stampforce, 'js/plugins.js')}"></script>
+  
+
+</head>
+
+<style>
+  
+    #responseErrors
+    {
+        text-align:center;
+        color:red;
+    }
+    
+    .ui-disabled
+    {
+        cursor:default;
+    }
+    
+    #proposalHeader
+    {
+        text-align:center;
+        width:100%;
+        font-size: 16px;
+        text-shadow: 0 -1px 1px black;
+        font-weight:bold;
+    }
+    #proposalScore
+    {
+        margin-top:10px;
+        width:100%;
+        height: 30px;
+        padding-top:10px;
+       -moz-border-radius: 15px;
+        border-radius: 15px;        
+        text-align:center;
+        font-weight:bold;
+        color: white;
+        border: 1px solid #222;
+        text-shadow: 0 -1px 1px white;
+        background-color:black;
+        background-image: -webkit-gradient(linear,left top,left bottom,from(#555),to(#333));
+       
+    }
+    
+    #voteControls
+    {
+        margin:10px;
+    }
+</style>
+<body>
+<div data-role="page" id="home" class="dataPage" data-theme="{!config.jQuery_Mobile_Data_Theme__c}">
+        <div data-role="header" class="ui-bar ui-bar-{!config.jQuery_Mobile_Data_Theme__c}">
+            <center><img src="{!config.Header_Image__c}" /></center>
+        </div>
+        
+        <center>
+        <img src="{!config.Banner_Image_URL__c}" id="bannerImage" align="center" />
+ 
+        <p>
+            <div id="introText">{!config.App_Description__c}</div>
+        </p>
+        </center>
+        <footer data-role='footer' data-position='fixed' class='foot'></footer>
+</div> 
+ 
+<div data-role="page" id="login" class="dataPage" data-theme="{!config.jQuery_Mobile_Data_Theme__c}">
+        <div data-role="header"  class="ui-bar ui-bar-{!config.jQuery_Mobile_Data_Theme__c}">
+            <center><img src="{!config.Header_Image__c}" /></center>
+        </div>
+        
+        <p>Logging in with Facebook is a fast easy way to sign in to {!config.Application_Name__c}. Simply authorize the application and you will be able to being voting on, commenting on, and creating proposals. </p>
+        
+       <div id="connectWithFBPanel">
+           <div id="connectFB"><a href="#" data-role="button" data-icon="gear" onClick="fb_login();" data-theme="{!config.jQuery_Mobile_Button_Theme__c}" id="fbConnectButton">Login With Facebook</a> </div> 
+           <div id="connectFBDone"><a href="#" data-role="button" data-icon="check" data-theme="{!config.jQuery_Mobile_Button_Theme__c}" id="fbConnectButtonDone"> Logged in with Facebook!</a> </div>
+            
+       </div>
+        <footer data-role='footer' data-position='fixed' class="foot"></footer>
+</div> 
+
+<div data-role="page" id="categories" class="dataPage" data-theme="{!config.jQuery_Mobile_Data_Theme__c}"> 
+    <div data-role="header"  class="ui-bar ui-bar-{!config.jQuery_Mobile_Data_Theme__c}">
+        <center><img src="{!config.Header_Image__c}" /></center>
+    </div>    
+    <div data-role="content">
+        <p>
+            <div id="categoryList"></div>
+        </p>
+    </div>       
+    <footer data-role='footer' data-position='fixed' class="foot"></footer>
+</div>
+
+<div data-role="page" id="proposals" class="dataPage" data-theme="{!config.jQuery_Mobile_Data_Theme__c}"> 
+    <div data-role="header"  class="ui-bar ui-bar-{!config.jQuery_Mobile_Data_Theme__c}" data-position="inline">
+         <a href="#categories" data-role="button" data-icon="arrow-l" >Back</a><center><img src="{!config.Header_Image__c}" /></center>
+    </div>    
+    <div data-role="content">
+        <p>
+            <div id="proposalList"></div>
+        </p>
+    </div>       
+    <footer data-role='footer' data-position='fixed' class="foot"></footer>
+</div>
+
+
+<div data-role="page" id="add" class="dataPage" data-theme="{!config.jQuery_Mobile_Data_Theme__c}"> 
+    <div data-role="header"  class="ui-bar ui-bar-{!config.jQuery_Mobile_Data_Theme__c}" data-position="inline">
+        <center><img src="{!config.Header_Image__c}" style="float:left" /></center>
+    </div>    
+    <div data-role="content">
+        <p >
+            <form name="addForm">
+                <p>Create a proposal for others to vote on</p>
+                <div data-role="fieldcontain" class="ui-hide-label">
+
+                        <label for="proposalNameInput">Proposal Name</label>
+                        <input type="text" name="proposalNameInput" id="proposalNameInput" placeholder="Name For Your Proposal"  data-theme="{!config.jQuery_Mobile_Button_Theme__c}" />
+
+                        <label for="proposalCategoryInput">Category</label>
+                        <select name="proposalCategoryInput" id="proposalCategoryInput" placeholder="Name For Your Proposal"  data-theme="{!config.jQuery_Mobile_Button_Theme__c}" >
+                        
+                        </select>
+
+
+                        <label for="proposalDescriptionInput">Describe your proposal</label>
+                        <textarea name="proposalDescriptionInput" id="proposalDescriptionInput" placeholder="Please describe your proposal. Be as detailed as possible to expedite approval."  data-theme="{!config.jQuery_Mobile_Button_Theme__c}" />      
+                        
+                        <br />
+                        <center><input type="button" name="Submit Proposal" id="submitProposal" value="Submit Proposal" data-inline="true" data-icon="check"  data-theme="{!config.jQuery_Mobile_Button_Theme__c}" onClick="createProposal();" /></center>          
+                </div>
+            </form>
+            
+        </p>
+    </div>       
+    <footer data-role='footer' data-position='fixed' class="foot"></footer>
+</div>
+
+<div data-role="page" id="proposal" class="dataPage" data-theme="{!config.jQuery_Mobile_Data_Theme__c}"> 
+    <div data-role="header"  class="ui-bar ui-bar-{!config.jQuery_Mobile_Data_Theme__c}" data-position="inline">
+       <a href="#proposals" data-role="button" data-icon="arrow-l" >Back</a><center><img src="{!config.Header_Image__c}" /></center>
+    </div>    
+    <div data-role="content">
+        <p>
+            <div id="proposalData" data-role="collapsible">
+                <div id="proposalHeader">Header</div>
+                <p>
+                <div id="voteControls">
+                    <div data-role="controlgroup" style="width:150px;float:left">
+                    <a href="#" data-role="button" onClick="castProposalVote('Promote');" data-theme="{!config.jQuery_Mobile_Button_Theme__c}" data-icon="arrow-u" id="promoteButton">Promote</a>
+                    <apex:outputText rendered="{!config.Negative_Voting_Enabled__c}"><a href="#" data-role="button" onClick="castProposalVote('Demote');" data-theme="{!config.jQuery_Mobile_Button_Theme__c}" data-icon="arrow-d"  id="demoteButton"  >Demote</a> </apex:outputText>    
+                    <div id="proposalScore">0</div>        
+                    
+                    
+                    </div>
+                    
+                    <div id="proposalDescription" style="float:left; margin-left:15px; margin-top:5px;">
+                        I am some placeholder text about this proposal.
+                    </div>
+                    
+                    
+                    <div id="proposalCreatedBy" style="clear:both">
+                        Created by placeholder text
+                    </div>
+                </div>
+                </p>
+            </div>
+            
+            <div id="votes" data-role="collapsible" data-collapsed="true">
+                <h3>Voters</h3>
+                <div id="voterImages"></div>
+            </div>
+
+             <div style="clear:both"></div>
+            <div id="comments" data-role="collapsible" data-collapsed="true">
+                <h3>Comments</h3>
+                <div id="addComment">
+                        <center>
+                        <textarea name="addCommentInput" id="addCommentInput" placeholder="Comment on this proposal"  data-theme="{!config.jQuery_Mobile_Button_Theme__c}" />      
+                        
+                        <br />
+                        <input type="button" name="Comment" id="submitProposal" value="Comment" data-inline="true" data-icon="plus"  data-theme="{!config.jQuery_Mobile_Button_Theme__c}" onClick="addComment();" /></center>                
+                </div>
+               <div style="clear:both"></div>
+                <div id="commentsContianer" style="width:95%; margin:10px;">
+                
+                </div>
+            </div>
+                        
+            <div style="clear:both"></div>
+            
+            <a href="#" data-role="button" onClick="shareProposal();" data-theme="{!config.jQuery_Mobile_Button_Theme__c}" id="sharePropOnFbButton" name="sharePropOnFbButton">Share this on Facebook</a>
+        </p>
+    </div>      
+     
+    <footer data-role='footer' data-position='fixed' class="foot"></footer>
+</div>
+
+
+<div data-role="page" id="about" data-theme="{!config.jQuery_Mobile_Data_Theme__c}"> 
+    <div data-role="header"  class="ui-bar ui-bar-{!config.jQuery_Mobile_Data_Theme__c}">
+        <center><img src="{!config.Header_Image__c}" /></center>
+    </div>    
+    <div data-role="content">
+        <p>
+            <h2><center> {!config.Application_Name__c} was developed by Kenji776 and CloudSpokes.com</center></h2><br />
+            {!config.Application_Name__c} is built on Salesforce force.com sites, using Apex, VisualForce and jQuery Mobile. Thanks in part to @Superfell for help with JSON parsing madness.<br />
+            Contact: <a href="mailto:Kenji776@gmail.com@example.com?Subject=Dude%20You%20Are%20Awesome!">Kenji776@gmail.com</a> or <a href="https://twitter.com/#!/Kenji776">@Kenji776</a> on twitter.<br />
+            Check out <a href="http://iwritecrappycode.wordpress.com/">my blog</a> too!
+        </p>
+    </div>       
+    <footer data-role='footer' data-position='fixed' class="foot" ></footer>
+</div>
+
+<div data-role="page" id="propCreated">  
+        <div data-role="header" data-theme="d" data-position="inline">
+            <h1>Proposal Created!</h1>
+
+        </div>
+
+        <div data-role="content" data-theme="c">
+            <h1>Success</h1>
+            <p>Your proposition has been created and is awaiting approval. As soon as it has been approved for voting it will be available for voting. You will receive an email when your proposal has been approved.</p> 
+        </div>
+</div>
+ 
+ <div data-role="page" id="propShared">  
+        <div data-role="header" data-theme="d" data-position="inline">
+            <h1>Proposal Shared!</h1>
+
+        </div>
+
+        <div data-role="content" data-theme="c">
+            <h1>Success</h1>
+            <p>You have shared this proposition on your facebook wall. Maybe you can get your friends to vote on it too and make an impact!</p> 
+        </div>
+</div>
+
+ <script>
+    //stores data about the currently selected proposal
+    var proposalData = new Object();
+    
+    //stores data about the currently logged in user
+    var userData = new Object();
+    userLoggedIn = false;
+    
+    var pageLog = new Array();
+    var pageIndex = 0;
+    var siteUrl = '{!siteUrl}';
+    var pageName = '{!pageName}';
+    
+
+
+    function getUrlVars()
+    {
+        var vars = [], hash;
+        var hashes = window.location.href.slice(window.location.href.indexOf('?') + 1).split('&');
+        for(var i = 0; i < hashes.length; i++)
+        {
+            hash = hashes[i].split('=');
+            vars.push(hash[0]);
+            vars[hash[0]] = hash[1];
+        }
+        return vars;
+    }
+           
+    function loadCategoriesList()
+    {
+        $.mobile.showPageLoadingMsg();
+        console.log('loading props');
+        cloudVote.getCategories('{!config.id}', function(result, event)
+        {
+            if (event.status)
+            {
+                var list = '<ul data-role="listview" data-theme="{!config.jQuery_Mobile_List_Theme__c}" data-filter="true">';
+                var selectOptions = '';
+                for(var categoryVal = 0; categoryVal < result.length; categoryVal++ )
+                {
+                    list += '<li><span class="ui-li-count">'+result[categoryVal].Number_of_Proposals__c+'</span><a href="javascript:loadProposalList(\''+result[categoryVal].Id+'\');">'+result[categoryVal].Name+'</a><li><p>'+result[categoryVal].Description__c+'</p></li></li>';
+                    selectOptions += '<option value="'+result[categoryVal].Id+'">'+result[categoryVal].Name+'</option>';
+                }            
+                list += '</ul>';
+                $('#categoryList').html(list);
+                $('#proposalCategoryInput').html(selectOptions);
+                try
+                {
+                    $("#categories").page("destroy").page();
+                }
+                catch(exception)
+                {
+                
+                }
+            } 
+            else
+            {
+                document.getElementById("responseErrors").innerHTML = event.message;
+            }
+            
+        }, {escape:true});   
+        $.mobile.hidePageLoadingMsg();   
+    }
+    
+    function addComment()
+    {
+        var comment = $('#addCommentInput').val();
+  
+        cloudVote.addComment(proposalData.Id,userData.Id, comment,function(result, event)
+        {
+            if (event.status)
+            {
+                
+                getComments(proposalData.Id, function(comments)
+                {
+                     $('#commentsContianer').html(null);
+                     var commentList = '<ul data-role="listview" data-theme="{!config.jQuery_Mobile_List_Theme__c}">';
+                     for(var i = 0; i < comments.length; i++ )
+                     {  
+                         console.log(votes[i]);
+                         commentList += '<li data-role="list-divider">' + comments[i].Contact__r.FirstName+' ' + comments[i].Contact__r.LastName + '</li><li><p>'+comments[i].Comment__c+'</p></li>'                    
+                     }      
+                     commentList += '</ul>';
+                     $('#commentsContianer').html(commentList);
+                     
+                      $("#proposal").page("destroy").page();              
+                });                    
+            } 
+            else
+            {
+                document.getElementById("responseErrors").innerHTML = event.message;
+            }
+            comment = $('#addCommentInput').val(null);
+            
+        }, {escape:true});           
+    }
+    
+    function loadProposalList(categoryId)
+    {           
+            $.mobile.showPageLoadingMsg();
+            cloudVote.getProposals(categoryId, function(result, event)
+            {
+                if (event.status)
+                {
+                    var list = '<ul data-role="listview" data-theme="{!config.jQuery_Mobile_List_Theme__c}" data-filter="true">';
+                    for(var categoryVal = 0; categoryVal < result.length; categoryVal++ )
+                    {
+                        list += '<li><span class="ui-li-count">'+result[categoryVal].Score__c+'</span><a href="javascript:getProposal(\''+result[categoryVal].Id+'\');">'+result[categoryVal].Name+'</a> <li><p>'+result[categoryVal].Description__c+'</p> <p>Created By '+result[categoryVal].Contact__r.FirstName+' '+result[categoryVal].Contact__r.LastName+'</p></li> </li>';
+                    }      
+                    
+                    if( result.length == 0 )
+                    {
+                        list += '<li>No Proposals in this category</li>';
+                    }      
+                    list += '</ul>';
+                    $('#proposalList').html(list);
+                     $.mobile.changePage('#proposals');
+                     
+                    $("#proposals").page("destroy").page();
+                } 
+                else
+                {
+                    document.getElementById("responseErrors").innerHTML = event.message;
+                }
+                
+            }, {escape:true});             
+            $.mobile.hidePageLoadingMsg();  
+    }
+    
+    function getProposal(proposalId)
+    {
+        var alreadyVoted;      
+        $.mobile.showPageLoadingMsg();
+        $('#promoteButton').addClass('ui-disabled');
+        $('#demoteButton').addClass('ui-disabled');        
+        cloudVote.getProposal(proposalId, function(result, event)
+        {
+            if (event.status)
+            {
+                //disable the voting if the user is not logged in.
+
+                var proposal = result[0];
+                proposalData = proposal;
+                $.mobile.changePage('#proposal',{transition: "pop"});
+                $('#proposalHeader').html(proposal.Name);
+                $('#proposalDescription').html(proposal.Description__c);
+                $('#proposalCreatedBy').html(proposal.Contact__r.FirstName + ' ' + proposal.Contact__r.LastName);
+                $('#proposalScore').html(proposal.Score__c);   
+                
+                getVotes(proposalData.Id, function(votes)
+                {
+                    $('#voterImages').html(null);
+                    alreadyVoted = false;
+                     for(var i = 0; i < votes.length; i++ )
+                     {
+                         if(votes[i].Contact__c == userData.Id)
+                         {
+                             alreadyVoted = true;                        
+                         }           
+                         $('#voterImages').append('<img src=" http://graph.facebook.com/'+votes[i].Contact__r.Facebook_ID__c+'/picture" title="'+votes[i].Contact__r.FirstName+' ' + votes[i].Contact__r.LastName +'" style="float:left; margin-left:3px">');
+                         
+                     }  
+                    if(userLoggedIn == true && alreadyVoted == false)
+                    {
+                        $('#promoteButton').removeClass('ui-disabled');
+                        $('#demoteButton').removeClass('ui-disabled');                       
+                    }                     
+                });           
+
+                getComments(proposalData.Id, function(comments)
+                {
+                     $('#commentsContianer').html(null);
+                     var commentList = '<ul data-role="listview" data-theme="{!config.jQuery_Mobile_List_Theme__c}">';
+                     for(var i = 0; i < comments.length; i++ )
+                     {  
+                         commentList += '<li data-role="list-divider">' + comments[i].Contact__r.FirstName+' ' + comments[i].Contact__r.LastName + '</li><li><p>'+comments[i].Comment__c+'</p></li>'                    
+                     }      
+                     commentList += '</ul>';
+                     $('#commentsContianer').html(commentList);
+                     
+                      $("#proposal").page("destroy").page();              
+                });   
+                                    
+            } 
+            else
+            {
+                document.getElementById("responseErrors").innerHTML = event.message;
+            }
+            $.mobile.hidePageLoadingMsg(); 
+            
+        }, {escape:true});        
+         
+    }
+
+    function fb_login()
+    {
+        window.open ("https://www.facebook.com/dialog/oauth?client_id={!config.Facebook_App_ID__c}&redirect_uri=http://{!$Site.Domain}{!$Site.Prefix}/cv_fb_regFinish&scope=user_about_me,user_birthday,email,offline_access,publish_stream","mywindow","status=0,toolbar=0,width=1000,height=550,menubar=0");    
+    }    
+    
+    function getVotes(proposalId, callback)
+    {    
+        cloudVote.getVotes(proposalId, function(result, event)
+        {
+            if (event.status)
+            {
+                    callback(result);                    
+            } 
+            else
+            {
+                callback(event.message);
+            }
+            
+        }, {escape:true});        
+    }
+
+    function getComments(proposalId, callback)
+    {    
+        cloudVote.getComments(proposalId, function(result, event)
+        {
+            if (event.status)
+            {
+                    callback(result);                    
+            } 
+            else
+            {
+                callback(event.message);
+            }
+            
+        }, {escape:true});        
+    }    
+    function castProposalVote(voteType)
+    {
+         $.mobile.showPageLoadingMsg();        
+        cloudVote.castVote(proposalData.Id, userData.Id,voteType, function(result, event)
+        {
+            if (event.status)
+            {
+                    getProposal(proposalData.Id);
+            } 
+            else
+            {
+                document.getElementById("responseErrors").innerHTML = event.message;
+            }
+            $.mobile.hidePageLoadingMsg();    
+        }, {escape:true});        
+          
+    }
+    
+    function shareProposal()
+    {
+         $.mobile.showPageLoadingMsg();
+        cloudVote.sharePropOnFB(proposalData.Id, userData.Id, function(result, event)
+        {
+            if (event.status)
+            {
+                     $.mobile.changePage("#propShared", {transition: 'pop', role: 'dialog'}); 
+            } 
+            else
+            {
+                document.getElementById("responseErrors").innerHTML = event.message;
+            }
+            $.mobile.hidePageLoadingMsg();   
+        }, {escape:true});          
+    }
+    
+
+    
+    function createProposal()
+    {
+         $.mobile.showPageLoadingMsg();
+         $('#submitProposal').addClass('ui-disabled'); 
+         var propName = $('#proposalNameInput').val();
+         var categoryId = $('#proposalCategoryInput').val();
+         var propDescription = $('#proposalDescriptionInput').val();
+
+        cloudVote.createProposal(categoryId, userData.Id, propName, propDescription, function(result, event)
+        {
+            if (event.status)
+            {
+                    $.mobile.changePage("#propCreated", {transition: 'pop', role: 'dialog'}); 
+                    $('#proposalNameInput').val(null);
+                    $('#proposalCategoryInput').val(null);
+                    $('#proposalDescriptionInput').val(null);
+            } 
+            else
+            {
+                document.getElementById("responseErrors").innerHTML = event.message;
+            }
+            $('#submitProposal').removeClass('ui-disabled'); 
+            $.mobile.hidePageLoadingMsg();   
+        }, {escape:true});        
+                   
+    }
+
+$(document).ready(function()
+{
+    checkFBLoginStatus();
+    
+    loadCategoriesList();
+
+
+    $('#categories').live('pageshow',function(event, ui){
+      loadCategoriesList();
+    });    
+
+    $('#proposal').live('pageshow',function(event, ui){
+        if(!proposalData.hasOwnProperty("Id"))
+        {
+            $.mobile.changePage("#home"); 
+        }
+    });  
+
+    $('#add').live('pageshow',function(event, ui){
+        if(!userData.hasOwnProperty("Id"))
+        {
+           $('#submitProposal').addClass('ui-disabled');      
+        }
+        else
+        {
+            $('#submitProposal').removeClass('ui-disabled');   
+        }
+    });  
+    
+    $('#home').live('pagecreate', function ()
+    {
+        if(getUrlVars()["prop"] != null)
+        {
+            console.log('trying to go to prop ' + getUrlVars()["prop"]);
+            getProposal(getUrlVars()["prop"]);
+        }   
+    });      
+
+    
+        
+    var footerContent = " <div id='responseErrors'></div><div class='ui-body-{!config.jQuery_Mobile_NavBar_Theme__c}'><nav data-role='navbar'><ul  ><li><a href='#categories' data-icon='home'>Proposals</a></li><li><a href='#login' data-icon='star'>Login</a></li><li><a href='#about' data-icon='info'>About</a></li><li><a href='#add' data-icon='plus'>Add</a></li></ul></nav></div>";
+     $('.foot').html(footerContent);    
+});
+
+
+function checkFBLoginStatus()
+{
+    var cookieData = $.cookie('{!config.Application_Name__c}_fb');
+
+    if(cookieData == null)
+    {
+        console.log('no cookie');
+        $('#connectFBDone').hide();
+        $('#connectFB').show();
+        userLoggedIn = false;
+    }
+    else
+    {
+        userData =  jQuery.parseJSON(cookieData);
+         $('#connectFB').hide();
+         $('#connectFBDone').show();
+         userLoggedIn = true;
+    }
+    try
+    {
+        $("#login").page("destroy").page();
+    }
+    catch(ex)
+    {
+    }
+}
+ </script>
+
+
+
+
+</body>
+
+
+
+</apex:page>

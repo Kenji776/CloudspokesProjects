@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Dreamforce Party Events.</description>
+    <enableActivities>false</enableActivities>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <fields>
+        <fullName>Access_Type__c</fullName>
+        <description>Is this even open to the public (anyone can attend), preregister (attendees must confirm intent to attend, but not necessarily be invited) or invite only (must have been sent and respondent to an invite.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Is this even open to the public (anyone can attend), preregister (attendees must confirm intent to attend, but not necessarily be invited) or invite only (must have been sent and respondent to an invite.</inlineHelpText>
+        <label>Access Type</label>
+        <picklist>
+            <picklistValues>
+                <fullName>Open to the public</fullName>
+                <default>true</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Must preregister</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Invite Only</fullName>
+                <default>false</default>
+            </picklistValues>
+            <sorted>false</sorted>
+        </picklist>
+        <trackHistory>false</trackHistory>
+        <type>Picklist</type>
+    </fields>
+    <fields>
+        <fullName>Address__c</fullName>
+        <description>Where is this event happening?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Where is this event happening?</inlineHelpText>
+        <label>Address</label>
+        <length>100</length>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>BYOB__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Is this event a bring your own booze type of event?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Is this event a bring your own booze type of event?</inlineHelpText>
+        <label>BYOB</label>
+        <trackHistory>false</trackHistory>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>City__c</fullName>
+        <description>What city is this event hosted in?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>What city is this event hosted in?</inlineHelpText>
+        <label>City</label>
+        <length>30</length>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>CreatedBy__c</fullName>
+        <externalId>false</externalId>
+        <label>Created By</label>
+        <referenceTo>Contact</referenceTo>
+        <relationshipLabel>Party Force Events</relationshipLabel>
+        <relationshipName>Party_Force_Events</relationshipName>
+        <trackHistory>false</trackHistory>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Description__c</fullName>
+        <description>Describe this event.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Describe this event.</inlineHelpText>
+        <label>Description</label>
+        <length>32768</length>
+        <trackHistory>false</trackHistory>
+        <type>LongTextArea</type>
+        <visibleLines>25</visibleLines>
+    </fields>
+    <fields>
+        <fullName>Dress_Code__c</fullName>
+        <description>What is the dress code of this event?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>What is the dress code of this event?</inlineHelpText>
+        <label>Dress Code</label>
+        <picklist>
+            <picklistValues>
+                <fullName>Black Tie</fullName>
+                <default>true</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Formal</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Black Tie Optional</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Creative Black Tie</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Semi-Formal</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Cocktail Attire</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Informal</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Festive Attire</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Dressy Casual</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Casual</fullName>
+                <default>false</default>
+            </picklistValues>
+            <sorted>false</sorted>
+        </picklist>
+        <trackHistory>false</trackHistory>
+        <type>Picklist</type>
+    </fields>
+    <fields>
+        <fullName>End_Date__c</fullName>
+        <description>When does this event end?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>When does this event end?</inlineHelpText>
+        <label>End Date</label>
+        <required>true</required>
+        <trackHistory>false</trackHistory>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Host__c</fullName>
+        <description>Who is hosting this event.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Who is hosting this event.</inlineHelpText>
+        <label>Host</label>
+        <referenceTo>Account</referenceTo>
+        <relationshipLabel>Party Force Events</relationshipLabel>
+        <relationshipName>Party_Force_Events</relationshipName>
+        <relationshipOrder>0</relationshipOrder>
+        <trackHistory>false</trackHistory>
+        <type>MasterDetail</type>
+        <writeRequiresMasterRead>false</writeRequiresMasterRead>
+    </fields>
+    <fields>
+        <fullName>Image__c</fullName>
+        <description>A url of an image for this event</description>
+        <externalId>false</externalId>
+        <inlineHelpText>A url of an image for this event</inlineHelpText>
+        <label>Image</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <type>Url</type>
+    </fields>
+    <fields>
+        <fullName>IsFutureContext__c</fullName>
+        <defaultValue>false</defaultValue>
+        <externalId>false</externalId>
+        <label>IsFutureContext</label>
+        <trackHistory>false</trackHistory>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Lat__c</fullName>
+        <description>Latitude of this address</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Latitude of this address</inlineHelpText>
+        <label>Lat</label>
+        <length>50</length>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Lng__c</fullName>
+        <description>longitude for this address</description>
+        <externalId>false</externalId>
+        <inlineHelpText>longitude for this address</inlineHelpText>
+        <label>Lng</label>
+        <length>50</length>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Location_Name__c</fullName>
+        <description>What is the name of this venue?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>What is the name of this venue?</inlineHelpText>
+        <label>Location Name</label>
+        <length>50</length>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Max_Attendees__c</fullName>
+        <description>What is the maximum amount of attendees this event can handle?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>What is the maximum amount of attendees this event can handle?</inlineHelpText>
+        <label>Max Attendees</label>
+        <precision>6</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackHistory>false</trackHistory>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Number_of_Guests__c</fullName>
+        <externalId>false</externalId>
+        <label>Number of Guests</label>
+        <summaryFilterItems>
+            <field>Party_Force_Invite__c.RSVP_Status__c</field>
+            <operation>equals</operation>
+            <value>Attending</value>
+        </summaryFilterItems>
+        <summaryForeignKey>Party_Force_Invite__c.Party_Force_Event__c</summaryForeignKey>
+        <summaryOperation>count</summaryOperation>
+        <trackHistory>false</trackHistory>
+        <type>Summary</type>
+    </fields>
+    <fields>
+        <fullName>Parking_Available__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Is parking available at this event location?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Is parking available at this event location?</inlineHelpText>
+        <label>Parking Available</label>
+        <trackHistory>false</trackHistory>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Rejection_Reason__c</fullName>
+        <description>If an event has been rejected, please specify why</description>
+        <externalId>false</externalId>
+        <inlineHelpText>If an event has been rejected, please specify why</inlineHelpText>
+        <label>Rejection Reason</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <type>TextArea</type>
+    </fields>
+    <fields>
+        <fullName>Start_Date__c</fullName>
+        <description>When does this event start?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>When does this event start?</inlineHelpText>
+        <label>Start Date</label>
+        <required>true</required>
+        <trackHistory>false</trackHistory>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>State__c</fullName>
+        <defaultValue>&apos;CA&apos;</defaultValue>
+        <description>State abbreviation of where this event is taking place.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>State abbreviation of where this event is taking place.</inlineHelpText>
+        <label>State</label>
+        <length>2</length>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Status__c</fullName>
+        <description>What is the status of this event?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>What is the status of this event?</inlineHelpText>
+        <label>Status</label>
+        <picklist>
+            <picklistValues>
+                <fullName>New</fullName>
+                <default>true</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Approved</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Rejected</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>In Progress</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Complete</fullName>
+                <default>false</default>
+            </picklistValues>
+            <sorted>false</sorted>
+        </picklist>
+        <trackHistory>false</trackHistory>
+        <type>Picklist</type>
+    </fields>
+    <fields>
+        <fullName>Suite_Apt_Number__c</fullName>
+        <description>What suite or apartment number is this event occurring in?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>What suite or apartment number is this event occurring in?</inlineHelpText>
+        <label>Suite/Apt Number</label>
+        <length>50</length>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Valet_Services_Available__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Are valet services available at this event?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Are valet services available at this event?</inlineHelpText>
+        <label>Valet Services Available</label>
+        <trackHistory>false</trackHistory>
+        <type>Checkbox</type>
+    </fields>
+    <label>Party Force Event</label>
+    <listViews>
+        <fullName>All</fullName>
+        <columns>NAME</columns>
+        <columns>Start_Date__c</columns>
+        <columns>End_Date__c</columns>
+        <columns>Host__c</columns>
+        <columns>Location_Name__c</columns>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>DFP Event Name</label>
+        <trackHistory>false</trackHistory>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Party Force Events</pluralLabel>
+    <searchLayouts/>
+    <sharingModel>ControlledByParent</sharingModel>
+    <validationRules>
+        <fullName>Do_Not_Exceed_Event_Quota</fullName>
+        <active>true</active>
+        <description>Make sure no more people than maximum allowed can rsvp</description>
+        <errorConditionFormula>Number_of_Guests__c &gt;  Max_Attendees__c</errorConditionFormula>
+        <errorMessage>Maximum number of guests has been reached.</errorMessage>
+    </validationRules>
+</CustomObject>

@@ -1,0 +1,135 @@
+@charset "utf-8";
+/* CSS Document */
+#flexiFilterContainer
+{
+	height:200;
+	width:450px;
+	font-size:12px;
+	float:left;
+	margin:15px;
+	 
+}
+
+/* put some spacing around the sliders or else they bunch up and look all shitty */
+.flexiFilterSlider
+{
+	margin-top:15px;
+	margin-bottom:15px;
+}
+
+.flexiFilterToolTip.ui-button-icon-only
+{
+	width:16px;
+	float:right;	
+	height:16px;
+	width:16px;	
+}
+/* style the titles above sliders a little bit */
+.flexiFilterSliderTitle
+{
+	float:left;
+	font-weight:bold;
+	margin-right:25px;
+	margin-bottom:5px;
+	
+}
+
+/* get the slider values to sit next to the slider titles. could add additional text styling if you like */
+.flexiFilterSliderValue
+{
+	float:left;
+}
+
+/* get the text box elements to look a little better */
+.flexiFilterTextbox
+{
+	font: inherit;
+	color: inherit;
+	text-align: left;
+	outline: none;
+	cursor: text;
+	width: 95%;
+	margin-bottom: 10px
+}
+
+/* reduces the width of the select list so the dropdown arrow will sit nicely instead of breaking to the next line */
+.flexiSelectList
+{
+	width:85%;	
+}
+
+/* the ajax spinner that is shown and hidden when json data is sending/being received */
+.flexiFilterLoader
+{
+	width:35px;
+	height:35px;
+	background-image:url('../img/flexiFilterSpinner.gif');
+	background-position:center;
+	background-repeat:no-repeat;
+	float:right;
+	display:none;
+}
+
+#flexiFilterDialog
+{
+	display:none;	
+}
+/* stop the stupid horizonstal scrollbars that always seem to show up */
+.ui-accordion .ui-accordion-content
+{
+	padding:10px;	
+	overflow-x: hidden;
+}
+
+/* utility class to get divs to break to the next line after sitting next to floated elements */
+.clear
+{
+	clear:both;
+}
+
+/*spacer for the bottom of each accordian panel to stop things looking so bunched together. Ajust to your personal liking */
+.spacer
+{
+	min-height:50px;
+}
+
+/* code for displaying code/json result. Could be removed in productions version */
+.code
+{
+	margin:15px;
+	font-family: Andale Mono, Lucida Console, Monaco, fixed, monospace; 
+	color: #000000; 
+	background-color: #eee;
+	font-size: 12px;
+	border: 1px dashed #999999;
+	line-height: 14px;
+	padding: 5px; 
+	overflow: auto; 
+	width: 95%;
+	white-space: pre-wrap; /* css-3 */
+	white-space: -moz-pre-wrap !important; /* Mozilla, since 1999 */
+	white-space: -pre-wrap; /* Opera 4-6 */
+	white-space: -o-pre-wrap; /* Opera 7 */
+	word-wrap: break-word; /* Internet Explorer 5.5+ */	
+	height:200px;
+}
+
+/* sample result table code. Could be removed Could be removed in productions version */
+#searchResults
+{
+	float:left;	
+	width:450;
+	height:200px;
+	margin:15px;
+}
+
+
+.searchResultTable
+{
+	border-spacing:5px;
+}
+
+.searchResultTable th, .searchResultTable td
+{
+	padding:5px;
+}

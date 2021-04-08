@@ -1,0 +1,361 @@
+global class clicked_controller
+{
+    /*********************************************************
+    Clicked Controller
+    Author: Kenji776
+    Date: 2/09/2012
+    Description: Provides back end functionality for the clicked web application. Allows for user creation,
+                              user updates, login, searching for users and placing a call to Twilio, and providing some TwilML
+                              to connect two users on the phone.
+    ********************************************************/
+    public string TwilML{get;set;}
+    public static final string callBackUrl = 'http://xerointeractive-developer-edition.na9.force.com/partyForce/clicked_returnTwilML';
+    public static final string twilio_accountSID = 'ACc1747f67d933be6aa91919018952dc91';
+    public static final string twilio_accountAuthToken = '851f4838c837f28842e0d84ce7cc4f7e';
+    public static final string twilio_accountPhone = '17632805326';
+
+    //message contstants
+    static final string msg_connectingMessage = 'Please wait while we connect you to to your party.';
+    static final string msg_loginSuccess = 'Login successfull';
+    static final string msg_placeCallSuccess = 'Call placed successfully';
+    static final string msg_updateUserSuccess = 'Update Successfull';
+    static final string err_notAbleToPlaceCall = 'We could not locate the user record for your party. Please hang up and try again.';
+    static final string err_badUsername = 'Incorrect username or email address';
+    static final string err_badPassword = 'Incorrect password.';
+    static final string err_dupeUsername = 'An account with this username has already been registered. ';
+    static final string err_dupeUserEmail = 'An account with this email address has already been registered. ';
+    static final string err_invalidCallerId = 'Invalid caller id specified in place call. ';
+
+     //returns some TwilML to tell Twilio to dial the person indicated as the called member (called__c) on the 
+     //clicked_call__c record indicated by the ID passed in the callid get parameter.     
+    public PageReference getTwilML()
+    {
+        map<string,string> params  = ApexPages.currentPage().getParameters();
+        list<Clicked_Call__c> user = [select id, called__r.name, called__r.Formatted_Phone__c from Clicked_Call__c where id = :params.get('callid')];
+        if(!user.isEmpty())
+        {
+            TwilML = '<?xml version="1.0" encoding="UTF-8"?><Response><Say>'+ msg_connectingMessage+'</Say><Dial><Number>'+user[0].called__r.Formatted_Phone__c+'</Number></Dial></Response>';
+        }
+        else
+        {
+            TwilML = '<?xml version="1.0" encoding="UTF-8"?><Response><Say>'+err_notAbleToPlaceCall+'</Say></Response>';
+        }
+        return null;
+    }
+    
+    //Creates a clicked_call__c record for a user. There is a trigger attached to clicked_call__c records that will invoke the placeTwilioCall method below
+    @RemoteAction
+    public static remoteObject placeCall(string callerId, string calledId)
+    {
+        remoteObject returnObj = new remoteObject();
+        returnObj.success = true;
+        returnObj.message = msg_placeCallSuccess;
+        returnObj.data = 'Remote Call Success';
+        
+        try
+        {    
+            Clicked_Call__c thisCall = new Clicked_Call__c();
+            thisCall.Caller__c = callerId;
+            thisCall.Called__c = calledId;
+            
+            insert thisCall;          
+            returnObj.data = thisCall.id;
+            returnObj.message = 'Created call record    ' +thisCall.id+ ' for user ' + callerId + ' to user ' + calledId;
+                    
+       }
+       catch(Exception e)
+       {
+            returnObj.success = false;
+            returnObj.message = e.getMessage();
+            returnObj.data = e.getMessage();
+       }
+       return returnObj;       
+    }
+     
+   //future method that takes a set of clicked_call__c object ids and uses them to place outbound calls to Twilio.  
+   @Future(callout=true)
+    public static void placeTwilioCall(set<id> callIds)
+    {
+        //get the list of call objects these ids represent. (why can't we just pass a list of objects to a future method? sigh)
+        list<Clicked_Call__c> calls = [select id, caller__r.Formatted_Phone__c, caller__c, Twilio_Call_Data__c from Clicked_Call__c where id in :callIds];
+
+        for(Clicked_Call__c call : calls)
+        {
+            try
+            {
+                string reqURL ='https://api.twilio.com/2010-04-01/Accounts/'+twilio_accountSID+'/Calls';
+                Http httpObj = new Http();                       
+                HttpRequest req = new HttpRequest();
+                req.setEndpoint(reqURL);
+                req.setMethod('POST');
+                Blob headerValue = Blob.valueOf(twilio_accountSID + ':' + twilio_accountAuthToken);
+                String authorizationHeader = 'Basic ' +
+                EncodingUtil.base64Encode(headerValue);
+                req.setHeader('Authorization', authorizationHeader);          
+                req.setBody('Caller='+EncodingUtil.urlEncode(twilio_accountPhone, 'UTF-8')+'&Called='+EncodingUtil.urlEncode(call.caller__r.Formatted_Phone__c, 'UTF-8')+'&Url='+EncodingUtil.urlEncode(callBackUrl+'?callId='+call.Id, 'UTF-8'));                          
+                
+                if(!Test.isRunningTest())
+                { 
+                    HttpResponse res = httpObj.send(req);    
+                    call.Twilio_Call_Data__c = res.getBody();
+                }
+                call.Status__c = 'Call In Progress';
+            }
+            catch(exception e)
+            {
+                call.Twilio_Call_Data__c += e.getMessage();
+                call.Status__c = 'Error Placing Call';            
+            }
+         }    
+         update calls;
+    }
+          
+    @remoteAction
+    global static remoteObject loginUser(string dataString)
+    {
+        remoteObject returnObj = new remoteObject();
+        returnObj.success = true;
+        returnObj.message = msg_loginSuccess;
+        returnObj.data = 'Remote Call Success';
+        
+        try
+        {
+            map<string,string> formData = deserializeString(dataString);
+            list<Clicked_User__c > user = [select id, 
+                                            Active__c, 
+                                            Bio__c,
+                                            Gender__c, 
+                                            Latitude__c, 
+                                            Longitude__c,
+                                            Password__c,
+                                            Phone_Number__c,
+                                            Name,
+                                            Email__c,
+                                            Age__c
+                                            from Clicked_User__c 
+                                            where ( name = :formData.get('login_name') or email__c = :formData.get('login_name')) 
+                                            limit 1];
+            
+            if(!user.isEmpty())
+            {
+                if(user[0].Password__c ==  formData.get('login_password__c'))
+                {
+                    returnObj.data = msg_loginSuccess;
+                    returnObj.sObjects = user;
+                }
+                else
+                {
+                    throw new customException(err_badPassword + '. ' + user[0].Password__c + ' ' +  formData.get('login_password__c'));
+                }
+            }
+            else
+            {
+                throw new customException(err_badUsername);
+            }
+        }
+        catch(Exception e)
+        {
+            returnObj.success = false;
+            returnObj.message = 'Error during login';
+            returnObj.data = e.getMessage();
+        }
+        return returnObj;       
+    } 
+    
+    
+    @remoteAction
+    global static remoteObject registerUser(string dataString)
+    {
+        remoteObject returnObj = new remoteObject();
+        returnObj.success = true;
+        returnObj.message = 'Member Created';
+        returnObj.data = 'Remote Call Success';
+        Clicked_User__c thisUser = new Clicked_User__c ();
+        
+        try
+        {
+            map<string,string> formData = deserializeString(dataString);
+            list<Clicked_User__c > users = new list<Clicked_User__c >();
+            list<Clicked_User__c > dupeUsers = [select id, name from Clicked_User__c where name= :formData.get('name') or email__c = :formData.get('email__c') LIMIT 1];
+            
+            if(!dupeUsers.isEmpty())
+            {
+                returnObj.message = formData.get('name');
+                returnObj.sObjects = dupeUsers;
+                if(dupeUsers[0].name== formData.get('name'))
+                {
+                    throw new customException(err_dupeUsername); 
+                }
+                else
+                {
+                     throw new customException(err_dupeUseremail); 
+                }
+                            
+            }
+            
+            for(String fieldName : formData.keySet())
+            {
+                try
+                {
+                    thisUser.put(fieldName,formData.get(fieldName)); 
+                }
+                catch(Exception e)
+                {
+                    system.debug('Field: ' +fieldName+' does not exist on user');
+                }       
+            }
+
+            thisUser.birthdate__c =  date.newInstance(integer.valueOf(formData.get('birthYear')),integer.valueOf(formData.get('birthMonth')), integer.valueOf(formData.get('birthDay')));
+            users.add(thisUser);
+            
+            thisUser.active__c = true;
+            insert thisUser;
+            returnObj.data = thisUser.id;
+            returnObj.sObjects = users;
+        }
+        catch(exception e)
+        {
+            returnObj.success = false;
+            returnObj.message = 'Error registering user';
+            returnObj.data = e.getMessage();
+        }
+        
+        
+        return returnObj;       
+    }   
+    
+    //updates a user record from url encoded serialized data.
+    @RemoteAction 
+    public static remoteObject updateUser(string dataString)
+    {
+        remoteObject returnObj = new remoteObject();
+        returnObj.success = true;
+        returnObj.message = msg_updateUserSuccess;
+        returnObj.data = 'Remote Call Success';      
+        map<string,string> formData = deserializeString(dataString);  
+        try
+        {
+            list<Clicked_User__c> thisuser = [select id from Clicked_User__c where id = :formData.get('Id')  ];
+            if(!thisUser.isEmpty())
+            {
+                for(String fieldName : formData.keySet())
+                {
+                    try
+                    {
+                        thisUser[0].put(fieldName,formData.get(fieldName)); 
+                    }
+                    catch(Exception e)
+                    {
+                        system.debug('Field: ' +fieldName+' does not exist on user');
+                    }       
+                }        
+                update thisUser;
+                returnObj.sObjects = thisUser;
+             }
+             else
+             {
+                returnObj.success = false;
+                returnObj.message = 'Invalid user id: '+ formData.get('Id');
+                returnObj.data = 'unable to update user record.';                 
+             }
+        }
+        catch(exception e)
+        {
+            returnObj.success = false;
+            returnObj.message = 'Error updating user';
+            returnObj.data = e.getMessage();
+        }        
+        return returnObj;        
+    }
+    
+    //returns the list of all active users in the system for displaying on the map.
+    @RemoteAction
+    public static remoteObject getActiveUsers()
+    {
+        remoteObject returnObj = new remoteObject();
+        returnObj.success = true;
+        returnObj.message = 'Members fetched';
+        returnObj.data = 'Remote Call Success';        
+        try
+        {
+            returnObj.sObjects = [select name, age__c, gender__c, bio__c, active__c, Latitude__c,  Longitude__c from Clicked_User__c where active__c = true];
+        }
+        catch(exception e)
+        {
+            returnObj.success = false;
+            returnObj.message = 'Error getting user list';
+            returnObj.data = e.getMessage();
+        }        
+        return returnObj;
+    }
+    
+
+    
+    //decodes a url encoded string into a map of strings.    
+    public static Map<string,string> deserializeString(String argString)
+    {   
+        argString = EncodingUtil.urlDecode(argString,'UTF-8');
+        string[] params = argString.split('&');
+        map<String,String>  formParams = new map<String,String>();
+        for(string p : params)
+        {       
+            formParams.put(EncodingUtil.urlDecode(p.substring(0,p.indexOf('=')),'UTF-8'),EncodingUtil.urlDecode(p.substring(p.indexOf('=')+1,p.length()),'UTF-8'));    
+        }       
+        return formParams;
+    }      
+    
+    //takes a string of base64 encoded data, a name for the file, and the user Id the file will belong to. 
+    //creates an attachment and attaches it to the record specified by the id.
+    @RemoteAction
+    public static RemoteObject UploadFile(string fileData, string fileName, string userId) 
+    {
+        remoteObject returnObj = new remoteObject();
+        returnObj.success = true;
+        returnObj.message = 'Photo Uploaded';
+        returnObj.data = 'Remote Call Success';         
+        try
+        {
+            Attachment myAttachment  = new Attachment();
+            fileData = fileData.substring(fileData.indexOf(',')+1,fileData.length());
+            fileData = fileData.replace( ' ','+');
+            blob fileContent = EncodingUtil.base64Decode(fileData);
+            returnObj.message = fileData;
+            myAttachment.Body =fileContent;
+            myAttachment.Name = fileName;
+            myAttachment.ParentId = userId;  
+            insert myAttachment;
+        }
+        catch(exception e)
+        {
+            returnObj.success = false;
+            returnObj.message = 'Error getting user list';
+            returnObj.data = e.getMessage();
+        }        
+        return returnObj;   
+    }
+
+    //gets the most recent attachment from a member record, which will be their most recent profile picture. Returns it as base64
+    //encoded data, which can then be displayed as an img. If no attachment is found, return null.
+    @RemoteAction
+    global static String getProfilePicture(string userId)
+    {   
+            list<Attachment> thisDoc = [select id, body from Attachment where parentid = :userid order by createdDate desc limit 1]; 
+            if(!thisDoc.isEmpty())
+            {
+                String fileContent = EncodingUtil.base64Encode(thisDoc[0].body); 
+                return fileContent;        
+            } 
+            return null;
+    }   
+
+    //simple wrapper object to make evaluating the result of a remoting request easier
+    global class remoteObject
+    {
+        public boolean success{get;set;}
+        public string message{get;set;}
+        public string data{get;set;}
+        public list<sObject> sObjects {get;set;} 
+    }
+
+   public class customException extends Exception {}    
+}

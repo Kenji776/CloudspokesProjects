@@ -1,0 +1,1 @@
+<apex:page showHeader="false" sidebar="false" standardStylesheets="false"  contentType="text/xml" controller="clicked_controller" action="{!getTwilML}"><apex:outputText escape="false" value="{!TwilML}" /></apex:page>

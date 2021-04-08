@@ -1,0 +1,36 @@
+{"WINNERS":
+[
+	{
+	"SCORE":5234.0,
+	"TITLE":"Team Dai Gurren",
+	"PLACE":2.0,
+	"NAME":"Super cool project",
+	"IMG":"teamLogos\/kamina.gif",
+	"SHOW":true
+	},
+	{
+	"SCORE":4424.0,
+	"TITLE":"Team Himura",
+	"PLACE":4.0,
+	"NAME":"pretty awesome project",
+	"IMG":"teamLogos\/kenshin.gif",
+	"SHOW":true
+	},
+	{
+	"SCORE":6800.0,
+	"TITLE":"Team Bebop",
+	"PLACE":1.0,
+	"NAME":"Decent project",
+	"IMG":"teamLogos\/spike.gif",
+	"SHOW":true
+	},
+	{
+	"SCORE":5020.0,
+	"TITLE":"Team Yagami",
+	"PLACE":3.0,
+	"NAME":"Meh project",
+	"IMG":"teamLogos\/light.gif",
+	"SHOW":true}
+	],
+	"HIDDENWINNERIMG":"css\/hidden.png"
+} 

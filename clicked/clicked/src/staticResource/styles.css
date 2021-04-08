@@ -1,0 +1,84 @@
+#birthdate {
+	margin-left:75px;
+}
+#contactList {
+	float:left;
+	height:100%;
+	position:relative;
+	width:29%;
+}
+#container {
+	height:80%;
+	position:absolute;
+	width:100%;
+}
+#map {
+	float:left;
+	height:100%;
+	position:relative;
+	width:70%;
+}
+.clickedBanner 
+{
+	background:url('clicked_favicon.png');
+	height:35px;
+	width:31px;
+	float:left;
+}
+.error {
+	color:red;
+	display:block;
+	font-weight:700;
+	margin:5px;
+	text-align:center;
+}
+.errorMessage {
+	color:red;
+	font-weight:700;
+	margin:5px;
+	text-align:center;
+}
+.greetingPrompt {
+	display:block;
+	float:left;
+	text-align:center;
+}
+.headerImage {
+	display:inline-block;
+	height:30px;
+	margin:0;
+	padding:0;
+	width:176px;
+}
+.hidden {
+	display:none;
+}
+.infoWindowContainer {
+	height:200px;
+	margin:15px;
+	min-width:350px;
+	padding:5px;
+}
+.infoWindowProfilePicture {
+	float:left;
+	margin-right:10px;
+}
+.thumb {
+	border:1px solid #000;
+	height:75px;
+	margin:10px 5px 0 0;
+}
+.ui-select-inline, .ui-select {
+	display:inline-block;
+	width:auto;
+}
+input.error {
+	border-color:Red;
+	border-style:solid;
+	border-width:1px;
+	color:#000;
+	font-weight:400;
+}
+ui-controlgroup-horizontal {
+	float:left;
+}

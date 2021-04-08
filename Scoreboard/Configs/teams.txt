@@ -1,0 +1,29 @@
+[
+	{
+	"DESCRIPTION":"A team of indomitable spirit, they won't let anyone stop them from grabbing their own destiny and forcing their weay down their own path! Lead by the mighty Kamina a man who's bad reputation far prceeds him the team fights valiantly against oppression using the power of the spiral and fighting spirit.",
+	"NAME":"Team Dai Gurren",
+	"IMG":"teamLogos\/kamina.gif",
+	"SHOW":true,
+	"CAPTAIN":"Kamina"
+	},
+	{
+	"DESCRIPTION":"Lead by Himura Kenshin this team of fighters from around Japan is without a doubt the most skilled collection of warriors anywhere. As Kenshin wandered around it was inevtiable that many warriors would want to test their mettle against him. When they say his skill was without peer they joined him in hopes of learning his ways.",
+	"NAME":"Team Himura",
+	"IMG":"teamLogos\/kenshin.gif",
+	"SHOW":false,
+	"CAPTAIN":"Himura Kenshin"
+	},
+	{
+	"DESCRIPTION":"Lead by the brilliant Light Yagami, the members of this team compose some of the brightest minds in the world today. After deciding to rid the world of evil using a notebook with the power to kill anyone's name who is written in it, Light attempts to make the world a better place by killing the worlds violent criminals.",
+	"NAME":"Team Yagami",
+	"IMG":"teamLogos\/light.gif",
+	"SHOW":false,
+	"CAPTAIN":"Light Yagami"
+	},	
+	{
+	"DESCRIPTION":"Lead by Spike, ex member of the red dragon syndicate the team of the Bebop is not to be taken lightly. Comprised of mercenaries from around the universe this team excels in firearms, hand to hand combat as well as espionage. ",
+	"NAME":"Team Bebop",
+	"IMG":"teamLogos\/spike.gif",
+	"SHOW":false,
+	"CAPTAIN":"Spike Speigal"
+	}] 

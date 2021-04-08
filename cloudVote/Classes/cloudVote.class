@@ -1,0 +1,375 @@
+global class cloudVote
+{
+
+    public string contactJson{get;set;}
+    public contact thisContact{get;set;}
+    public CloudVote_Config__c config{get;set;}
+    public string siteUrl{get;set;}
+    public string pageName{get;set;}
+    public string appId{get;set;}
+    
+    public class Data {
+        public Boolean installed;
+        public String id;
+    }
+
+    public class Paging {
+        public String next;
+    }
+
+    public class facebookFriendsList {
+        public List<Data> data;
+        public Paging paging;
+    }
+
+    class facebookUser
+    {
+        public string id;
+        public string first_name;
+        public string last_name;
+        public string email;
+        
+        public facebookUser(string id, string first_name, string email)
+        {
+            this.id = id;
+            this.first_name = first_name;
+            this.last_name = last_name;
+            this.email = email;
+        }
+    }
+
+    public PageReference facebookConnect() 
+    {     
+        contactJson = 'Blah';
+        Map<string,string> params = ApexPages.currentPage().getParameters();
+        string accessCode = params.get('code');
+        
+        HttpRequest req = new HttpRequest();
+        req.setMethod('GET'); 
+        system.debug(config.Facebook_App_ID__c);
+        system.debug(site.getCurrentSiteUrl());
+        system.debug(accessCode);
+        
+        req.setEndpoint( 'https://graph.facebook.com/oauth/access_token?client_id='+config.Facebook_App_ID__c+'&client_secret='+config.Facebook_App_Secret__c+'&redirect_uri='+site.getCurrentSiteUrl()+'cv_fb_regFinish&code='+accessCode);      
+        Http http = new Http();
+        string token;
+        string jsonData;
+        
+        if(!Test.isRunningTest())
+        {
+            //Execute web service call here     
+             HTTPResponse res = http.send(req); 
+             token = res.getBody();  
+        }
+        else
+        {
+        	token = 'token=test';
+        }    
+
+    	req.setEndpoint('https://graph.facebook.com/me?'+token+'&fields=first_name,last_name,email');
+        if(!Test.isRunningTest())
+        {
+        	HTTPResponse res2 = http.send(req); 
+        	jsonData = res2.getBody();   
+        }
+        else
+        {
+        	jsonData = '{"first_name": "Daniel","last_name": "Llewellyn","email": "testtesttesttest@gmail.com","id": "234232342"}';
+        }
+        
+        facebookUser d = (facebookUser) JSON.deserialize(jsonData,facebookUser.class);           
+        list<contact> findContact = [select id, firstname, lastname, email, Facebook_ID__c, Facebook_Auth_Token__c from contact where email = :d.email or Facebook_ID__c = : d.id];                
+		string authToken = token.split('=')[1];
+		if(findContact.isEmpty())
+		{
+			thisContact = new Contact();
+			thisContact.firstname = d.first_name;
+			thisContact.lastname = d.last_name;
+			thisContact.email = d.email;
+			thisContact.Facebook_ID__c =  d.id;
+			thisContact.Facebook_Auth_Token__c =  authToken;    
+			insert thisContact;
+			postToFacebook(d.id, authToken, config.Application_Name__c, config.Header_Image__c, site.getCurrentSiteUrl()+'/cloudVote', 'I just signed up with '+ config.Application_Name__c , config.App_Description__c);
+		 }         
+		else if( findContact[0].Facebook_ID__c == null ||  findContact[0].Facebook_Auth_Token__c == null)
+		{
+			thisContact = findContact[0];
+			thisContact.Facebook_ID__c =  d.id;
+			thisContact.Facebook_Auth_Token__c =  authToken;
+			update thisContact;
+			postToFacebook(d.id, authToken, config.Application_Name__c, config.Header_Image__c, site.getCurrentSiteUrl()+'/cloudVote', 'I just signed up with ' + config.Application_Name__c, config.App_Description__c );
+		}  
+		else
+		{
+			thisContact = findContact[0];
+		}                        
+ 
+       
+        contactJson = JSON.serialize(thisContact);
+        return null;
+    }
+        
+    @RemoteAction
+    public static string sharePropOnFB(id proposalId, id contactId)
+    {
+        string returnString = 'success';
+        CloudVote_Proposal__c getPropDetails =  [select id, 
+                                                         CloudVote_Category__r.CloudVote_Config__r.Application_Name__c,
+                                                         CloudVote_Category__r.CloudVote_Config__r.Header_Image__c,
+                                                         name,
+                                                         Description__c 
+                                                         from  CloudVote_Proposal__c 
+                                                         where id = :proposalId];
+
+        Contact thisContact = [select id,  Facebook_ID__c, Facebook_Auth_Token__c from contact where id = :contactId];
+        postToFacebook(thisContact.Facebook_ID__c, 
+                                            thisContact.Facebook_Auth_Token__c, 
+                                            getPropDetails.CloudVote_Category__r.CloudVote_Config__r.Application_Name__c, 
+                                            getPropDetails.CloudVote_Category__r.CloudVote_Config__r.Header_Image__c, 
+                                            site.getCurrentSiteUrl()+'/cloudVote?prop='+proposalId, 
+                                            'Check out this proposition!, '+ getPropDetails.name+' in ' + getPropDetails.CloudVote_Category__r.CloudVote_Config__r.Application_Name__c,
+                                            getPropDetails.Description__c  );
+      
+        return returnString;
+    }
+
+    public void getConfig()
+    {
+       config = [select id, name, Facebook_App_ID__c, Negative_Voting_Enabled__c, Application_Name__c, Facebook_App_Secret__c, jQuery_Mobile_NavBar_Theme__c, jQuery_Mobile_Button_Theme__c, jQuery_Mobile_List_Theme__c, Header_Image__c, jQuery_Mobile_Data_Theme__c, App_Description__c, Banner_Image_URL__c from CloudVote_Config__c where active__c = true limit 1];
+       siteUrl = site.getCurrentSiteUrl();
+       pageName = string.valueOf(ApexPages.currentPage());
+    }
+
+    
+    @future (callout=true)
+    public static void postToFacebook(string userId, string accessToken, string message, string picUrl, string link, string postName, string caption)
+    {
+        boolean success = true;
+        HttpRequest req = new HttpRequest();
+        req.setMethod('POST'); 
+        req.setEndpoint( 'https://graph.facebook.com/'+userId+'/feed');
+        req.setBody('access_token='+accessToken+'&message='+message+'&picture='+picUrl+'&link='+link+'&name='+postName+'&caption='+caption);  
+        Http http = new Http();  
+        
+        system.debug(accessToken);
+		if(!Test.isRunningTest())
+		{     
+        	HTTPResponse res = http.send(req);
+        }   
+    }
+
+    public list<Contact> getUsersFriendsWithApp(string contactId)
+    {
+        list<string> users = new list<string>();
+        list<Contact> contacts; 
+        Contact thisContact = [select id,  Facebook_ID__c, Facebook_Auth_Token__c from contact where id = :contactId];
+        string jsonData;
+        HttpRequest req = new HttpRequest();
+        req.setMethod('GET'); 
+        req.setEndpoint( 'https://graph.facebook.com/me/friends?fields=installed&format=json&access_token='+thisContact.Facebook_Auth_Token__c);          
+        Http http = new Http();    
+        if(!Test.isRunningTest())
+        {
+        	HTTPResponse res = http.send(req); 
+        	jsonData = res.getBody();
+        }
+        else
+        {
+        	jsonData = '{"data": [ { "id": "1153335445" }, { "id": "1154630725" }, { "id": "1156420747" }, { "installed": true, "id": "1183445521" }, { "id": "1185009595" } ], "paging": { "next": "https://graph.facebook.com/me/friends?fields=installed&format=json&access_token=AAAEbZAUeDZBNIBAJmwZCyXz2uW7Xy7KytoMHOfI88b4ZA369do6mO4jiC1T47duQy3U3jFHRH7i4eZBaZAnFb75UApVUsw3OAZD&limit=5000&offset=5000" } }';
+        } 
+         
+        facebookFriendsList f = (facebookFriendsList)JSON.deserialize( jsonData,facebookFriendsList.class);
+        
+        for(Data d : f.data)
+        {        
+            if(d.installed != null)
+            {
+                users.add(d.id);
+            }
+            
+        }
+        contacts = [select firstname, lastname, id, email, Facebook_ID__c from contact where Facebook_ID__c in :users];
+        return contacts;
+    }  
+            
+    @RemoteAction
+    global static list<cloudVote_category__c> getCategories(Id configID)
+    {
+        list<cloudVote_category__c> categories = [select Id, Description__c, Number_of_Proposals__c, Name from cloudVote_category__c where CloudVote_Config__c = :configId order by Name];
+           
+        return categories;
+    }
+    
+    @RemoteAction
+    global static list<CloudVote_Proposal__c> getProposals(Id categoryId)
+    {
+        list<CloudVote_Proposal__c> proposals = [select id, contact__r.firstname, contact__r.lastname, createdDate, Description__c, Name,Score__c,Status__c,Number_Of_Votes__c from CloudVote_Proposal__c where CloudVote_Category__c = :categoryId and status__c = 'Approved' order by Score__c,name];
+        return proposals;
+    }
+
+    @RemoteAction
+    global static list<CloudVote_Proposal__c> getProposal(Id proposalId)
+    {
+        list<CloudVote_Proposal__c> proposals = [select id, contact__r.firstname, contact__r.lastname, createdDate, Name, Score__c, Status__c, Number_Of_Votes__c, Description__c from CloudVote_Proposal__c where Id= :proposalId];
+        return proposals;
+    }
+    
+    @RemoteAction
+    global static list<CloudVote_Vote__C> getVotes(Id proposalId)
+    {
+        list<CloudVote_Vote__c> votes = [select id, Contact__c, Contact__r.Facebook_ID__c, Contact__r.Firstname, Contact__r.Lastname, name, score__c, vote__c from CloudVote_vote__c where CloudVote_Proposal__c = :proposalId  order by createdDate];
+        return votes;
+    }
+
+    @RemoteAction
+    global static list<CloudVote_Comment__c> getComments(Id proposalId)
+    {
+        list<CloudVote_Comment__c> comments = [select id, createdDate, Contact__c, Contact__r.Facebook_ID__c, Contact__r.Firstname, Contact__r.Lastname, comment__c from CloudVote_Comment__c where CloudVote_Proposal__c = :proposalId order by createdDate];
+        return comments;
+    }
+    
+    @RemoteAction
+    global static CloudVote_Comment__c addComment(Id proposalId, Id contactId, string Comment)
+    {
+        CloudVote_Comment__c thisComment = new CloudVote_Comment__c();
+        thisComment.contact__c  = contactId;
+        thisComment.comment__c = comment;
+        thisComment.CloudVote_Proposal__c  = proposalId;
+        insert thisComment;
+        return thisComment;
+        
+    }      
+      
+    @RemoteAction
+    global static list<CloudVote_Vote__c> castVote(id proposalId, id contactId, string voteType)
+    {
+        list<CloudVote_Vote__c> vote = [select id, name, score__c, vote__c from CloudVote_vote__c where CloudVote_Proposal__c = :proposalId and contact__c = :contactId];
+        
+        if(vote.isEmpty())
+        {
+            CloudVote_Vote__c thisVote = new CloudVote_Vote__c();
+            thisVote.Contact__c = contactId;
+            thisVote.CloudVote_Proposal__c = proposalId;
+            thisVote.Vote__c = voteType;
+            insert thisVote;
+            
+            CloudVote_Proposal__c getPropDetails =  [select id, 
+                                                             CloudVote_Category__r.CloudVote_Config__r.Application_Name__c,
+                                                             CloudVote_Category__r.CloudVote_Config__r.Header_Image__c,
+                                                             name,
+                                                             Description__c 
+                                                             from  CloudVote_Proposal__c 
+                                                             where id = :proposalId];
+
+            Contact thisContact = [select id,  Facebook_ID__c, Facebook_Auth_Token__c from contact where id = :contactId];
+            postToFacebook(thisContact.Facebook_ID__c, 
+                            thisContact.Facebook_Auth_Token__c, 
+                            getPropDetails.CloudVote_Category__r.CloudVote_Config__r.Application_Name__c, 
+                            getPropDetails.CloudVote_Category__r.CloudVote_Config__r.Header_Image__c, 
+                            site.getCurrentSiteUrl()+'/cloudVote?prop='+proposalId, 
+                            'I just voted on a proposition, '+ getPropDetails.name+' in ' + getPropDetails.CloudVote_Category__r.CloudVote_Config__r.Application_Name__c,
+                             getPropDetails.Description__c  );
+        }
+        return vote;
+         
+    }
+    
+    @RemoteAction
+    global static CloudVote_Proposal__c createProposal(id categoryId, id contactId, string name, string description)
+    {
+        CloudVote_Proposal__c thisProp = new CloudVote_Proposal__c();
+        thisProp.CloudVote_Category__c = categoryId;
+        thisProp.Contact__c = contactId;
+        thisProp.Description__c = description;
+        thisProp.Name = name;
+        insert thisProp;
+        return thisProp;
+        
+    }
+    
+     static testMethod void testCloudVote()
+     {
+		
+		Contact thisContact = new Contact();
+		thiscontact.firstname = 'test';
+		thiscontact.lastname = 'test';
+		thiscontact.email = 'testtesttesttest@gmail.com';
+		insert thisContact;
+		
+  		CloudVote_Config__c thisConfig = new CloudVote_Config__c();
+  		thisConfig.Facebook_App_ID__c= 'test'; 
+  		thisConfig.Negative_Voting_Enabled__c= true; 
+  		thisConfig.Application_Name__c = 'cloudVote';
+  		thisConfig.Facebook_App_Secret__c= 'test'; 
+  		thisConfig.jQuery_Mobile_NavBar_Theme__c= 'test'; 
+  		thisConfig.jQuery_Mobile_Button_Theme__c= 'test'; 
+  		thisConfig.jQuery_Mobile_List_Theme__c= 'test'; 
+  		thisConfig.Header_Image__c= 'test'; 
+  		thisConfig.jQuery_Mobile_Data_Theme__c= 'test'; 
+  		thisConfig.App_Description__c= 'test'; 
+  		thisConfig.Banner_Image_URL__c= 'test'; 
+  		thisConfig.Active__c = true;
+  		insert thisConfig;
+  		
+  		Id configId = thisConfig.id;
+  		
+  		CloudVote_Category__c thisCategory = new CloudVote_Category__c();
+        thisCategory.CloudVote_Config__c = thisConfig.id;
+        thisCategory.description__c = 'test';
+        insert thisCategory;
+
+	 	CloudVote cv = new CloudVote();
+		cv.getConfig();
+		
+		PageReference cloudvotepage = Page.cloudVote;
+        system.test.setCurrentPageReference(cloudvotepage);
+        cloudvotepage.getParameters().put('code','whatever');	 	
+	 	
+	 	//first login find contact, find they have no facebook id or auth token, so run the update block
+	 	PageReference thisRef1 = cv.facebookConnect();
+	 	
+	 	//remove the contact
+	 	delete thisContact;
+	 	
+	 	//try again now that no contact at all is found
+	 	PageReference thisRef2 = cv.facebookConnect();
+	 	
+	 	//and one more time now that the contact exists with token and authcode
+	 	PageReference thisRef3 = cv.facebookConnect();    
+	 	    
+        Id categoryId = thisCategory.id;
+        contact findContact = [select id from contact where email = 'testtesttesttest@gmail.com'];
+        Id contactId = findContact.id;   
+        CloudVote_Proposal__c thisProp = CloudVote.createProposal(categoryId, contactId, 'test', 'test');
+        Id proposalId = thisProp.id;
+           
+
+	 	
+		
+		
+		CloudVote.addComment(proposalId,contactId,'test');
+		CloudVote.castVote(proposalId,contactId, 'promote');
+		
+		CloudVote.getCategories(configID);
+		CloudVote.getComments(proposalId);
+		CloudVote.getProposal(proposalId);
+		CloudVote.getProposals(categoryId);
+		cv.getUsersFriendsWithApp(contactId);
+		CloudVote.getVotes(proposalId);
+
+		CloudVote.sharePropOnFB(proposalId, contactId);
+		
+		Data thisData = new Data();
+		thisData.id = '1234';
+		thisData.installed = true;
+		list<data> dataList = new list<data>();
+		dataList.add(thisData);
+		Paging thisPaging = new paging();
+		thisPaging.next ='test';
+ 		facebookFriendsList thisList = new facebookFriendsList();
+ 		thisList.data = dataList;
+ 		thisList.paging = thisPaging;
+		//facebookUser thisuser= new facebookUser('123','test','test','test');
+     }
+
+}

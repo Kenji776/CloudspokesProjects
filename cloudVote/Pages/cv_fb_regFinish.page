@@ -1,0 +1,34 @@
+<apex:page showHeader="false" sidebar="false" standardStylesheets="false" controller="cloudVote" action="{!getConfig}">
+ <head>
+    <script src="{!URLFOR($Resource.stampforce, 'js/jquery-1.6.2.min.js')}"></script>   
+    <script src="{!URLFOR($Resource.stampforce, 'js/plugins.js')}"></script>
+</head>
+
+<apex:form >
+    <apex:actionFunction action="{!facebookConnect}" name="facebookConnect"  oncomplete="logCookie('{!contactJson}');">
+         <apex:param name="isApexTest"  value="false" />
+    </apex:actionFunction>
+</apex:form>
+ <script>  
+      facebookConnect();
+      
+      function logCookie(contactJson)
+      {
+         try
+         {            
+                     $.cookie('{!config.Application_Name__c}_fb', contactJson);
+                     var cookieData = jQuery.parseJSON($.cookie('{!config.Application_Name__c}_fb'));
+                     window.opener.checkFBLoginStatus();
+                     window.close();
+                     document.write('You have succesfully connect your account to facebook. You may now close this page.');                  
+         }       
+         catch(exception)
+         {
+              document.write('There was an error linking your accounts. Please try again later.');
+              console.log(exception);
+         }
+     }   
+ </script>
+
+
+</apex:page>

@@ -1,0 +1,55 @@
+<html>
+	<head>
+    	<title>Dynamic Scoreboard!</title>
+        <script src="jQuery.js"></script>
+        <script src="script.js"></script>
+        <LINK href="styles.css" rel="stylesheet" type="text/css">
+    </head>
+
+	<!-------------------------------------------------------------
+    
+    If you are looking at this, you might be thinking about cheating off me
+    Pleae don't do it. I worked hard on this, and cheating would make me sad.
+    Plus I mean, cmon it's not that hard. Make your own version ;)
+    
+    --------------------------------------------------------------->
+    
+    <body id="body">
+        <div id="viewStateContainer" class="viewStateContainer">
+            <div id="viewStateHeader" class="viewStateHeader"></div>
+            
+			<div id="viewStatesContent" class="viewStatesContent">
+                <div  id="viewState1">
+                    <img src="css/hidden.png" id="viewState1-adImg" class="viewState1-adImg" align="middle" width="100%" height="500">
+				</div>
+
+                <div  id="viewState2">
+                   <div id="viewState2-teamLogo">
+                    	<img src="" id="viewState2-teamLogoImg" class="viewState2-teamLogoImg">
+                   </div>
+                   
+                    <div id="viewState2-teamText">
+                        <div id="viewState2-teamNameLabel" class="viewState2-textItem">Team Name</div>
+                        <div id="viewState2-teamNameData" class="viewState2-textItem"> - </div>
+                        
+                        <div class="clear"></div>
+                        
+                        <div id="viewState2-teamCaptainLabel" class="viewState2-textItem">Team Captain</div>
+                        <div id="viewState2-teamCamptainData" class="viewState2-textItem"> - </div>  
+                        
+                        <div class="clear"></div>
+                        
+                        <div id="viewState2-teamDescription" class="viewState2-textDescription"></div>                      
+                    </div>
+				</div>
+
+                <div  id="viewState3">
+                	<!---- content for this div is created dynamically ------>                      
+				</div>
+            </div>
+                                                
+            <div class="viewStateFooter"><img src="" class="viewStateFooterPoweredBy"></div>
+            <div class="cloudSpokesLogo"><img src="" class="viewStateFooterLogo"></div>
+        </div>
+	</body>        
+</html>    

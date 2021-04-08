@@ -1,0 +1,375 @@
+global class artMashExtensions {
+
+
+    Public Document mydoc {get; set;}
+    Public Id currentDocId {get;set;}
+    Public Id currentPicId {get;set;}
+    Public String serverName {get; set;}
+    
+    Public Document getmyimage()
+    {
+        mydoc = new Document();
+        return mydoc;
+    }
+    
+    @RemoteAction
+    global static remoteObject saveImageDetails(string dataString)
+    {
+        remoteObject returnObj = new remoteObject();
+        returnObj.success = true;
+        returnObj.message = 'Save Successful';
+        returnObj.data = '';
+            
+        try
+        {
+            map<string,string> formData = deserializeString(dataString);
+    
+                
+                
+            list<ArtMash_Picture__c> thispic = [select id from ArtMash_Picture__c where Id=:formData.get('Id')];
+            
+            if(!thisPic.isEmpty())
+            {
+               
+                for(String fieldName : formData.keySet())
+                {
+                    try
+                    {
+                        thispic[0].put(fieldName,formData.get(fieldName)); 
+                    }
+                    catch(Exception e)
+                    {
+                        returnObj.data += 'Error: '+e.getMessage();
+                    }       
+                }
+                   
+                update thispic;
+                returnObj.sObjects = thispic;
+            }
+            else
+            {
+                throw new customException('Could not find picture record with id ' + formData.get('Id'));
+            }      
+        }
+        catch(Exception e)
+        {
+           returnObj.success = false; 
+           returnObj.message = e.getMessage();
+        }      
+        
+        return returnObj;
+    }  
+ 
+    @RemoteAction
+    global static remoteObject getContests()
+    {
+        remoteObject returnObj = new remoteObject();
+        returnObj.success = true;
+        returnObj.message = 'Contests Fetched';
+        returnObj.data = '';  
+        
+        try
+        {
+            list<ArtMash_Contest__c> contests = [select id, Picasa_Dropbox_Email__c, Picasa_Dropbox_URL__c, name from ArtMash_Contest__c where active__c = true];
+        
+            returnObj.sObjects = contests;
+        }
+        catch(exception e)
+        {
+            returnObj.success = false;
+            returnObj.message = 'Error: ' + e.getMessage();
+        }
+        return returnObj;    
+    }
+
+    @RemoteAction
+    global static remoteObject getPictures(String contestId)
+    {
+        remoteObject returnObj = new remoteObject();
+        returnObj.success = true;
+        returnObj.message = 'Pictures Fetched';
+        returnObj.data = '';  
+        
+        try
+        {
+            list<ArtMash_Picture__c> pictures = [select id, 
+                                                                                                name, 
+                                                                                                Text_Box_Height__c, 
+                                                                                                Text_Box_Left_Offset__c,
+                                                                                                Text_Box_Top_Offset__c,
+                                                                                                Text_Box_Width__c,
+                                                                                                Description__c, 
+                                                                                                Maximum_Caption_Length__c,
+                                                                                                Image_URL__c,
+                                                                                                Font_Family__c,
+                                                                                                Font_Size__c,
+                                                                                                Default_Text__c,
+                                                                                                Text_Color__c,
+                                                                                                Current_Picture_Document_Id__c
+                                                                                                from ArtMash_Picture__c 
+                                                                                                where active__c = true and 
+                                                                                                ArtMash_Contest__c = :contestId];
+        
+            
+            returnObj.sObjects = pictures;
+            
+            map<Id,sObject> picMap = new map<Id,sObject>();
+            
+            for(ArtMash_Picture__c pic : pictures)
+            {
+                picMap.put(pic.id,pic);
+            }
+            
+            returnObj.sObjectMap = picMap;
+        }
+        catch(exception e)
+        {
+            returnObj.success = false;
+            returnObj.message = 'Error: ' + e.getMessage();
+        }
+        return returnObj;    
+    }
+
+        
+    @RemoteAction
+    global static remoteObject createCaption(string dataString)
+    {
+        remoteObject returnObj = new remoteObject();
+        returnObj.success = true;
+        returnObj.message = 'Save Successful';
+        returnObj.data = dataString;
+            
+        try
+        {
+            map<string,string> formData = deserializeString(dataString);          
+                ArtMash_Caption__c thisCaption= new ArtMash_Caption__c();
+                thisCaption.ArtMash_Picture__c = formData.get('pictureId');
+                thisCaption.Caption__c = formData.get('captionText');
+                thisCaption.Caption_Title__c = formData.get('photoName');
+                thisCaption.Submitter_Email__c = formData.get('submitterEmail');
+                thisCaption.Submitter_Name__c = formData.get('submitterName');
+                
+                insert thisCaption;             
+                Attachment thisAttachment = artMashExtensions.createImageAttachment(thisCaption.id,formData.get('img'));
+                
+                returnObj.data =+thisAttachment.id;
+                map<Id,sObject> objMap = new map<Id,sObject>();
+                objMap.put(thisCaption.id,thisCaption);
+                returnObj.sObjectMap = objMap; 
+                
+                list<sObject> captions = new list<ArtMash_Caption__c>();
+                captions.add(thisCaption);
+                returnObj.sObjects = captions;
+                
+        }
+        catch(Exception e)
+        {
+                returnObj.success = false;
+                returnObj.message = 'Error: ' + e.getMessage();
+        }
+        return returnObj;
+    }
+    
+    global static Attachment createImageAttachment(Id parentId, String fileData)
+    {
+        /*****
+        Data comes in looking like
+                        data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAEsCAYAAAB5fY51AAAGB
+                        ElEQVR4nO3UMVEEABAEwZNFBiGOeAe8I0LIsIWCDUinuqtOwAZzd3cvd/fhnMvf6wU87u737
+                        p7Ouez93N3nBTwgCnTeWYIMGU6zwwBpkznmSHAlOk8MwSYMp1nhgBTpvPMEGDKdJ4ZAk
+                        yZzjNDgCnTeWYIMGU6zwwBpkznmSHAlOk8MwSYMp1nhgBTpvPMEGDKdJ4ZAkyZzjNDgCn
+                        e10Ue1tvdPZ1z+Xs/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+                        AAAAAAAAAAAAAAAAAAAAAAAIB/+gMqleRG3CrxcAAAAABJRU5ErkJggg==
+                        
+        so we need to remove everthing up to and including the first comma. Then we need to base64 decode 
+        the string to get it to a blob. Then save that content as a document.
+        ****/
+        
+        fileData = fileData.substring(fileData.indexOf(',')+1,fileData.length());
+        fileData = fileData.replace( ' ','+');
+        blob fileContent = EncodingUtil.base64Decode(fileData);
+        Attachment a = new Attachment(parentId = parentId);
+        a.body = fileContent;
+        a.name = 'Captioned Photo.png';
+        insert a;
+        
+        return a;
+    } 
+
+        
+        @RemoteAction
+    global static RemoteObject SendToPicasa(String attachmentId, String emailAddr)
+    {
+        remoteObject returnObj = new remoteObject();
+        returnObj.success = true;
+        returnObj.message = 'Email Sent';
+       
+                  
+        try
+        {       
+            Messaging.SingleEmailMessage mail = new Messaging.SingleEmailMessage();
+            //Set email address
+            String[] toAddresses = new String[] {emailAddr};
+            mail.setToAddresses(toAddresses);
+            mail.setReplyTo('noreply@salesforce.com'); //the reply address doesn't matter
+
+            Attachment doc = [select parentid, id, name, body, contenttype from Attachment where id = :attachmentId];
+        
+            ArtMash_Caption__c caption = [select Caption_Title__c, Caption__c, Submitter_Email__c,Submitter_Name__c from ArtMash_Caption__c where id = :doc.parentId];
+            
+            Messaging.EmailFileAttachment attach = new Messaging.EmailFileAttachment();
+            attach.setContentType(doc.contentType);
+            attach.setFileName(doc.name+'.png');
+            attach.setInline(false);
+            attach.Body = doc.Body;
+            
+            mail.setSubject(caption.Caption_Title__c);                                                
+            mail.setBccSender(false);  //we don't want to Bcc ourselves on this
+            mail.setPlainTextBody('Body Text - This will not be utilized, picasa will not use it.');
+            mail.setFileAttachments(new Messaging.EmailFileAttachment[] { attach });
+
+            
+            if (!Test.isRunningTest())
+            {
+                Messaging.sendEmail(new Messaging.SingleEmailMessage[] { mail }); //send the email   
+            }            
+        }
+        catch(Exception e)
+        {
+                returnObj.success = false;
+                returnObj.message = 'Error: ' + e.getMessage();
+        }
+        return returnObj; 
+    }  
+        
+    @RemoteAction
+    global static String getDocumentFileBody(string documentId)
+    {   
+            Document thisDoc = [select id, body from Document where id = :documentId limit 1]; 
+                String fileContent = EncodingUtil.base64Encode(thisDoc.body); 
+            return fileContent;         
+    }   
+
+               
+    public PageReference getImageDetails() 
+    {
+        Id currentPic = ApexPages.currentPage().getParameters().get('id');       
+        servername = ApexPages.currentPage().getHeaders().get('Host');       
+        list<ArtMash_Picture__c> thisPic = [select name, id, Current_Picture_Document_Id__c from ArtMash_Picture__c where Id = :currentPic];        
+        if(!thisPic.isEmpty())
+        {
+            currentDocId = thisPic[0].Current_Picture_Document_Id__c;  
+        }
+        return null;
+    }
+    
+    @RemoteAction
+    global static map<Id,String> getDocs()
+    {
+        map<Id,String> docs = new map<Id,String>();
+        Folder artFolder = [select id from folder where name = 'artMash' limit 1];
+        list<Document> docList = [select Id, name from document where IsInternalUseOnly = false and folderId = :artFolder.id];
+        
+        for(Document doc : docList)
+        {
+            docs.put(doc.id, doc.name);
+        }
+        return docs;
+    }
+
+
+    public static Map<string,string> deserializeString(String argString)
+    {   
+        string[] params = argString.split('&');
+        map<String,String>  formParams = new map<String,String>();
+        for(string p : params)
+        {       
+            formParams.put(EncodingUtil.urlDecode(p.substring(0,p.indexOf('=')),'UTF-8'),EncodingUtil.urlDecode(p.substring(p.indexOf('=')+1,p.length()),'UTF-8'));    
+        }       
+        return formParams;
+    }
+
+    global class remoteObject
+    {
+        public boolean success{get;set;}
+        public string message{get;set;}
+        public string data{get;set;}
+        public list<sObject> sObjects {get;set;} 
+        public map<id,sObject> sObjectMap {get;set;}
+    }
+    
+    
+    public class customException extends Exception {}
+
+        @isTest
+        public static void tests()
+        {
+                ArtMash_Picture__c amp = new ArtMash_Picture__c();
+                
+                Apexpages.StandardController stdController = new Apexpages.StandardController(amp); 
+                
+                artMashExtensions ame = new artMashExtensions(stdController);
+                
+                ArtMash_Contest__c thisContest = new ArtMash_Contest__c();
+                thisContest.active__c = true;
+                
+                insert thisContest;
+                
+                ArtMash_Picture__c thisPic = new ArtMash_Picture__c();
+                thisPic.name = 'test';
+                thisPic.Active__c = true;
+                thisPic.ArtMash_Contest__c = thisContest.id;
+                thisPic.Default_Text__c = 'test';
+                thisPic.Description__c = 'none';
+                thisPic.Font_Family__c = 'Tahoma';
+                thisPic.Font_Size__c = 12;
+                thisPic.Maximum_Caption_Length__c = 10;
+                thisPic.Text_Box_Height__c = '0';
+                thisPic.Text_Box_Left_Offset__c = '0';
+                thisPic.Text_Box_Top_Offset__c = '0';
+                thisPic.Text_Box_Width__c = '0';
+                thisPic.Text_Color__c = 'red';
+                
+                
+                insert thisPic;
+                
+                ArtMash_Caption__c thisCap = new ArtMash_Caption__c();
+                thisCap.ArtMash_Picture__c = thisPic.id; 
+                thisCap.Caption__c = 'test';
+                thisCap.Caption_Title__c = 'Derp, Im dumb';
+                
+                insert thisCap;
+                
+                artMashExtensions.getContests();
+                artMashExtensions.getPictures(thisContest.id);
+                artMashExtensions.getPictures('nope ima fail');
+                ame.getImageDetails();
+                ame.getmyimage();
+                artMashExtensions.getDocs();
+                
+                Document testDoc = [select id, body from Document limit 1];
+                
+                artMashExtensions.createImageAttachment(thisPic.id, EncodingUtil.base64Encode(testDoc.body));
+                
+                Attachment testAttachment = [select id from Attachment limit 1];
+                artMashExtensions.SendToPicasa(testAttachment.id, 'nobody@nowhere.com');
+                
+                artMashExtensions.getDocumentFileBody(testDoc.id);
+                
+                string dataString = 'name=bob&face=frank';
+                
+                artMashExtensions.deserializeString(dataString);
+                        
+                artMashExtensions.saveImageDetails('Current_Picture_Document_Id__c=015E0000000tFCPIA2&Id=a0YE0000000TR9rMAG&Text_Box_Width__c=172&Text_Box_Height__c=98&Text_Box_Top_Offset__c=28&Text_Box_Left_Offset__c=249');
+                artMashExtensions.saveImageDetails('lulz fail');
+                
+                String captionDataString = 'pictureId='+thisPic.id+'&captionText=woot&img='+EncodingUtil.base64Encode(testDoc.body);
+                artMashExtensions.createCaption(captionDataString);
+                artMashExtensions.createCaption('all aboard the failboat!');
+        }          
+    public artMashExtensions(ApexPages.StandardController controller) 
+    {
+
+
+    }       
+}

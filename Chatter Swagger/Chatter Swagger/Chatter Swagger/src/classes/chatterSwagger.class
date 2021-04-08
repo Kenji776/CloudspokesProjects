@@ -1,0 +1,407 @@
+global class chatterSwagger 
+{
+        //These variables are for the visualforce page
+        public Chatter_Swagger_Scorecard__c scoreCard{get;set;}
+        public list<swaggerTotal> influentialAbout{get;set;}
+        public list<swaggerTotal> influentialUsers{get;set;}
+        public list<swaggerTotal> influentialTo{get;set;}        
+        public id userId{get;set;}
+        public integer userScore{get;set;}
+        
+        public static boolean isApexTest = false;
+ 
+        //should votes be hidden (removed from the chatter string post)
+        //to make voting anonymous? Otherwise votes will be displayed.
+        public static boolean hideVotes = true;
+        
+        //create swagger records from any chatter post type.
+        //requires a list of sObjects (All of the same type)
+        //the name of the field that contains the ownerID (who is getting the swagger)
+        //and the Id of the field that contains the actual text blob that we are scouring for 
+        //hasmarks mentions (and maybe votes if I have time to build that in.)
+        public static list<Chatter_Swagger__c> createSwagger(list<sObject> posts, string ownerIdField, string postTextField)
+        {
+            //first off, this is kind of stupid. On the swagger objects we are going to create
+            //we need to record the chatter feeditem that caused them. So when comments are posted
+            //we can figure out which swagger object to modify (when a comment is posted, a trigger runs 
+            //that finds any swagger objects that have their parent stored as the root object id). Of course
+            //chatter makes this really hard. a user status change causes a feeditem to be created but we 
+            //can't query those directy, so we have to query the userstatusfeed table, find the most recent
+            //entry for any user that appears in the incoming list of posts (whew!)
+            if(string.valueOf(posts.getSObjectType()) == 'user')
+            {
+                
+            }
+            //a list to contain the swagger records to create
+            list<Chatter_Swagger__c> swaggerEntries = new list<Chatter_Swagger__c>();
+
+            list<Chatter_Swagger_Topic__c> topics = [select id, name from Chatter_Swagger_Topic__c];
+
+             //a map that contains a topic name (like #cloudspokes or @Kenji776) to the chatter swagger topic record
+             //for that topic
+             map<string,id> topicToIdMap = new map<string,id>();
+                 
+             //put all the chatter topics in a map so we can get their ID by their topic text
+             for(Chatter_Swagger_Topic__c t : topics)
+             {
+                topicToIdMap.put(t.name,t.id);
+             }  
+
+            map<string,id> topicToFeedItemMap = new map<string,id>();
+            if(string.valueOf(posts.getSObjectType()) == 'user')
+            {
+                set<id> usersWhoPosted = new set<id>();
+                for(sObject post : posts)
+                {
+                    usersWhoPosted.add(post.id);
+                    
+                }
+                list<userfeed> feeds = [select body from userfeed where parentid in :usersWhoPosted order by createdDate desc];
+                for(userfeed feed : feeds)
+                {
+                    topicToFeedItemMap.put(feed.body,feed.id);
+                }
+            }                  
+             //At this point we have a map that should contain the name to Id of every topic that already exists that was mentioned
+             //either by # or @ in any of the incoming posts.
+                
+              
+             for(sObject post : posts)
+             {                                     
+                map<string,string> thisPostTopics = getTopics( (string)post.get(postTextField));
+                                   
+                for(String topic : thisPostTopics.keySet())
+                {          
+                    Chatter_Swagger__c thisSwagger = new Chatter_Swagger__c();
+                                                
+                    //If there is an entry in the topic map for this topic, then user that topic id, otherwise
+                    //create a new topic and use it
+                    if(topicToIdMap.containsKey(topic))
+                    {
+                        thisSwagger.Chatter_Swagger_Topic__c = topicToIdMap.get(topic);
+                    }
+                    else
+                    {
+                        thisSwagger.Chatter_Swagger_Topic__c =createTopic(topic, thisPostTopics.get(topic)).id;
+                    }
+                    thisSwagger.Scorecard__c =  getScoreCard( (string) post.get(ownerIdField)).id;
+                    thisSwagger.Post_Text__c = (string) post.get(postTextField);
+                    thisSwagger.Swagger__c = 1.0;
+                    if(string.valueOf(posts.getSObjectType()) == 'user')
+                    {
+                         thisSwagger.Root_Content_Object_ID__c =  topicToFeedItemMap.get((string) post.get(postTextField));
+                    }
+                    else
+                    {
+                        thisSwagger.Root_Content_Object_ID__c = (string) post.get('Id');
+                    }
+                        
+                     swaggerEntries.add(thisSwagger);   
+                }               
+            }               
+            list<database.Saveresult> createSwagger = database.insert(swaggerEntries);
+            return swaggerEntries;      
+        }
+        
+        public static void modSwaggerFromComments(list<FeedComment> comments)
+        {
+            list<Id> rootIds = new list<id>();
+            map<id,Chatter_Swagger__c> swaggerData = new map<id,Chatter_Swagger__c>();
+            
+            for(FeedComment fc : comments)
+            {
+                rootIds.add(fc.feedItemId);
+                 system.debug('Root ID is: ' + fc.feedItemId);
+            }
+            
+           
+            list<Chatter_Swagger__c> swaggerEntries = [select id, swagger__c,Root_Content_Object_ID__c from Chatter_Swagger__c where Root_Content_Object_ID__c in : rootIds];
+            
+            for(Chatter_Swagger__c swagger : swaggerEntries)
+            {
+                     swaggerData.put(swagger.Root_Content_Object_ID__c, swagger);
+            }
+            
+            for(FeedComment fc : comments)
+            {
+                //modify the swagger score of this swagger object based on the vote in
+                //this comment if there is one.
+                Chatter_Swagger__c thisSwagger =  swaggerData.get(fc.feedItemId);
+                
+                if(thisSwagger != null)
+                {
+                    system.debug(thisSwagger);
+                    integer swaggerMod = getVotes(fc.commentBody);     
+                    system.debug('MOD IS: ' + swaggerMod);
+                    thisSwagger.swagger__c += swaggerMod;
+                    swaggerData.put(fc.feedItemId,thisSwagger);
+                    
+                    //remove the vote strings so that votes are hidden
+                    if(hideVotes)
+                    {
+                        fc.commentBody =fc.commentBody.replace('^up','');
+                        fc.commentBody = fc.commentBody.replace('^down','');
+                    }
+                }
+            }
+            
+            update swaggerData.values();
+            
+            
+            
+        }
+               
+        //This method will extract hastags and user mentions from a string, and return 
+        //then in a map, keyed by the word, with a value that indicates whether it is a hastag or mention
+        public static map<string,string> getTopics(string postBody)       
+        {
+                map<string,string> topics = new map<string,string>();
+                
+                list<string> words = postBody.split(' ');
+                integer counter = 0;
+                
+                for(string word : words)
+                {
+                        String firstChar = word.subString(0,1);                 
+                        if(firstChar == '#')
+                        {
+                            topics.put(word,'Hashtag');
+                        }
+                        else if(firstChar == '@')
+                        {
+                            topics.put(words[counter] + ' ' + words[counter+1],'Mention');
+                        }             
+                        counter++;
+                }
+                return topics;
+        }
+        
+        //This method will extract up and downvotes from a string and a map with the
+        //vote string removed and an integer indicating if it was a downvote (-1), upvote (+1) or neutral (+0) 
+        //downvotes will take priority over upvotes if both exist in a string 
+        
+        public static integer getVotes(string postBody)       
+        {
+ 
+            if(postBody.toLowerCase().contains('^up'))
+            {
+                return 2;
+            }
+            else if(postBody.toLowerCase().contains('^down'))
+            {
+               return -2;
+            }
+            
+            return 1;
+        }
+        
+
+        public static Chatter_Swagger_Scorecard__c getScorecard(id userid)
+        {
+                list<Chatter_Swagger_Scorecard__c> scoreCard = [select  id, 
+                                                                        swagger__c,
+                                                                        Chatter_User__c,
+                                                                        Chatter_User__r.firstname,
+                                                                        Chatter_User__r.lastname,
+                                                                        Chatter_User__r.FullPhotoUrl,
+                                                                        Chatter_User__r.AboutMe,
+                                                                        Chatter_User__r.City,
+                                                                        Chatter_User__r.Country,
+                                                                        Chatter_User__r.State,
+                                                                        Chatter_User__r.Title,
+                                                                        Chatter_User__r.name
+                                                        from Chatter_Swagger_Scorecard__c 
+                                                        where Chatter_User__c = :userid];
+                
+                //if no scorecard was found, create one for this user
+                if(scoreCard.isEmpty())
+                {
+                        Chatter_Swagger_Scorecard__c thisScoreCard = new Chatter_Swagger_Scorecard__c();
+                        thisScoreCard.Chatter_User__c = userid;
+                        insert thisScoreCard;
+                        return thisScoreCard;
+                }               
+                return scoreCard[0];
+
+                
+        }
+ 
+               
+        public  pagereference getUserScore()
+        {
+            userScore =  (integer) getScorecard(UserInfo.getUserId()).swagger__c.intValue();   
+            return null;
+        }
+        
+        public static Chatter_Swagger_Topic__c createTopic(string topicName, string topicType)
+        {
+                Chatter_Swagger_Topic__c thisTopic = new Chatter_Swagger_Topic__c();
+                thisTopic.name = topicName;
+                thisTopic.Type__c = topicType;  
+                
+                insert thisTopic;
+                return thisTopic;
+        }
+        
+        public void loadUserInfo()
+        {
+                userId = Apexpages.currentPage().getParameters().get('Id');
+                influentialAbout = new list<swaggerTotal>();
+                influentialUsers = new list<swaggerTotal>();
+                influentialTo = new list<swaggerTotal>();
+                
+                if(userId == null)
+                {
+                        userId = UserInfo.getUserId();
+                }
+                scoreCard = getScorecard(userId);
+                
+                list<AggregateResult> influentialAboutTopics = [select count(id)swagger, Chatter_Swagger_Topic__r.name, Chatter_Swagger_Topic__r.type__c from Chatter_Swagger__c where Scorecard__r.Chatter_User__c = :userId group by Chatter_Swagger_Topic__r.name,Chatter_Swagger_Topic__r.type__c  order by count(id) desc ];
+                system.debug(influentialAboutTopics);
+                for(AggregateResult ar : influentialAboutTopics)
+                {
+                    swaggerTotal thisTotal = new swaggerTotal();
+                    thisTotal.topic = (string)ar.get('Name');
+                    thisTotal.topicType = (string)ar.get('Type__c');
+                    thisTotal.swagger = (integer)ar.get('swagger');
+                    influentialAbout.add(thisTotal);
+                }
+                //Find other users influential to this one (any mention created by this user)
+                list<AggregateResult> influentialUsersQuery = [select count(id)swagger, 
+                                                                 Chatter_Swagger_Topic__r.name 
+                                                          from Chatter_Swagger__c 
+                                                          where Scorecard__r.Chatter_User__c = :userId and 
+                                                                Chatter_Swagger_Topic__r.type__c = 'mention'
+                                                          group by Chatter_Swagger_Topic__r.name];
+                for(AggregateResult ar : influentialUsersQuery)
+                {
+                    swaggerTotal thisTotal = new swaggerTotal();
+                    thisTotal.topic = (string)ar.get('Name');
+                    thisTotal.swagger = (integer)ar.get('swagger');
+                    influentialUsers.add(thisTotal);
+                }
+                
+                //Find users who are influenced by this user (any mention of this username not authored by this user)
+                list<AggregateResult> influentialToQuery = [select count(id)swagger, 
+                                                                Scorecard__r.Chatter_User__r.name 
+                                                          from Chatter_Swagger__c 
+                                                          where Scorecard__r.Chatter_User__c != :userId and 
+                                                                Chatter_Swagger_Topic__r.type__c = 'mention' and
+                                                                Chatter_Swagger_Topic__r.name = :scoreCard.Chatter_User__r.name
+                                                          group by Scorecard__r.Chatter_User__r.name];
+                for(AggregateResult ar : influentialToQuery)
+                {
+                    swaggerTotal thisTotal = new swaggerTotal();
+                    thisTotal.topic = (string)ar.get('Name');
+                    thisTotal.swagger = (integer)ar.get('swagger');
+                    influentialTo.add(thisTotal);
+                }        
+        }
+        
+        //This thing really should get updated to use the twitter bulk API at
+        //http://partners-v1.twittersentiment.appspot.com/api/bulkClassifyJson
+        //But it requires JSON and without JSON parsing in Apex that is just not happening.
+        //After winter 12' this should get updated. Just send post request to that endpoint
+        //with an array of json elements containing the post text, and probably the ID of the object
+        //it is related to.
+        
+        @Future(callout=true)
+        webservice static void updateTopicMoods(list<Id> topicIds)
+        {
+            list<Chatter_Swagger__c> topics = [select post_text__c, id from Chatter_Swagger__c where Id in :topicIds];
+            
+            HttpRequest req = new HttpRequest();
+            Http httpObj = new Http();
+            req.setMethod('GET');
+            
+            for(Chatter_Swagger__c topic : topics)
+            {
+                // Instantiate a new HTTP request, specify the method (GET) as well as the endpoint             
+                String url = 'http://data.tweetsentiments.com:8080/api/analyze.xml?q='+EncodingUtil.urlEncode(topic.post_text__c, 'UTF-8').trim();
+                req.setEndpoint(url);     
+                if(!isApexTest)
+                {                      
+                	HttpResponse res = httpObj.send(req);               
+                	topic.Mood__c = readXMLelement(res.getBody(),'name');   
+                }
+                else
+                {
+                	topic.Mood__c = 'Positive';
+                }        
+            }
+            update topics;
+        }
+
+    public static String readXMLelement(String xml, String element)
+    {
+        String elementValue = 'NOT FOUND'; 
+
+        Xmlstreamreader reader = new Xmlstreamreader(xml);
+        while (reader.hasNext()) 
+        {
+            if (reader.getEventType() == XmlTag.START_ELEMENT && reader.getLocalName() == element)
+            {
+                reader.next();
+                elementValue = getDecodedString(reader);
+            }         
+            reader.next();
+        }
+        return elementValue;
+    }
+        
+    public static String getDecodedString(Xmlstreamreader reader)
+    {
+        return EncodingUtil.urlDecode(reader.getText(), 'UTF-8').trim();
+    }  
+           
+    class swaggerTotal
+    {
+        public string topic{get;set;}
+        public string topicType{get;set;}
+        public integer swagger{get;set;}
+    }
+    
+    static testMethod void testChatterSwagger()
+    {
+    	isApexTest = true;
+    	
+    	User thisUser = [select firstname, lastname, id from user limit 1];
+    	
+    	thisUser.currentStatus = 'Im so cool #swagger Yeah!';
+    	update thisUser;
+    		
+		FeedItem fItem = new FeedItem(); 
+		fItem.Type = 'TextPost'; 
+		fItem.ParentId = thisUser.id; 
+		fItem.Body = 'this is a post that tests #chatterSwagger @'+thisuser.firstname+ ' '+thisuser.lastname;
+		insert fItem;
+
+		FeedItem fItem2 = new FeedItem(); 
+		fItem2.Type = 'TextPost'; 
+		fItem2.ParentId = thisUser.id; 
+		fItem2.Body = 'this is another post that tests #chatterSwagger @'+thisuser.firstname+ ' '+thisuser.lastname;
+		insert fItem2;
+		
+		FeedComment fcomment = new FeedComment(); 
+		fcomment.FeedItemId = fItem.id; 
+		fcomment.CommentBody = 'this post is awesome ^up'; 
+		insert fcomment;
+
+		FeedComment fcomment2 = new FeedComment(); 
+		fcomment2.FeedItemId = fItem.id; 
+		fcomment2.CommentBody = 'this post is awesome ^down'; 
+		insert fcomment2;				
+
+		FeedComment fcomment3 = new FeedComment(); 
+		fcomment3.FeedItemId = fItem.id; 
+		fcomment3.CommentBody = 'this post is neutral. @'+thisuser.firstname+ ' '+thisuser.lastname; 
+		insert fcomment3;	
+				
+		ChatterSwagger thisInstance = new ChatterSwagger();
+		
+		thisInstance.loadUserInfo();
+		thisinstance.getUserScore();
+		
+		string xmlReaderResult = readXMLelement('<test>hello!</test>', 'test');
+    }
+}

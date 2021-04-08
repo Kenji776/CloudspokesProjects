@@ -1,0 +1,582 @@
+global class SpinSMS implements Messaging.InboundEmailHandler
+{
+    public JsonObject json {get;set;}
+
+	public class customException extends Exception {}
+	
+    //Class that handles inbound email messages from the email service
+    global Messaging.InboundEmailResult handleInboundEmail(Messaging.InboundEmail email, Messaging.InboundEnvelope envelope) 
+    {
+        // declare the result variable
+        Messaging.InboundEmailResult result = new Messaging.InboundEmailresult();
+        
+        // declare a string variable to catch our custom debugging messages
+        result.success = true;
+        
+        try
+        {         
+        	
+            //Create some variables
+            String messageRecipPhone = '';
+            String messageBody = '';  
+            String messageContent = '';     
+			String messageToken = '';
+			
+            //Get the message body from the email plainTextBody
+            messageBody = email.plainTextBody;
+            messageBody = messageBody.trim();
+            
+            //Find the beginning and end of the XML data
+            messageBody = messageBody.substring(messageBody.indexOf('<?xml version="1.0"?>'),messageBody.indexOf('</emailData>')+12);
+
+            //extract the phone number          
+            messageRecipPhone = readXMLelement(messageBody,'phoneNumber');      
+            
+            //extract the message content
+            messageToken = readXMLelement(messageBody,'token');
+ 
+ 			//extract the message content
+ 			messageContent = readXMLelement(messageBody,'message');
+ 			
+		     Spin_SMS_Config__c[] SMSconfig = [select ID,
+		     										  Integration_Token__c,
+		     										  Use_Token_Security__c
+		                              			from Spin_SMS_Config__c 
+		                              			where 
+		                              			Active__c = true
+		                              			LIMIT 1];
+            
+            if(SMSconfig == null)
+            {
+            	throw new customException('No active SMS config could be located. Please ensure there is an active SMS config');
+            }
+            if( (SMSconfig[0].Use_Token_Security__c == true && SMSconfig[0].Integration_Token__c == messageToken) || SMSconfig[0].Use_Token_Security__c == false)                      		           
+            {
+	            //Trim the message to a useable length.
+	            if(messageContent.length() > 159)
+	            {
+	                messageContent = messageContent.substring(0,159);
+	            }
+	            
+	            //Create an SMS record based on the information found in the email                              
+	            Spin_SMS_Message__c message = new Spin_SMS_Message__c(Recipient_Phone_Number__c = messageRecipPhone, Message_Body__c=messageContent);
+	            insert message;
+            }
+            else
+            {
+            	throw new customException('Invalid Token '+messageToken+' Please ensure the token provided matches the token on the active SMS config object');
+            }
+            
+        }
+        catch(exception e)
+        {    
+            //if an error occured, then create a logging record
+            system.debug(e);
+            result.success = false;
+            Spin_SMS_Error_Log__c log = new Spin_SMS_Error_Log__c();          
+            log.trace__c = e.getTypeName() + '\n' + e.getCause() + '\n' + e.getMessage();
+            insert log;
+        }
+
+        return result;
+    }
+
+
+    public void receiveSMSmessage()
+    {
+        try
+        {
+            //Mobile Phone number to contact Id map
+            map<String,Id> contactPhoneMap = new map<String,Id>();
+            
+            Spin_SMS_Config__c SMSconfig = [select ID,
+                                        Twilio_Accound_SID__c,
+                                        Twilio_API_Endpoint__c,
+                                        Twilio_API_Version__c,
+                                        Twilio_Auth_Token__c,
+                                        Twilio_Phone_Number__c,
+                                        Twilio_PIN__c,
+                                        Contact_Matching__c,
+                                        Incoming_SMS_Handler__c,
+                                        Response_Message__c,
+                                        Send_Confirmation_Response__c,
+                                        Cost_Per_Message__c
+                                        
+                                  from Spin_SMS_Config__c where Active__c = true 
+                                  LIMIT 1];
+
+        	if(SMSconfig == null)
+            {
+            	throw new customException('No active SMS config could be located. Please ensure there is an active SMS config');
+            }
+                                                        
+             //Get the form variables passed in by Twilio
+             Map<string,string> params = ApexPages.currentPage().getParameters();
+             
+            //Attempt to find a contact with the phone number of the sender
+            //Contact contact = [select Id from Contact where SmsPhoneNumber__c = :params.get('FROM') LIMIT 1];
+            
+            //Create a new message object and populate it with the data
+            Spin_SMS_Message__c thisMessage = new Spin_SMS_Message__c();
+    
+            string phone  = params.get('FROM');
+            string newPhone = '('+phone.substring(2,5)+') '+phone.substring(5,8)+'-'+phone.substring(8,12);
+            newPhone = newPhone.replaceAll('\\D','');
+            
+            thisMessage.Message_Body__c = params.get('BODY');
+            thisMessage.Message_Direction__c = 'Inbound';
+            thisMessage.Twilio_Message_Id__c = params.get('SMSSID');
+            thisMessage.Message_Status__c = params.get('SMSSTATUS');    
+            thisMessage.Message_Cost__c = SMSconfig.Cost_Per_Message__c;    
+            thisMessage.Recipient_Phone_Number__c = newPhone;
+            thisMessage.Inbound_From_City__c = params.get('FROMCITY');
+            thisMessage.Inbound_From_Country__c = params.get('FROMCOUNTRY');
+            thisMessage.Inbound_From_State__c = params.get('FROMSTATE');
+            thisMessage.Inbound_From_Zip__c = params.get('FROMZIP');
+
+            string body;
+            for (string paramname : params.keySet() )
+             body += paramname + '=' + params.get(paramname) + '\n';
+            if (body.endsWith('=\n')) {
+             body = body.substring(0,body.length()-2);
+            }
+            
+            thisMessage.HTTP_Response__c = body;
+            
+            thisMessage.Twilio_Account_ID__c = params.get('ACCOUNTSID');
+            thisMessage.Spin_SMS_Config__c = SMSconfig.id;
+
+
+                boolean contactUpdateRequired = false;
+                //Find all contacts with a mobile phone number that is found in the list of numbers passed in
+                list<Contact> contacts = [select id, SmsPhoneNumber__c from contact where SmsPhoneNumber__c = :newPhone];
+                        
+                system.debug('Found Contacts----------------------------- '+contacts);
+                
+                for(Contact c : contacts)
+                {
+                    contactPhoneMap.put(c.SmsPhoneNumber__c,c.Id);
+	                if(thisMessage.Message_Body__c.toLowerCase() == 'stop')
+	                {
+	                	c.SMS_Enabled__c = false;	
+	                	contactUpdateRequired = true;
+	                }                    
+                }
+                
+                //if any contacts requsted that SMS be disabled for them, then we do need to update
+                //contact records. Otherwise skip it.
+                if(contactUpdateRequired)
+                {
+                	update contacts;
+                }
+                system.debug('Created Contact Map ----------------------------- '+contactPhoneMap);
+                
+                thisMessage.Contact__c = contactPhoneMap.get(newPhone);
+                        
+                        
+            //Create the message object
+            insert thisMessage; 
+            
+            if(SMSconfig.Send_Confirmation_Response__c)
+            {
+                list<Spin_SMS_Message__c> messages = new list<Spin_SMS_Message__c>();
+                Spin_SMS_Message__c replyMessage = new Spin_SMS_Message__c();              
+                replyMessage.Message_Body__c = SMSconfig.Response_Message__c;
+                replyMessage.Message_Direction__c = 'outbound';
+                replyMessage.Recipient_Phone_Number__c = newphone;
+                replyMessage.Spin_SMS_Config__c = SMSconfig.id;
+                if(SMSconfig.contact_Matching__c)
+                {
+                    replyMessage.Contact__c = contactPhoneMap.get(newphone);
+                }               
+                messages.add(replyMessage);
+                insert messages;
+            }
+        }
+        catch(Exception e)
+        {
+        	system.debug(e);
+            Spin_SMS_Error_Log__c log = new Spin_SMS_Error_Log__c();
+            log.trace__c = e.getTypeName() + '\n' + e.getCause() + '\n' + e.getMessage();
+            insert log;
+        }
+    }
+
+    WebService static string registerCallBackHandler()
+    {
+        
+            string returnMessage = 'Register Call Back Handler Called';
+            Spin_SMS_Config__c SMSconfig = [select ID,
+                                        Twilio_Accound_SID__c,
+                                        Twilio_API_Endpoint__c,
+                                        Twilio_API_Version__c,
+                                        Twilio_Auth_Token__c,
+                                        Twilio_Phone_Number__c,
+                                        Twilio_PIN__c,
+                                        Contact_Matching__c,
+                                        Incoming_SMS_Handler__c
+                                  from Spin_SMS_Config__c where Active__c = true 
+                                  LIMIT 1];
+
+            try
+            {
+            	if(SMSconfig == null)
+	            {
+	            	throw new customException('No active SMS config could be located. Please ensure there is an active SMS config');
+	            }
+	            Http httpObj = new Http();
+                // Instantiate a new HTTP request, specify the method (GET) as well as the endpoint
+                HttpRequest req = new HttpRequest();
+                String url = 'https://api.twilio.com/'+SMSconfig.Twilio_API_Version__c+'/Accounts/'+SMSconfig.Twilio_Accound_SID__c+'/Sandbox/';
+                req.setEndpoint(url);
+                req.setMethod('POST');  
+    
+                Blob headerValue = Blob.valueOf(SMSconfig.Twilio_Accound_SID__c + ':' + SMSconfig.Twilio_Auth_Token__c);
+                String authorizationHeader = 'Basic ' +
+                EncodingUtil.base64Encode(headerValue);
+                req.setHeader('Authorization', authorizationHeader);
+                req.setBody('SmsUrl='+SMSconfig.Incoming_SMS_Handler__c+'&SmsMethod=POST');
+                HttpResponse res = httpObj.send(req);   
+                
+                returnMessage = 'Sucess! Inbound message URL set to ' + readXMLelement(res.getBody(),'SmsUrl');
+                SMSconfig.twilio_Registered_SMS_URL__c = readXMLelement(res.getBody(),'SmsUrl');
+                
+                update SMSconfig;                   
+            }
+            catch(Exception e)
+            {
+                returnMessage = 'Failure! ' +e.getMessage();
+                SMSconfig.twilio_Registered_SMS_URL__c = 'ERROR: '+e;
+                 system.debug(e);
+
+                Spin_SMS_Error_Log__c log = new Spin_SMS_Error_Log__c();
+                log.trace__c = e.getTypeName() + '\n' + e.getCause() + '\n' + e.getMessage();
+                insert log;             
+            }
+            
+            return returnMessage;
+    }    
+                    
+    //This method takes a list of SMS messages and posts each one to Twilio
+    //using an HTTP post request. The data is JSON encoded and the API is RESTful.
+    @Future(callout=true)
+    public static void sendSMSmessage(list<string> messageIds, list<string> phoneNumbers)
+    {
+        try
+        {          
+            //List of messages to iterate over
+            list<Spin_SMS_Message__c> SMSmessages = new list<Spin_SMS_Message__c>();
+            
+            //Mobile Phone number to contact Id map
+            map<String,contact> contactMap = new map<String,contact>();
+    
+            Spin_SMS_Config__c SMSconfig = [select ID,
+                                            Twilio_Accound_SID__c,
+                                            Twilio_API_Endpoint__c,
+                                            Twilio_API_Version__c,
+                                            Twilio_Auth_Token__c,
+                                            Twilio_Phone_Number__c,
+                                            Twilio_PIN__c,
+                                            Sandbox_Account__c,
+                                            Contact_Matching__c,
+                                            Cost_Per_Message__c
+                                      from Spin_SMS_Config__c where Active__c = true 
+                                      LIMIT 1];
+            if(SMSconfig == null)
+            {
+            	throw new customException('No active SMS config could be located. Please ensure there is an active SMS config');
+            }
+                                            
+
+            //Find all contacts with a mobile phone number that is found in the list of numbers passed in
+            list<Contact> contacts = [select id, SmsPhoneNumber__c, SMS_Enabled__c from contact where SmsPhoneNumber__c in :phoneNumbers];
+                          
+            for(Contact c : contacts)
+            {
+            	system.debug('Contact SMS number:' + c.SmsPhoneNumber__c);
+                contactMap.put(c.SmsPhoneNumber__c,c);
+            }
+
+    
+    		//select any messages in the list where the contact is also SMS enabled.
+    		list<Spin_SMS_Message__c> messages = [SELECT Message_Body__c, 
+    											   Recipient_Phone_Number__c,
+    											   MatchingPhone__c
+                                               FROM Spin_SMS_Message__c
+                                               WHERE Id in :messageIds];
+            for(Spin_SMS_Message__c thisMessage : messages)
+            {
+                thisMessage.Spin_SMS_Config__c = SMSconfig.id;                
+                Contact thisContact = contactMap.get(thisMessage.MatchingPhone__c);
+                if(thisContact != null)
+                {
+                	thisMessage.Contact__c = thisContact.id;
+                	system.debug('Found contact ID ' + thisMessage.Contact__c);
+                	thisMessage.Contact_Allows_SMS__c = thisContact.SMS_Enabled__c;                    	
+                }
+                else
+                {
+                	throw new customException('No contact could be located with phone number '+thisMessage.MatchingPhone__c+' unable to send message. Please ensure there is a contact with that phone number before attempting to send a message to them');
+                }
+
+                //only sent the message if the contact allows receving of SMS messages.
+                if(thisMessage.Contact_Allows_SMS__c)
+                {
+	                JSONObject cjson = new JSONObject();
+	                cjson.putOpt('"from"', new JSONObject.value(SMSconfig.Twilio_Phone_Number__c));
+	                cjson.putOpt('"body"', new JSONObject.value(thisMessage.Message_Body__c));
+	                cjson.putOpt('"to"', new JSONObject.value(thisMessage.Recipient_Phone_Number__c));
+	                
+	                Http httpObj = new Http();
+	                
+	                // Instantiate a new HTTP request, specify the method (GET) as well as the endpoint
+	                HttpRequest req = new HttpRequest();
+	                String url = ' https://api.twilio.com/'+SMSconfig.Twilio_API_Version__c+'/Accounts/'+SMSconfig.Twilio_Accound_SID__c+'/SMS/Messages';
+	                req.setEndpoint(url);
+	                req.setMethod('POST');
+	                Blob headerValue = Blob.valueOf(SMSconfig.Twilio_Accound_SID__c + ':' + SMSconfig.Twilio_Auth_Token__c);
+	                String authorizationHeader = 'Basic ' +
+	                EncodingUtil.base64Encode(headerValue);
+	                req.setHeader('Authorization', authorizationHeader);
+	                
+	                //If this is a demo account, the PIN must be included in the message. Otherwise it is not required.
+	                //That is the only difference currently.
+	                String recipNumber = thisMessage.MatchingPhone__c;
+	                recipNumber = recipNumber.replaceAll('\\D','');
+	                if(SMSconfig.Sandbox_Account__c)
+	                {
+	                    req.setBody('To='+recipNumber+'&From='+SMSconfig.Twilio_Phone_Number__c+'&Body='+SMSconfig.Twilio_PIN__c+' '+thisMessage.Message_Body__c);
+	                }
+	                else
+	                {
+	                    req.setBody('To='+recipNumber+'&From='+SMSconfig.Twilio_Phone_Number__c+'&Body='+thisMessage.Message_Body__c);
+	                }
+	                
+	                HttpResponse res = httpObj.send(req);                	
+                	SMSmessages.add(thisMessage);
+
+	                thisMessage.HTTP_Response__c = 'Request Body: ' + cjson.ValuetoString() + '      URL: ' + url + '        Request Response:' +res.getBody();                
+	                thisMessage.Twilio_Message_Id__c = readXMLelement(res.getBody(),'Sid');
+	                thisMessage.Message_Status__c = 'Sent';
+	                thisMessage.Twilio_Response_Message__c = readXMLelement(res.getBody(),'Message');
+	                thisMessage.Twilio_Account_ID__c = readXMLelement(res.getBody(),'AccountSid');
+	                thisMessage.Message_Cost__c = SMSconfig.Cost_Per_Message__c;                	  
+                }  
+                else
+                {
+                	thisMessage.Message_Status__c = 'Not Sent';
+                	thisMessage.Message_Cost__c = 0.0;  
+		            Spin_SMS_Error_Log__c log = new Spin_SMS_Error_Log__c();
+		            log.trace__c =  'Contact Does not Allow SMS \n' + thisMessage.Contact__c;
+		            insert log;               	
+                } 
+                            
+                //If this config has contact matching enabled attempt to find the contact in the map
+                //based on the phone number. Otherwise don't.
+                
+          
+            }
+            update messages;
+        }
+        catch(Exception e)
+        {
+        	system.debug(e);
+            Spin_SMS_Error_Log__c log = new Spin_SMS_Error_Log__c();
+            log.trace__c = 'Error sending message \n' + e.getTypeName() + '\n' + e.getCause() + '\n' + e.getMessage();
+            insert log;
+        }
+    }
+    
+    WebService static string triggerSendMessage(string targetPhone, string message, string integrationToken)
+    {
+
+		try
+		{ 
+			Spin_SMS_Config__c[] SMSconfig = [select ID,
+			 										  Integration_Token__c,
+			 										  Use_Token_Security__c
+			                          			from Spin_SMS_Config__c 
+			                          			where 
+			                          			Active__c = true
+			                          			LIMIT 1];
+            
+            if(SMSconfig == null)
+            {
+            	throw new customException('No active SMS config could be located. Please ensure there is an active SMS config');
+            }
+            
+            if( (SMSconfig[0].Use_Token_Security__c == true && SMSconfig[0].Integration_Token__c == integrationToken) || SMSconfig[0].Use_Token_Security__c == false)                      		           
+            {                    	
+				    Spin_SMS_Message__c messageObject = new Spin_SMS_Message__c(Recipient_Phone_Number__c = targetPhone, Message_Body__c = message);
+				    insert messageObject;
+				    return 'Message Sent to '+targetPhone;
+        	}
+	        else
+	        {
+	        	throw new customException('Invalid Token '+integrationToken+' Please ensure the token provided matches the token on the active SMS config object');	
+	        }
+		}
+        catch(Exception e)
+        {
+        	system.debug(e);
+            Spin_SMS_Error_Log__c log = new Spin_SMS_Error_Log__c();
+            log.trace__c = 'Error creating message \n'+ e.getTypeName() + '\n' + e.getCause() + '\n' + e.getMessage();
+            insert log;
+            return 'Failure sending message. Please check logs for more details';
+        }    
+    }
+    
+    public static String readXMLelement(String xml, String element)
+    {
+        String elementValue = 'NOT FOUND'; 
+        
+        try
+        {
+            Xmlstreamreader reader = new Xmlstreamreader(xml);
+            while (reader.hasNext()) 
+            {
+                if (reader.getEventType() == XmlTag.START_ELEMENT && reader.getLocalName() == element)
+                {
+                    reader.next();
+                    elementValue = getDecodedString(reader);
+                }         
+                reader.next();
+            }
+            return elementValue;
+        }
+        catch(exception e)
+        {
+        	system.debug(e);
+            Spin_SMS_Error_Log__c log = new Spin_SMS_Error_Log__c();
+            log.trace__c = e.getTypeName() + '\n' + e.getCause() + '\n' + e.getMessage() + '\n' + xml;
+            insert log;
+
+            return log.trace__c;
+        }
+    }
+        
+    public static String getDecodedString(Xmlstreamreader reader)
+    {
+        return EncodingUtil.urlDecode(reader.getText(), 'UTF-8').trim();
+    }
+    
+    @isTest
+    static void testMessagingSystem()
+    {
+        try
+        {
+            Contact newContact = new Contact();
+            newContact.FirstName = 'Test';
+            newContact.LastName = 'Test';
+            newContact.MobilePhone = '(999) 999-9999';
+            
+            insert newContact;
+            
+            //Create a Spin SMS Config Record
+            Spin_SMS_Config__c SMSconfig = new Spin_SMS_Config__c();
+            SMSconfig.Twilio_Accound_SID__c = 'ACaaa36fc0c0743905ebabd05c0d44205a';
+            SMSconfig.Twilio_API_Endpoint__c = 'https://demo.twilio.com';
+            SMSconfig.Twilio_API_Version__c = '2010-04-01';
+            SMSconfig.Twilio_Auth_Token__c = 'a389188d888b34c0e29503626c1fed4b';
+            SMSconfig.Integration_Token__c = 'testToken';
+            SMSconfig.Use_Token_Security__c = true;
+            SMSconfig.Twilio_Phone_Number__c = '4155992671';
+            SMSconfig.Twilio_PIN__c = '8212-4527';
+            SMSconfig.Sandbox_Account__c = true;
+            SMSconfig.Contact_Matching__c = true;
+            SMSconfig.Send_Confirmation_Response__c = true;
+            SMSconfig.Response_Message__c = 'Unit Testing For Spin SMS Message';
+            SMSconfig.Active__c = true;
+            SMSconfig.Incoming_SMS_Handler__c = 'http://xerointeractive-developer-edition.na9.force.com/SpinSMS/SpinSMSHandleInbound';
+            insert SMSconfig;
+            
+            //Test the registering of the callback handler
+            String registerCallBackHandler = registerCallBackHandler();
+            
+            //Test receiving an inbound message
+			            
+            PageReference indexPage = Page.SpinSMSHandleInbound;
+            system.test.setCurrentPageReference(indexPage);
+            SpinSMS Ctlr = new SpinSMS();
+            indexPage.getParameters().put('FROM','+19999999999');
+            indexPage.getParameters().put('BODY','TEST INBOUND SMS MESSAGE');
+            indexPage.getParameters().put('INTEGRATIONTOKEN','testToken');
+            indexPage.getParameters().put('SMSSID','AGSDFASDASDCVADFASFDAS');
+            indexPage.getParameters().put('SMSSTATUS','received');
+            indexPage.getParameters().put('ACCOUNTSID','ACc1747f67d933be6aa91919018952dc91');   
+                                    
+            Ctlr.receiveSMSmessage();
+            
+            //Test the email service
+            
+            // create a new email and envelope object
+            Messaging.InboundEmail email = new Messaging.InboundEmail() ;
+            Messaging.InboundEnvelope env = new Messaging.InboundEnvelope();
+                        
+            //Test email with wrong token
+            email.subject = '';
+            email.fromname = 'Unit Test';
+            email.plainTextBody = '<?xml version="1.0"?><emailData><token>wrongToken</token><phoneNumber>(999) 999-9999</phoneNumber><message>Test Message from Spin SMS System</message></emailData>';
+            env.fromAddress = 'someaddress@email.com';
+             
+             
+            // call the email service class and test it with the data in the testMethod
+            SpinSMS emailProcess = new SpinSMS();
+            emailProcess.handleInboundEmail(email, env);
+
+
+			//Test email with correct token
+            email.subject = '';
+            email.fromname = 'Unit Test';
+            email.plainTextBody = '<?xml version="1.0"?><emailData><token>testToken</token><phoneNumber>(999) 999-9999</phoneNumber><message>Test Message from Spin SMS System</message></emailData>';
+            env.fromAddress = 'someaddress@email.com';
+             
+             
+            // call the email service class and test it with the data in the testMethod
+            emailProcess.handleInboundEmail(email, env);
+            
+            //Test sending of the SMS message (this is reduntant if the test above worked though)
+            
+            //Create an SMS record based on the information found in the email                              
+            Spin_SMS_Message__c message = new Spin_SMS_Message__c(Recipient_Phone_Number__c = '(999) 999-9999', Message_Body__c= 'test SMS message');
+            insert message;
+
+            //Test the sending of messages with a bad token
+            triggerSendMessage('19999999999','Test Message','this is the wrong token');
+                        
+            //Test the sending of messages via the webservice
+            triggerSendMessage('19999999999','Test Message','testToken');
+            
+
+            
+            //Test the XML parser
+            String XML = '<TwilioResponse>'+
+            '<SMSMessage>' +
+            '<Sid>SMf6844bd872ec4c83347818e4bc2f6f48</Sid>' +
+            '<DateCreated>Wed, 19 Jan 2011 19:58:35 +0000</DateCreated>' +
+            '<DateUpdated>Wed, 19 Jan 2011 19:58:35 +0000</DateUpdated>' +
+            '<DateSent/>' +
+            '<AccountSid>ACc1747f67d933be6aa91919018952dc91</AccountSid>' +
+            '<To>+XXXXXXXXX</To>' +
+            '<From>+XXXXXXXXX</From>' +
+            '<Body>XXXX-XXXXThis is a test message</Body>' +
+            '<Status>queued</Status>' +
+            '<Direction>outbound-api</Direction>' +
+            '<ApiVersion>2010-04-01</ApiVersion>' +
+            '<Price/>' +
+            '<Uri>/2010-04-01/Accounts/XXXXXXXXXXXXXXXx/SMS/Messages/SMf6844bd872ec4c83347818e4bc2f6f48</Uri>' +
+            '</SMSMessage>' +
+            '</TwilioResponse>';
+            String sid = readXMLelement(XML,'Sid');
+            system.assertEquals('SMf6844bd872ec4c83347818e4bc2f6f48',sid);
+                    
+        }
+        catch(Exception e)
+        {
+            system.debug(e);
+        }
+                    
+    }
+            
+
+}

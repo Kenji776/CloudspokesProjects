@@ -1,0 +1,210 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<style>
+table.diff_text { border:1px solid #bbb; }
+table.diff_text td.lineno {
+  border-style:solid; border-color:#bbb; border-width:0 1px;
+  background:#ddd;
+  color:#999;
+}
+table.diff_text td { border:none; background:#FFFAFA; }
+table.diff_text .add td.difftext { background:#DDFFDD; }
+table.diff_text .del td.difftext { background:#FFDDDD; }​
+
+.linedwrap {
+	border: 1px solid #c0c0c0;
+	padding: 3px;
+}
+
+.linedtextarea {
+	padding: 0px;
+	margin: 0px;
+}
+
+.linedtextarea textarea, .linedwrap .codelines .lineno {
+	font-size: 10pt;
+	font-family: monospace;
+	line-height: normal !important;
+}
+
+.linedtextarea textarea {
+	padding-right:0.3em;
+	padding-top:0.3em;
+	border: 0;
+}
+
+.linedwrap .lines {
+	margin-top: 0px;
+	width: 50px;
+	float: left;
+	overflow: hidden;
+	border-right: 1px solid #c0c0c0;
+	margin-right: 10px;
+}
+
+.linedwrap .codelines {
+	padding-top: 5px;
+}
+
+.linedwrap .codelines .lineno {
+	color:#AAAAAA;
+	padding-right: 0.5em;
+	padding-top: 0.0em;
+	text-align: right;
+	white-space: nowrap;
+}
+
+.linedwrap .codelines .lineselect {
+	color: red;
+}
+
+.contentBlock
+{
+	width:45%;
+	float:left;	
+	border-style:solid;
+	border-width:1px;
+	margin:5px;
+	min-height:300px;
+}
+
+textarea
+{
+	width:98%;
+	height:300px;
+	
+}
+</style>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+<script src="jquery-linedtextarea.js"></script>
+
+
+<script>
+function diff_text(text1, text2) {
+  var table = '';
+
+  function make_row(x, y, type, text) 
+  {
+    if (type == ' ') console.log(x, y);
+    var row = '<tr';
+    if (type == '+') row += ' class="add"';
+    else if (type == '-') row += ' class="del"';
+    row += '>';
+
+    row += '<td class="lineno">' + y;
+    row += '<td class="lineno">' + x;
+    row += '<td class="difftext">' + type + ' ' + text;
+
+    table += row;
+  }
+
+  function get_diff(matrix, a1, a2, x, y) {
+    if (x > 0 && y > 0 && a1[y-1] === a2[x-1]) {
+      get_diff(matrix, a1, a2, x-1, y-1);
+      make_row(x, y, ' ', a1[y-1]);
+    }
+    else {
+      if (x > 0 && (y === 0 || matrix[y][x-1] >= matrix[y-1][x])) {
+        get_diff(matrix, a1, a2, x-1, y);
+        make_row(x, '', '+', a2[x-1]);
+      }
+      else if (y > 0 && (x === 0 || matrix[y][x-1] < matrix[y-1][x])) {
+        get_diff(matrix, a1, a2, x, y-1);
+        make_row('', y, '-', a1[y-1]);
+      }
+      else {
+        return;
+      }
+    }
+  }
+
+  function diff(a1, a2) {
+    var matrix = new Array(a1.length + 1);
+    var x, y;
+
+    for (y = 0; y < matrix.length; y++) {
+      matrix[y] = new Array(a2.length + 1);
+
+      for (x = 0; x < matrix[y].length; x++) {
+        matrix[y][x] = 0;
+      }
+    }
+    
+    for (y = 1; y < matrix.length; y++) {
+      for (x = 1; x < matrix[y].length; x++) {
+        if (a1[y-1] === a2[x-1]) {
+          matrix[y][x] = 1 + matrix[y-1][x-1];
+        }
+        else {
+          matrix[y][x] = Math.max(matrix[y-1][x], matrix[y][x-1]);
+        }
+      }
+    }
+
+    get_diff(matrix, a1, a2, x-1, y-1);
+  }
+
+  diff(text1.split('\n'), text2.split('\n'));
+  return '<table class="diff_text">' + table + '</table>';
+}
+
+
+
+
+$(function() {
+
+	$("textarea").linedtextarea(
+		{selectedLine: 1}
+	);
+
+	
+ $('#getDocumentsButton').click(function(){
+	$.get($('#doc1Uri').val(), function(data) {
+	  $('#text1').val(data);
+	});
+
+	$.get($('#doc2Uri').val(), function(data) {
+	  $('#text2').val(data);
+	}); 
+ });
+ 
+ $('#compareText').click(function(){
+	$('#compareResult').html( diff_text( $('#text1').val(), $('#text2').val()) );
+ });
+ 
+});
+</script>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<title>Untitled Document</title>
+</head>
+
+<body>
+
+<div id="container">
+	<label for="doc1Uri">URL For Document 1</label><input type="text" name="doc1Uri" id="doc1Uri" size="50" value="doc1.txt"/>
+    <label for="doc2Uri">URL For Document 2</label><input type="text" name="doc2Uri" id="doc2Uri" size="50" value="doc2.txt"/>
+    <button id="getDocumentsButton">Get Document Data</button>
+    
+    <div id="results">
+    	<div id="block1" class="contentBlock">     
+    		<textarea id="text1" ></textarea>
+        </div>
+        
+        <div id="block2" class="contentBlock">     
+        	<textarea id="text2"   ></textarea>
+        </div>
+        <br />
+        
+    </div>
+    
+    <div style="clear:both"/>
+    <button id="compareText">Compare</button>
+    <div id="compareResult">
+    
+    </div>
+    
+</div>
+</body>
+</html>

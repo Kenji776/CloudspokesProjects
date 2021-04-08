@@ -1,0 +1,859 @@
+<apex:component >
+
+    <script>
+    
+$.ajaxSetup ({
+    // Disable caching of AJAX responses
+    cache: false
+});
+    
+        var map;
+        var geocoder;
+        var markersArray = [];
+        
+        var gblSrcLat;
+        var gblSrcLng; 
+        var gblCurrentAddress = '747 Howard Street San Francisco, CA 94103';    
+        var useAddrMode = false;  
+        var coords = new Object(); 
+        coords.lat = 0;
+        coords.lng = 0;
+        
+        searchResults = new Array();
+        myEventsResults = new Array();
+        var  userData = new Object();
+        var url = 'http://xerointeractive-developer-edition.na9.force.com/partyForce/';
+
+   
+        function loadPage(pageId)
+        {                                 
+                  
+                  $.get(url+''+pageId, function(data) {
+                  $("#form").validate();
+                      $('#content').html(data);    
+                       $(  "input:submit,input:button, button", "#content" ).button();  
+              
+                     
+                  });           
+        }   
+
+
+
+
+        function translateBoolean(value)
+        {
+            if(value == true)
+            {
+                return 'Yes';
+            }
+            else
+            {
+                return 'No';
+            }
+        }
+        function drawPartyMap()
+        { 
+ 
+           
+            deleteOverlays();            
+            map.setCenter(new google.maps.LatLng(coords.lat, coords.lng), 10);        
+            plotPoint(coords.lat,coords.lng, 'You are here!','http://www.google.com/mapfiles/arrow.png');
+
+            partyForce.findEvents( ' ' , function(result, event)
+            {
+          
+                if (event.status) 
+                {
+                    for(var i=0; i<result.sObjects.length; i++)
+                    {
+                       try
+                       { 
+                           var startDate = new Date(result.sObjects[i].Start_Date__c);
+                           var endDate =  new Date(result.sObjects[i].End_Date__c);                    
+                      }
+                      catch(e)
+                      {
+                           var startDate = result.sObjects[i].Start_Date__c;
+                           var endDate =  result.sObjects[i].End_Date__c;                                      
+                      }
+                       var html = '<ul class="formList">';
+                       html += '<li>'+result.sObjects[i].Name+'</li>';
+                       html += '<li>'+result.sObjects[i].Location_Name__c+'</li>';
+                       html += '<li>'+result.sObjects[i].Address__c+', ' +result.sObjects[i].City__c+', '+result.sObjects[i].State__c+'</li>';                                         
+                       html += '<li> From '+dateFormat(startDate, "dddd, mmmm dS, h:MM TT")+' Until ' +dateFormat(endDate, "h:MM TT")+'</li>'; 
+                       html += '<li><a href="#" onClick="loadPage(\'partyForceEventDetails?id='+result.sObjects[i].Id+'\');">Details & RSVP</a></li>';
+                       html += '</ul>';
+                       plotPoint(result.sObjects[i].Lat__c,result.sObjects[i].Lng__c, html);
+                    } 
+                } 
+
+            }, {escape:true}); 
+            
+        }
+
+        function getUserEventsList(userId)
+        {   
+            
+            partyForce.getInvites("Contact__c = '"+ userId + "'", function(result, event)
+            {
+                
+                if (event.status) 
+                {              
+                    myEventsResults = result.sObjects;
+                    if(myEventsResults.length == 0)
+                    {
+                        $('#noResults').fadeIn('medium');
+                    }     
+                    else
+                    { 
+                       $('#noResults').hide();
+                        html = '<table width="100%" id="searchResultsTable" class="tablesorter"><thead><tr><th>Name</th><th>From</th><th>Until</th><th>Address</th><th>Distance</th><th>Status</th></tr></thead>';
+                        for(var i=0; i<result.sObjects.length; i++)
+                        {
+                            var startDate = new Date(result.sObjects[i].Party_Force_Event__r.Start_Date__c);
+                            var endDate =  new Date(result.sObjects[i].Party_Force_Event__r.End_Date__c);                                                              
+                            distance = calcDistanceBetweenAddr(coords.lat, coords.lng, myEventsResults[i].Party_Force_Event__r.Lat__c, myEventsResults[i].Party_Force_Event__r.Lng__c );                      
+                            try
+                            {
+                                html += '<tr><td><input type="button" onClick="loadPage(\'partyForceEventDetails?id='+result.sObjects[i].Party_Force_Event__r.Id+'\');" value="'+result.sObjects[i].Party_Force_Event__r.Name+'" /></td><td>'+dateFormat(startDate, "dd/mm/yy h:MM TT")+'</td><td>'+dateFormat(endDate, "dd/mm/yy h:MM TT")+'</td><td><input type="button" id="'+i+'" class="viewMap" value="'+result.sObjects[i].Party_Force_Event__r.Address__c+'" /></td><td>'+distance+' Miles</td><td><select name="rsvp" id="rsvpSelect'+result.sObjects[i].Id+'" onChange="updateRSVP(\''+result.sObjects[i].Id+'\', this.value)"><option>Invited</option><option>Unsure</option><option>Attending</option><option>Not Attending</option></select></td></tr>';
+                            }
+                            catch(e)
+                            {
+                            
+                            }                                                                      
+                                                  
+    
+                        } 
+                        html += '</table>'; 
+                        $('#searchResults').html(html);   
+                        
+                         for(var i=0; i<result.sObjects.length; i++)
+                        {
+                            $('#rsvpSelect'+result.sObjects[i].Id).val(result.sObjects[i].RSVP_Status__c);
+                        }
+                        
+                           
+                        $( ".viewMap" ).click(function() {  
+                            $( "#map_container" ).dialog( "open" );                      
+                            deleteOverlays();  
+                            map.setCenter(new google.maps.LatLng(myEventsResults[this.id].Party_Force_Event__r.Lat__c,myEventsResults[this.id].Party_Force_Event__r.Lng__c), 10);
+                            plotPoint(coords.lat,coords.lng, 'You are here!','http://www.google.com/mapfiles/arrow.png');
+                            
+                            plotPoint(myEventsResults[this.id].Party_Force_Event__r.Lat__c,myEventsResults[this.id].Party_Force_Event__r.Lng__c , myEventsResults[this.id].Party_Force_Event__r.Name);                            
+                            
+                            return false;
+                        });
+                
+                        $("#searchResultsTable").tablesorter(); 
+                        $(  "input:submit,input:button, button", "#searchResultsTable" ).button();  
+                    }    
+                } 
+
+            }, {escape:true});            
+        }
+
+      function deleteOverlays() {
+        if (markersArray) {
+          for (i in markersArray) 
+          {
+            try
+            {
+                markersArray[i].setMap(null);
+             }
+             catch(ex)
+             {
+             
+             }
+          }
+          markersArray.length = 0;
+        }
+      }
+
+
+        function getEventAttendees(eventId)
+        {   
+            
+            partyForce.getInvites("Party_Force_Event__c = '"+ eventId + "'", function(result, event)
+            {
+                
+                if (event.status) 
+                {              
+                        
+                        var html = "<span class='title'>Guest List</span>";
+                        html += '<table width="100%" id="searchResultsTable" class="tablesorter"><thead><tr><td></td><th>Twitter Name</th><th>Name</th><th>Status</th></thead>';
+                        for(var i=0; i<result.sObjects.length; i++)
+                        {
+                            var startDate = new Date(result.sObjects[i].Party_Force_Event__r.Start_Date__c);
+                            var endDate =  new Date(result.sObjects[i].Party_Force_Event__r.End_Date__c);                                                              
+                           
+                            try
+                            {
+                                html += '<tr><td><img src="http://api.twitter.com/1/users/profile_image/'+result.sObjects[i].Contact__r.Twitter_Name__c+'"></td><td>'+result.sObjects[i].Contact__r.Twitter_Name__c+'</td><td>'+result.sObjects[i].Contact__r.Name+'</td><td>'+result.sObjects[i].RSVP_Status__c+'</td></td></tr>';
+                            }
+                            catch(e)
+                            {
+                                
+                            } 
+                        }                                                                     
+                                                                   
+                        html += '</table>'; 
+                        $('#attendeeResults').html(html);         
+ 
+                
+                        $("#searchResultsTable").tablesorter(); 
+                        $(  "input:submit,input:button, button", "#searchResultsTable" ).button(); 
+                 } 
+        
+  
+
+            }, {escape:true});            
+        }
+                        
+        function getEventsList(searchString)
+        {   
+            
+            //if it's a blank search, make it a space so it gets forced to run as string/name search instead of an ID search
+                    if(searchString.length ==  0)
+                    {
+                        searchString = ' ';
+                    }              
+            partyForce.findEvents( searchString, function(result, event)
+            {
+                
+                if (event.status) 
+                {              
+                    searchResults = result.sObjects;
+   
+                    html = '<table width="100%" id="searchResultsTable" class="tablesorter"><thead><tr><th>Name</th><th>From</th><th>Until</th><th>Address</th><th>Distance</th><td></td></tr></thead>';
+                    if(result.sObjects && result.sObjects.length > 0)
+                    {
+                        for(var i=0; i<result.sObjects.length; i++)
+                        {
+                            var startDate = new Date(result.sObjects[i].Start_Date__c);
+                            var endDate =  new Date(result.sObjects[i].End_Date__c);
+                                                                  
+                           distance = calcDistanceBetweenAddr(coords.lat, coords.lng, searchResults[i].Lat__c, searchResults[i].Lng__c );
+     
+                          
+                            try
+                            {
+                                html += '<tr><td>'+result.sObjects[i].Name+'</td><td>'+dateFormat(startDate, "dd/mm/yy h:MM TT")+'</td><td>'+dateFormat(endDate, "dd/mm/yy h:MM TT")+'</td><td><input type="button" id="'+i+'" class="viewMap" value="'+result.sObjects[i].Address__c+'" /></td><td>'+distance+' Miles</td><td><input type="button" onClick="loadPage(\'partyForceEventDetails?id='+result.sObjects[i].Id+'\');" value="Details & RSVP"></td></tr>';
+                            }
+                            catch(e)
+                            {
+                            
+                            } 
+                        }
+                     }  
+                     else
+                     {
+                         html += '<tr><td colspan="5">Nope, couldn\'t find any events like that</td></tr>'
+                     }      
+                    
+                    html += '</table>'; 
+                    $('#searchResults').html(html);         
+                    $( ".viewMap" ).click(function() {
+                       
+                      deleteOverlays();  
+                        map.setCenter(new google.maps.LatLng(searchResults[this.id].Lat__c,searchResults[this.id].Lng__c), 10);
+                        plotPoint(coords.lat,coords.lng, 'You are here!','http://www.google.com/mapfiles/arrow.png');           
+
+                       var html = '<ul class="formList">';
+                       html += '<li>'+searchResults[this.id].Name+'</li>';
+                       html += '<li>'+searchResults[this.id].Location_Name__c+'</li>';
+                       html += '<li>'+searchResults[this.id].Address__c+', ' +searchResults[this.id].City__c+', '+searchResults[this.id].State__c+'</li>';                                         
+                       html += '<li> From '+dateFormat(searchResults[this.id].Start_Date__c, "dddd, mmmm dS, h:MM TT")+' Until ' +dateFormat(searchResults[this.id].End_Date__c, "h:MM TT")+'</li>'; 
+                       html += '<li><a href="#" onClick="loadPage(\'partyForceEventDetails?id='+searchResults[this.id].Id+'\');">Details & RSVP</a></li>';
+                       html += '</ul>';
+                                                            
+                        plotPoint(searchResults[this.id].Lat__c,searchResults[this.id].Lng__c ,html);
+                        
+                        
+                        $( "#map_container" ).dialog( "open" );
+                        return false;
+                    });
+            
+                    $("#searchResultsTable").tablesorter(); 
+                    $(  "input:submit,input:button, button", "#searchResultsTable" ).button();  
+                    
+                } 
+
+            }, {escape:true}); 
+                        
+           return false;
+        }
+       
+
+    
+        function getCurrentCoords(callback)
+        {
+            var returnObject = new Object();
+            returnObject.success = true;
+            
+            //default these to whatever they already are
+            //so if we can't get the GPS status, we don't lose what we already know
+            returnObject.lat = coords.lat;
+            returnObject.lng = coords.lng;
+
+
+            returnObject.method = 'GPS';
+            navigator.geolocation.getCurrentPosition(
+            function(position)
+            {                   
+               
+                returnObject.lat = position.coords.latitude;
+                returnObject.lng = position.coords.longitude; 
+                $('#gpsFixInfo').html('Lat: ' + position.coords.latitude + ' Lng: ' + position.coords.longitude);
+                callback(returnObject);
+               
+            }, 
+            function(error)
+            {
+                
+                returnObject.success = false;
+                
+                callback(returnObject);
+            });
+                  
+        }
+         
+        
+        function plotPoint(srcLat, srcLon, popUpContent,markerIcon,title)
+        {
+                var myLatlng = new google.maps.LatLng(srcLat, srcLon);            
+                     console.log(markerIcon);
+  
+                          var marker = new google.maps.Marker({
+                              position: myLatlng, 
+                              map: map, 
+                              title:title,
+                              icon: markerIcon
+                          });
+                  
+ 
+                      
+                      markersArray.push(marker);
+
+
+                var infowindow = new google.maps.InfoWindow({
+                    content: popUpContent
+                });
+                
+                google.maps.event.addListener(marker, 'click', function() {
+                  infowindow.open(map,marker);
+                });
+                
+                
+                                                  
+        }
+
+            rad = function(x) {return x*Math.PI/180;}
+            
+            function distHaversine(p1, p2) 
+            {
+              var R = 6371; // earths mean radius in km
+              var dLat  = rad(p2.lat() - p1.lat());
+              var dLong = rad(p2.lng() - p1.lng());
+            
+              var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(rad(p1.lat())) * Math.cos(rad(p2.lat())) * Math.sin(dLong/2) * Math.sin(dLong/2);
+              var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+              var d = R * c;
+            
+              return d.toFixed(3);
+            }
+
+        function calcRoute(endpointCoords) // endpointCoords holds coordinates for end point
+        {
+            var startpoint = '<?=$startPoint[latitude];?>, <?=$startPoint[longitude];?>';
+            var endpoint = endpointCoords;
+        
+            var request = {
+            origin:startpoint,
+            destination:endpoint,
+            travelMode: google.maps.DirectionsTravelMode.DRIVING
+            };
+        
+            directionsService.route(request, function(response, status){
+                if (status == google.maps.DirectionsStatus.OK) 
+                {   
+                    directionsDisplay.setDirections(response);
+                }
+            });
+        }
+        
+        function calcDistanceBetweenAddr(srcLat, srcLon, dstLat, dstLon) 
+        {
+            var loc1 = new google.maps.LatLng(srcLat, srcLon);
+            var loc2 = new google.maps.LatLng(dstLat, dstLon);
+            
+            return distHaversine(loc1, loc2);
+
+            
+        } 
+ 
+               
+        function getAddressCoords(address, callback)
+        {
+            var returnObject = new Object();
+            returnObject.success = true;
+            returnObject.lat = 0;
+            returnObject.lng = 0;
+            returnObject.addr = address;
+            
+            geocoder.getLocations(address, function(response) 
+            {
+              if (!response || response.Status.code != 200) 
+              {
+                returnObject.success = false;
+                returnObject.data = response;
+                
+              } 
+              else 
+              {
+                place = response.Placemark[0];
+                returnObject.lat = place.Point.coordinates[1];
+                returnObject.lng = place.Point.coordinates[0];
+              }
+              
+              callback(returnObject);             
+            });           
+        }
+
+        
+        $(document).ready(function() 
+        {
+  
+
+            $('#loader')
+                .hide()  // hide it initially
+                .ajaxStart(function() {
+                    $(this).show();
+                })
+                .ajaxStop(function() {
+                    $(this).hide();
+                });  
+             
+             loadPage('partyForceHome'); 
+ 
+                           
+             //Read cookie if it exists    
+            if($.cookie('partyForceUser') != null)
+            {
+                userData = jQuery.parseJSON($.cookie('partyForceUser'));
+            }
+   
+            //if this persons cookie is still good
+            if('Id' in userData)
+            {
+                setTwitterImage(userData.Twitter_Name__c);
+                $('#loginBtn').hide();
+                $('#logoutBtn').show();
+                $('#twitPicImg').show();
+            }
+            else
+            {
+                $('#loginBtn').show();
+                $('#logoutBtn').hide();  
+                $('#favesBtn').hide();
+                $('#createBtn').hide(); 
+                $('#twitPicImg').hide();                          
+            }
+            
+            
+
+            
+            $( "#map_container" ).dialog({
+                autoOpen:false,
+                width: 555,
+                height: 400,
+                show: "blind",
+                hide: "explode",
+                resizeStop: function(event, ui) {google.maps.event.trigger(map, 'resize')  },
+                open: function(event, ui) {google.maps.event.trigger(map, 'resize'); }      
+            });     
+            
+            $( "#loginDiv" ).dialog({
+                autoOpen: false,
+                show: "blind",
+                hide: "explode"            
+            });     
+
+            $( "#gpsInfo" ).dialog({
+                autoOpen: false,
+                show: "blind",
+                hide: "explode"
+  
+            });     
+            
+            
+            $( "#loginBtn" ).click(function() {
+                $( "#loginDiv" ).dialog( "open" );
+                return false;
+            });
+  
+             $(  "input:submit,input:button, a, button", "#loginDiv" ).button();
+             $(  "input:submit,input:button, a, button", "#header" ).button();  
+
+            $( "#refreshBtn" ).button({
+                        icons: {
+                            primary: "refresh-gps"
+                        },
+                        text: false
+                    });
+
+            $( "#favesBtn" ).button({
+                        icons: {
+                            primary: "faves"
+                        },
+                        text: false
+                    });
+            $( "#loginBtn" ).button({
+                        icons: {
+                            primary: "login"
+                        },
+                        text: false
+                    }); 
+            $( "#logoutBtn" ).button({
+                        icons: {
+                            primary: "logout"
+                        },
+                        text: false
+                    });
+             $( "#mapBtn" ).button({
+                        icons: {
+                            primary: "map"
+                        },
+                        text: false
+                    });                   
+                    
+
+            $( "#mapBtn" ).click(function() {
+               
+                $( "#map_container" ).dialog( "open" );
+                drawPartyMap();
+                return false;
+            });   
+                                
+            $( "#logoutBtn" ).click(function() {
+                logoutUser();
+                return false;
+            });                                                           
+            $( "#refreshBtn" ).click(function() {
+               getCurrentCoords(function(result)
+                {
+                         coords = result;                    
+                         var html = 'Coordinates refreshed!  For best results, use on a mobile device with GPS enabled!';
+                         $("#gpsCoordsInfo").html(html);
+                         $( "#gpsInfo" ).dialog( "open" );
+                    
+                });
+                return false;
+            });
+
+             getCurrentCoords(function(result) {
+                 coords = result; 
+                  initialize();  
+               
+                  plotPoint(coords.lat, coords.lng, 'you are here','none');            
+             });              
+                                
+      });
+
+       function initialize() 
+        {      
+             geocoder = new google.maps.Geocoder();
+             gDir = new google.maps.DirectionsService();  
+ 
+                    var latlng = new google.maps.LatLng(coords.lat, coords.lng);
+                    var myOptions = {
+                      zoom: 10,
+                      center: latlng,
+                      mapTypeId: google.maps.MapTypeId.ROADMAP
+                    };
+                   map = new google.maps.Map(document.getElementById("map_canvas"),  myOptions);                         
+        }       
+        
+        function registerUser()
+        {
+            if($("#form").valid())
+            {
+                $('#submit').attr('disabled', 'disabled');
+                var str = $("#form").serialize();
+               
+                partyForce.registerUser( str , function(result, event)
+                {                
+                    if (event.status) 
+                    {
+                        
+                        if(result.success == 'true' || result.success == true)
+                        {
+                            $('#statusDiv').html('Your account has been created. You should receive a confirmation email shortly');
+                        }
+                        else
+                        {
+                             $('#statusDiv').html('Looks like there was a problem creating your account.' + result.data);
+                        }
+                        $('#submit').attr('disabled', null);
+                    } 
+    
+                }, {escape:true}); 
+            }           
+        }
+
+        function rsvpEvent(eventId, userId, status)
+        {
+            partyForce.createInvite( eventId, userId, status, function(result, event)
+            {                
+                if (event.status) 
+                {
+                   
+                    if(result.success == 'true' || result.success == true)
+                    {
+                        if(status == 'Invited')
+                        {
+                            $('#rsvpResultInfo').html('You have invited this user to this event. They will receive an invite in their email shortly');
+                        }
+                        else
+                        {
+                            $('#rsvpResultInfo').html('You have registered for this event!');
+                        }
+                    }
+                    else
+                    {
+                        $('#rsvpResultInfo').html('We were not able to register this user for this event.' + result.data);
+                    }
+                    $( "#rsvpResult" ).dialog( "open" );
+                } 
+
+            }, {escape:true}); 
+        }  
+          
+        function loginUser()
+        {
+            if($("#loginForm").valid())
+            {
+                $('#loginSubmit').attr('disabled', 'disabled');
+                var str = $("#loginForm").serialize();
+                
+                partyForce.loginUser( str , function(result, event)
+                {                
+                    if (event.status) 
+                    {
+                        if(result.success == 'true' || result.success == true)
+                        {
+                            $('#loginDiv').dialog('close');
+                            $('#favesBtn').fadeIn();
+                            $('#createBtn').fadeIn(); 
+                            $('#loginStatusDiv').html('Login was successful');
+                            var jsonData = JSON.stringify(result.sObjects[0]);
+                            
+                            $.cookie('partyForceUser', jsonData, { expires: 7 });
+                            userData = jQuery.parseJSON($.cookie('partyForceUser'));
+                            setTwitterImage(result.sObjects[0].Twitter_Name__c);
+                            $('#loginBtn').hide();
+                            $('#logoutBtn').show();
+                            $('#twitPicImg').show();
+                        }
+                        else
+                        {
+                             $('#loginStatusDiv').html('Looks like there was a problem logging you in.' + result.data);
+                        }
+                        $('#loginSubmit').attr('disabled', null);
+                    } 
+    
+                }, {escape:true}); 
+            }           
+        }
+        
+        function logoutUser()
+        {
+            $('#loginBtn').show();
+            $('#logoutBtn').hide();  
+            $('#favesBtn').fadeOut();
+            $('#createBtn').fadeOut();      
+            setTwitterImage('null');
+            $('#twitPicImg').hide();
+            $.cookie('partyForceUser', null);
+            userData = new Object();
+            loadPage('partyForceHome');
+            
+        }
+        
+        
+        function registerNewEvent()
+        {
+           
+            if($("#form").valid())
+            {
+                $('#submit').attr('disabled', 'disabled');
+                var str = $("form").serialize();
+                
+                partyForce.registerEvent(str , function(result, event)
+                {                
+                    if (event.status) 
+                    {
+                      
+                        if(result.success == 'true' || result.success == true)
+                        {
+                            $('#statusDiv').html('Event created successfully! It has been submitted for approval. If your event is approved you will receive a confirmation email');
+                        }
+                        else
+                        {
+                             $('#statusDiv').html('Looks like there was a problem creating your event.' + result.data);
+                        }
+                        $( "#statusResult" ).dialog('open');
+                        $('#submit').attr('disabled', null);
+                        
+                        
+                    } 
+                    
+    
+                }, {escape:true}); 
+            }           
+        }         
+        
+        function findUsers(userName)
+        {
+            partyForce.findUser(userName, function(result, event){
+               if (event.status) 
+                {              
+                            var html = '<table width="100%" id="searchResultsTable" class="tablesorter"><thead><tr><td></td><th>Twitter Name</th><th>Name</th><th></th></thead>';
+                            for(var i=0; i<result.sObjects.length; i++)
+                            {                              
+                                try
+                                {
+                                    html += '<tr><td><img src="http://api.twitter.com/1/users/profile_image/'+result.sObjects[i].Twitter_Name__c+'"></td><td>'+result.sObjects[i].Twitter_Name__c+'</td><td>'+result.sObjects[i].Name+'</td><td><input type="button" onClick="rsvpEvent(\''+thisEventId+'\',\''+result.sObjects[i].Id+'\',\'Invited\');" value="Invite" /></td></td></tr>';
+                                }
+                                catch(e)
+                                {
+                                    
+                                } 
+                            }                                                                     
+                                                                       
+                            html += '</table>'; 
+                            $('#inviteResultInfo').html(html);         
+     
+                    
+                            $("#searchResultsTable").tablesorter(); 
+                            $(  "input:submit,input:button, button", "#searchResultsTable" ).button(); 
+                            $( "#inviteResult" ).dialog( "option", "height", 300 );
+                            $( "#inviteResult" ).dialog( "option", "width", 330 );
+                                 
+                }            
+            });
+        }
+        
+        function getEventDetails(eventId)
+        {
+                 partyForce.findEvents(eventId , function(result, event)
+                {                
+                    if (event.status) 
+                    {
+                        
+                        var event = result.sObjects[0];
+                        
+                        if(result.success == 'true' || result.success == true)
+                        {
+                          //if this is an invite only event, hide the RSVP button
+                           if(event.Access_Type__c == 'Invite Only')
+                           {
+                               $('#rsvpBtn').hide();
+                           }
+
+                           if(event.CreatedBy__c != userData.Id)
+                           {
+                               $('#inviteBtn').hide();
+                           }
+                            var html;
+                            html = "<span class='title'>"+event.Name+"</span>";
+                            html += "<p>"+event.Description__c+"</p>";
+                            html += "<div class='dataBlock'>";
+                            html += "<ul>";
+                            html +="<li>Start: "+dateFormat(event.Start_Date__c, "dddd, mmmm dS, h:MM TT")+"</li>";
+                            html +="<li>End: "+dateFormat(event.End_Date__c, "dddd, mmmm dS, h:MM TT")+"</li>";
+                            html +="<li>Attendees: "+event.Number_of_Guests__c+"/"+event.Max_Attendees__c+"</li>";
+                            html +="<li>Parking Available: "+translateBoolean(event.Parking_Available__c);+"</li>";
+                            html +="<li>Address: "+event.Address__c+"</li>";
+                            html +="<li>City: "+event.City__c+"</li>";
+                            html +="<li>State: "+event.State__c+"</li>";
+                            html +="<li>Dress Code:  "+event.Dress_Code__c+"</li>";
+                            html +="<li>Bring your own booze:  "+translateBoolean(event.BYOB__c);+"</li>";
+                            html +="<li>Registration Type: <b>" + event.Access_Type__c + "</b></li>";
+                            html +="</ul>";
+                            html += "</div>";
+                            html += "<div class='dataBlock'>";
+                            html += "<img src="+event.Image__c+">";
+                            html += "</div>";
+                            html += "<div style='clear:both'></div>";
+                            
+                            $('#eventData').html(html);
+                            
+                            $('#statusDiv').html('Event created successfully! It has been submitted for approval. If your event is approved you will receive a confirmation email');
+                        }
+                        else
+                        {
+                             $('#statusDiv').html('Looks like there was a problem getting this event data.' + result.data);
+                        }
+                        
+                    } 
+    
+                }, {escape:true});        
+        
+        }
+     
+    function updateRSVP(id, status)
+    {
+       
+                partyForce.updateRSVP(id, status , function(result, event)
+                {                
+                    if (event.status) 
+                    {
+                       
+                    }
+                 }, {escape:true});             
+    }
+        
+    function setTwitterImage(twitterName)
+    {
+  
+        var imgTwitter = document.getElementById("twitPicImg");
+        imgTwitter.src = "http://api.twitter.com/1/users/profile_image/" + twitterName;
+    }
+            
+    jQuery.cookie = function (key, value, options) {
+    
+        // key and at least value given, set cookie...
+        if (arguments.length > 1 && String(value) !== "[object Object]") {
+            options = jQuery.extend({}, options);
+    
+            if (value === null || value === undefined) {
+                options.expires = -1;
+            }
+    
+            if (typeof options.expires === 'number') {
+                var days = options.expires, t = options.expires = new Date();
+                t.setDate(t.getDate() + days);
+            }
+    
+            value = String(value);
+    
+            return (document.cookie = [
+                encodeURIComponent(key), '=',
+                options.raw ? value : encodeURIComponent(value),
+                options.expires ? '; expires=' + options.expires.toUTCString() : '', // use expires attribute, max-age is not supported by IE
+                options.path ? '; path=' + options.path : '',
+                options.domain ? '; domain=' + options.domain : '',
+                options.secure ? '; secure' : ''
+            ].join(''));
+        }
+    
+        // key and possibly options given, get cookie...
+        options = value || {};
+        var result, decode = options.raw ? function (s) { return s; } : decodeURIComponent;
+        return (result = new RegExp('(?:^|; )' + encodeURIComponent(key) + '=([^;]*)').exec(document.cookie)) ? decode(result[1]) : null;
+    };      
+    </script>
+    
+   
+</apex:component>

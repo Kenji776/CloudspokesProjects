@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="jquery.signaturepad.css">
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+
+<script src="jquery.signaturepad.js"></script> 
+
+<script>
+    //sforce.connection.sessionId = '{!$Api.Session_ID}';
+
+    $(document).ready(function() {
+        //instantiate signature pad
+        $('.sigPad').signaturePad({
+                defaultAction: 'drawIt',
+                lineTop: 145,
+                lineWidth: 2,
+                errorClass: 'sigError',
+				validateFields : false
+        });
+		
+		$('#PrintedName').keyup(function(){
+		
+			if($(this).val().length > 2)
+			{
+				$('#getSignature').removeAttr('disabled');
+			}
+			else
+			{
+				$('#getSignature').attr('disabled','disabled');
+			}
+		});
+
+        window.onload = function () {
+            document.body.onresize = function () {
+               var canvasNode = document.getElementById('sigPadCanvas');
+               canvasNode.width = canvasNode.parentNode.clientWidth;
+               canvasNode.height = canvasNode.parentNode.clientHeight;
+            }
+            document.body.onresize();
+        };
+
+        $('#clear').click();
+        
+        //get signature pad data on button click
+        $('#getSignature').click(function(event){
+            try
+            {
+                event.preventDefault();
+                var api = $('.sigPad').signaturePad();
+                var sig = api.getSignatureImage();
+                
+                var attachment = new Object();
+                attachment.Body = sig.split(',')[1];
+                attachment.ParentId = '{!parentRecordId}';
+                attachment.Name = 'Authorized Signature For ' + $('#PrintedName').val()+'.png';
+                saveAttachment(attachment);                   
+            }
+            catch(ex)
+            {
+                $('#sigError').html(ex.message);
+            }
+        });   
+        
+    });
+    
+    function saveAttachment(attachmentData)
+    {
+        
+        try
+        {
+            $('#sigSuccess').html(null);
+            $('#sigError').html(null);
+            
+            var attachment = new sforce.SObject("Attachment");
+              for(key in attachmentData)
+              {
+                  attachment[key] = attachmentData[key];
+              }
+              var result = sforce.connection.create([attachment]);
+                        
+              if (result[0].getBoolean("success")) 
+              {
+                console.log(result[0]);
+                $('#sigSuccess').html('Signature Captured!');  
+                $('#clear').click();
+              } 
+              else 
+              {
+                throw result[0]
+              }    
+        }
+        catch(ex)
+        {
+            console.log(ex);
+            $('#sigError').html(ex.message);
+        }
+    }
+    
+    
+
+  </script> 
+
+
+
+    <form method="post" action="" class="sigPad">
+    	<label for="PrintedName">Printed Name</label>
+        <input type="text" id="PrintedName" maxlength="50" /> <br/>
+        <div class="sigWrapper">
+            <canvas class="pad" id="sigPadCanvas"></canvas>
+            <input type="hidden" name="output" class="output" />
+        </div>
+        <button id="clear" class="btn clearButton">Clear</button>
+        <button id="getSignature" class="btn" disabled="disabled">I accept the terms of this agreement</button>
+        <div style="clear:both"></div>
+        <div class="sigError" id="sigError"></div><div class="sigSuccess" id="sigSuccess"></div>
+    </form>

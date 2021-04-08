@@ -1,0 +1,55 @@
+public with sharing class chatterContentController 
+{
+	//Delcair some variables
+    public string jsonData{get;set;}
+    public string callBack{get;set;}
+    
+    public void createJson()
+    {
+    	//Create a map of the URL paramaters
+        Map<string,string> params = ApexPages.currentPage().getParameters();
+        
+        //Figure out what our callback function is, so we can call it.
+        callBack = params.get('callBack'); 
+        
+        //For my example I want to print out the timestamp
+        DateTime rightNow = System.now();
+        String content = '';
+        
+        //What are we going to print back to the user?        
+        content += '<h2><img width=150 height=150 src=http://cdn1.knowyourmeme.com/i/000/095/218/original/feels-good-man.jpg?1295998969>'+rightNow+'</h2>';
+
+		//If a userId was passed in, then we should figure out which user that belongs to
+        if(params.get('userId') != null)
+        {
+        	//Run a query to find this users name
+        	list<user> thisUser = [select firstname, lastname from user where id = :params.get('userId')];
+        	if(thisUser.size() > 0)
+        	{
+        		content += 'This is the chatter page for '+thisUser[0].firstName + ' ' +thisUser[0].lastName + '<br />';
+        	}
+        	else
+        	{
+        		content += 'Could not find user for requested Id.';
+        	}
+        }
+        else
+        {
+        	content += 'No Id specified. User is viewing their own page';
+        }
+        
+        //Finish creating the json String        
+        jsonData = '{"content": "'+content+'"}';
+        
+        //Wrap the json string in a javascript style function call with the name of the callback as the function name
+        jsonData = callBack + '(' + jsonData + ')';
+        
+    }
+    
+    public string getResult()
+    {
+    	//Actually print the created data
+        return jsonData;
+    }
+    
+}

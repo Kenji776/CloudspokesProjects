@@ -1,0 +1,9 @@
+{"REFRESH":10.0,
+"ADS":[
+	"ads\/ad0.gif",
+	"ads\/ad1.gif",
+	"ads\/ad2.gif",
+	"ads\/ad3.gif",
+	"ads\/ad4.gif"
+      ]
+} 

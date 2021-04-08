@@ -1,0 +1,64 @@
+<apex:page showHeader="false"  sidebar="false" title="partyForce" standardStylesheets="false">
+     
+     <div id="eventData">
+      
+         
+        
+     </div>
+     <center>
+         <button onClick="rsvpEvent('{!$CurrentPage.Parameters.id}', userData.Id, 'Attending');" id="rsvpBtn">RSVP To This Event</button>
+         <button id="inviteBtn">Invite someone</button>
+     </center>
+     
+     <div id="rsvpResult" title="RSVP Result">
+         <div id="rsvpResultInfo"></div>
+     </div>
+
+     <div id="inviteResult" title="Invite a user">
+         <form id="form" onkeypress="if(event.keyCode == 13){findUsers($('#userName').val());} return event.keyCode != 13;">
+             <ul>
+                 <li>Full Name, Email or Twitter Id</li>
+                 <li><input name="userName" id="userName" class="required" /></li>
+                 <li><input type="button" name="inviteUser" value="Invite" onClick='findUsers($("#userName").val())' /></li>
+             </ul>
+         </form>
+         <div id="inviteResultInfo"  style="width:300px; overflow:auto"></div>
+     </div>
+          
+     <div id="attendeeResults">
+     
+     </div>
+     <script>
+        var thisEventId = '{!$CurrentPage.Parameters.id}';
+        if('Id' in userData)
+        {     
+            $( "#rsvpResult" ).dialog({
+                autoOpen: false,
+                show: "blind",
+                hide: "explode"
+               
+            }); 
+ 
+            $( "#inviteResult" ).dialog({
+                autoOpen: false,
+                show: "blind",
+                hide: "explode",
+                width:315,
+            }); 
+
+            $( "#inviteBtn" ).click(function() { 
+                $( "#inviteResult" ).dialog( "open" );
+                return false;
+            });   
+                                            
+             getEventDetails(thisEventId);
+             
+             getEventAttendees(thisEventId);
+        }
+        else
+        {
+            loadPage('partyForce/partyForceNotAuthed');
+        }             
+     </script>
+ 
+</apex:page>

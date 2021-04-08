@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>A record of an up or down vote</description>
+    <enableActivities>false</enableActivities>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <fields>
+        <fullName>CloudVote_Proposal__c</fullName>
+        <description>Which idea is this vote related to?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Which idea is this vote related to?</inlineHelpText>
+        <label>Proposal</label>
+        <referenceTo>CloudVote_Proposal__c</referenceTo>
+        <relationshipLabel>Votes</relationshipLabel>
+        <relationshipName>Votes</relationshipName>
+        <relationshipOrder>0</relationshipOrder>
+        <type>MasterDetail</type>
+        <writeRequiresMasterRead>false</writeRequiresMasterRead>
+    </fields>
+    <fields>
+        <fullName>Contact__c</fullName>
+        <description>To whom does this vote belong?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>To whom does this vote belong?</inlineHelpText>
+        <label>Contact</label>
+        <referenceTo>Contact</referenceTo>
+        <relationshipLabel>CloudVote Votes</relationshipLabel>
+        <relationshipName>Votes</relationshipName>
+        <required>false</required>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Score__c</fullName>
+        <description>The score of this vote to be used in the rollup for the idea</description>
+        <externalId>false</externalId>
+        <formula>IF(ISPICKVAL(Vote__c, &apos;Promote&apos;),  CloudVote_Proposal__r.CloudVote_Category__r.CloudVote_Config__r.Positive_Vote_Score__c   ,  CloudVote_Proposal__r.CloudVote_Category__r.CloudVote_Config__r.Negative_Vote_Score__c )</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <inlineHelpText>The score of this vote to be used in the rollup for the idea</inlineHelpText>
+        <label>Score</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Vote__c</fullName>
+        <description>Is this an up or down vote?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Is this an up or down vote?</inlineHelpText>
+        <label>Vote</label>
+        <picklist>
+            <picklistValues>
+                <fullName>Promote</fullName>
+                <default>true</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Demote</fullName>
+                <default>false</default>
+            </picklistValues>
+            <sorted>false</sorted>
+        </picklist>
+        <type>Picklist</type>
+    </fields>
+    <fields>
+        <fullName>unique_vote_id__c</fullName>
+        <caseSensitive>true</caseSensitive>
+        <description>unique vote id</description>
+        <externalId>false</externalId>
+        <inlineHelpText>unique vote id</inlineHelpText>
+        <label>unique_vote_id</label>
+        <length>50</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>true</unique>
+    </fields>
+    <label>CloudVote Vote</label>
+    <listViews>
+        <fullName>All</fullName>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <displayFormat>CV-{0000000}</displayFormat>
+        <label>CloudVote Vote Name</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>CloudVote Votes</pluralLabel>
+    <searchLayouts/>
+    <sharingModel>ControlledByParent</sharingModel>
+</CustomObject>

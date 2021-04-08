@@ -1,0 +1,4 @@
+Package Name	Multiuploader - failed
+Version Number	1.0
+Version Name	Fail version
+https://login.salesforce.com/packaging/installPackage.apexp?p0=04tE0000000PcU8

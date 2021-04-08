@@ -1,0 +1,163 @@
+/*
+Knowledge controller
+Author: Kenji776 (Daniel Llewellyn)
+Description: Provides back end logic functionality for the knowledge visualforce application
+Date: 10/21/2012
+
+*/
+
+public class knowledge 
+{
+
+    //properties for visualforce pages that handle exports
+    public String CSV;
+    public string PDF;
+    
+    //get CSV content from posted data
+    public string getCSV()
+    {
+        return ApexPages.currentPage().getParameters().get('CSVContentTextArea');
+    }
+    
+    //get table data to create PDF from posted data
+    public string getPDF()
+    {
+        return ApexPages.currentPage().getParameters().get('PDFContentTextArea');
+    }    
+    
+    //gets all the fields and some related data for a given object.
+    @remoteAction 
+    public static map<string,map<string,string>> getObjectFields(string objectType)
+    {
+        //map of data to return about fields
+        map<string,map<string,string>> fields = new map<string,map<string,string>>();
+
+        //describe the object. get map of fields
+        Map<String, Schema.SObjectField> objectFields = Schema.getGlobalDescribe().get(objectType).getDescribe().fields.getMap();
+   
+        //iterate over returned field data
+        for(String s : objectFields.keySet()) 
+        {
+        
+            //get the fields data and create an entry in the list
+           Schema.DescribeFieldResult fieldDescribe =  objectFields.get(s).getDescribe();
+           map<string,string> fieldData = new map<string,string>();
+           
+           //field data points
+           try{
+           fieldData.put('type',string.valueOf(fieldDescribe .getType()));
+           fieldData.put('label',fieldDescribe .getLabel());
+           fieldData.put('isCustom',string.valueOf(fieldDescribe.isCustom()));
+           fieldData.put('soapType',string.valueOf(fieldDescribe.getSOAPType()));
+           }
+           catch(exception e)
+           {
+           }
+           fields.put(fieldDescribe.getName(),fieldData);
+        }      
+        return fields;    
+    }
+    
+    
+    //find all the various article types that are defined in the org. Since the types are actually
+    //sepearate sobjects we do a global describe and look for anything with kav in the name.
+    @remoteAction
+    public static map<string,string> getArticleTypes()
+    {
+        map<string,string> categories = new  map<string,string>();
+        //global describe
+        Map<String, Schema.SObjectType> gd = Schema.getGlobalDescribe(); 
+        
+        //iterate over all sobjects
+        for(string obj : gd.keyset())
+        {
+            //if the last 3 chars of the name of the object are kav, we know its a knowledge article version object type
+            if(obj.substring(obj.length()-3,obj.length()) == 'kav')
+            {
+                //add this category to the list
+                categories.put(obj,obj.substring(0,obj.length()-3).replace('_', ' '));
+            }
+        }
+        return categories;
+    }
+    
+    //along with the types there are data categories. This is a poorly concocted half thought out peice of shit schema setup
+    //that makes things way harder than it needs to be. Anyway, we need to describe all the category groups that are valid for 
+    //the knowledge article version object and return them.
+    
+    @remoteAction
+    public static map<string,string> getKnowledgeCategories()
+    {
+        map<string,string> categories= new map<string,string>();
+        list<string> objects = new list<string>();
+        objects.add('KnowledgeArticleVersion');
+        
+        //describe the categories for this object type (knowledgeArticleVersion)
+        List<Schema.DescribeDataCategoryGroupResult> describeCategoryResult =  Schema.describeDataCategoryGroups(objects);
+        
+        //add the found categories to the list.
+        for(Schema.DescribeDataCategoryGroupResult s : describeCategoryResult)
+        {
+            categories.put(s.getLabel(),s.getName());
+        }
+        return categories;
+    }
+    
+    //each category can have sub categories. We need to find all the sub categories of the main category so we can filter 
+    //against that as well. So here we take a category and find all the sub categories for it.
+    @remoteAction
+    public static map<string,string> getCategoryOptions(string category)
+    {
+        map<string,string> categoryItems = new map<string,string>();
+        list<Schema.DataCategoryGroupSObjectTypePair> pairs = new list<Schema.DataCategoryGroupSObjectTypePair>();
+        Schema.DataCategoryGroupSObjectTypePair thisPair = new Schema.DataCategoryGroupSObjectTypePair();
+        thisPair.sObject = 'knowledgeArticleVersion';
+        thisPair.dataCategoryGroupName = category;
+        pairs.add(thisPair);
+        list<Schema.DescribeDataCategoryGroupStructureResult> results = Schema.describeDataCategoryGroupStructures(pairs,false);
+        
+        for(Schema.DataCategory thisCategory : results[0].getTopCategories()[0].getChildCategories())
+        {
+            categoryItems.put(thisCategory.name,thisCategory.label);
+        }
+        return categoryItems;
+    }
+    
+    //simple method for finding all articles that match a given query. all the hard shit was done above in finding categories and so on.
+    @remoteAction 
+    public static list<knowledgeArticleVersion> getArticles(string fieldList, string filterString)
+    {
+        string query = 'select ' + fieldList + ' from knowledgeArticleVersion ' + filterString;
+        return database.query(query);
+    }
+    
+    @remoteAction
+    public static list<sObject> getArticleDataCategories(Id articleType, string articleId)
+    {
+        string queryString = 'SELECT Id,toLabel(DataCategoryName), DataCategoryGroupName FROM '+articleType+'__DataCategorySelection WHERE ParentId=\''+articleId+'\'';
+        return database.query(queryString);
+    }
+     
+    @isTest
+    public static void testKnowledge()
+    {
+        Knowledge kc = new Knowledge();
+        
+        string csv = kc.getcsv();
+        string pdf = kc.getpdf();
+        
+        map<string,map<string,string>> knowledgeArticleFields = getObjectFields('contact');
+        
+        map<string,string> articleTypes = getArticleTypes();
+        
+        map<string,string> topLeveLCategories = getKnowledgeCategories();
+        
+        for(string category : topLeveLCategories.keySet())
+        {
+            map<string,string> categoryOptions = getCategoryOptions(topLeveLCategories.get(category));
+        }
+        
+        list<knowledgeArticleVersion> articles = getArticles('id, title','where PublishStatus=\'Online\' and Language = \'en_US\'' );
+        
+    }
+}

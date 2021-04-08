@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customSettingsType>Hierarchy</customSettingsType>
+    <customSettingsVisibility>Public</customSettingsVisibility>
+    <enableFeeds>false</enableFeeds>
+    <fields>
+        <fullName>Height__c</fullName>
+        <description>Height in pixels. If none specified full image size is used.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Height in pixels. If none specified full image size is used.</inlineHelpText>
+        <label>Height</label>
+        <precision>3</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Organization_Logo_Image__c</fullName>
+        <description>Url of the image to use for the logo in the Sign Here Application</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Url of the image to use for the logo in the Sign Here Application</inlineHelpText>
+        <label>Organization Logo Image</label>
+        <required>false</required>
+        <type>Url</type>
+    </fields>
+    <fields>
+        <fullName>Primary_Contact_Role__c</fullName>
+        <defaultValue>&apos;Primary&apos;</defaultValue>
+        <description>The role type for the primary contact</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The role type for the primary contact</inlineHelpText>
+        <label>Primary Contact Role</label>
+        <length>50</length>
+        <required>true</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Width__c</fullName>
+        <description>Width in pixels. If none specified full image size is used.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Width in pixels. If none specified full image size is used.</inlineHelpText>
+        <label>Width</label>
+        <precision>3</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <label>Sign Here Settings</label>
+</CustomObject>

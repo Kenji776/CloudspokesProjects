@@ -1,0 +1,1008 @@
+<apex:page standardStylesheets="false" showHeader="false" sidebar="false" controller="clicked_controller"  cache="true">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.0.1/jquery.mobile-1.0.1.min.css" />
+    <script src="http://code.jquery.com/jquery-1.6.4.min.js"></script>
+    <script src="http://code.jquery.com/mobile/1.0.1/jquery.mobile-1.0.1.min.js"></script>
+    <script src="http://maps.googleapis.com/maps/api/js?sensor=true&libraries=geometry" type="text/javascript"></script>
+   <link rel="stylesheet" href="{!URLFOR($Resource.clicked, 'styles.css')}"  />
+   <script src="{!URLFOR($Resource.clicked, 'plugins.js')}" ></script>
+
+    <script type="text/javascript">
+        //********** GLOBAL VARIABLES *****************//
+        
+        //holds the default search radius. Defaults to 20 miles.
+        var defaultSearchRadiusMeters = 32186;
+        
+        //map icons
+        var maleMarker = "{!URLFOR($Resource.clicked, 'male-2.png')}";
+        var femaleMarker = "{!URLFOR($Resource.clicked, 'female-2.png')}";
+        
+        var searchRadiusColor = '#6699FF';
+        
+        //variables for the birthdate date picker.
+        var startYear = 1940;
+        var minAge = 16;
+        var maxAge = 80;
+        
+        //holds date for the logged in user
+var memberData = new Object();
+
+//holds the whole list of all potential matching members
+var allUsers = new Object();
+
+//holds the list of current visiable members
+var activeUsers = new Object();
+
+//list of google maps markers. Keyed by the salesforce Id of the member they belong to.
+var markers = new Object();
+
+//list of google info windows that are tied to markers. Keyed by the salesforce Id of the member they belong to.
+var infoWindows = new Object();
+
+//holds the geocoder object for google maps for performing geocoding services.
+var geocoder;
+
+//holds the currently active google map and its associated properties.
+var map;
+
+//holds the id of the currently active memebe record (salesforce record id)
+var activeMarker = null;
+
+//holds the google maps circle object that represents the currently active search radius.
+var searchRadius;
+
+//date picker variables.      
+var today = new Date();
+var currentYear = today.getFullYear();
+        
+//********** PAGE INIT FUNCTIONS *****************//
+$(document).ready(function ()
+{
+    //set the content of the header and footer bars on the pages.
+    $(".foot").html(" <div id='responseErrors' class='responseErrors errorMessage'></div><div><nav data-role='navbar'><ul ><li><a href='#home' data-role='button' data-icon='home'>Search</a></li><li><a href='#profile' data-role='button' data-icon='lock' >Profile</a></li></ul></nav></div>")
+    $(".titleBar").html('<div class="clickedBanner" /><h1 class="greetingPrompt">Hello Guest</h1><div data-role="controlgroup" id="headerButtons" data-type="horizontal" style="text-align: right;"><a href="#register" id="regButton" class="regButton" data-role="button" data-inline="true" data-theme="b" data-rel="dialog" > Register </a><a href="#login" data-role="button" id="loginButton" class="loginButton" data-inline="true" data-theme="b" data-rel="dialog" >Login </a> <a href="#logout"  data-role="button" id="logoutButton" class="logoutButton" style="display:none;" data-inline="true" data-theme="b" data-rel="dialog">Logout </a></div>');
+    $("#" + $.mobile.activePage.attr('id')).page("destroy").page();
+    
+    //until the user is logged in, the foote bar should be hidden.
+    $('.ui-navbar').hide();
+    
+    //if they just loaded the app and are at any page besides the intro, flip the back to the intro. 
+    //non logged users arn't allowed to see any other content, and they can't be logged in immediatly on page load.
+    if ($.mobile.activePage.attr('id') != 'intro')
+    {
+        $.mobile.changePage("#intro", {
+            transition: "slideup"
+        });
+    }
+    
+    //register some event handlers.
+    $('#authButton').click(function()
+    {
+        loginUser();
+    });
+    $('#registerButton').click(function()
+    {
+        registerUser();
+    });
+    $('.logoutButton').click(function()
+    {
+        logoutUser();
+    });
+    $('#updateButton').click(function()
+    {
+        //find all the fields that are updatable from the memberData object
+        //(since this was originally a member record retreived from SF
+        for (key in memberData)
+        {
+            //attempt to find a form value with the same name in the profile update form.
+            //if we find a match, set the value of the key in the memberData struct as what we found in the form.
+            var dataVal = $("#profileUpdateForm #" + key.toLowerCase()).val();
+            if (dataVal != null)
+            {
+                memberData[key] = dataVal;
+            }
+        }
+        updateUser(function (data)
+        {
+            $('#updateResult').html(data.message);
+        });
+    });
+    
+    //test to see if this browser supports the fileReader part of the HTML5 fileAPI. show the corresponding failure message, or 
+    //the upload form. If showing the upload form, create an event listener on the file upload so when a file is picked, it uploads.
+    if (typeof (FileReader) == "undefined")
+    {
+        $('#noUploadMessage').show();
+        $('#photoUpload').hide();
+    }
+    else
+    {
+        $('#noUploadMessage').hide();
+        $('#photoUpload').show();
+        var fileSelect = document.getElementById("fileSelect");
+        var fileElem = document.getElementById("files");
+        fileSelect.addEventListener("click", function (e)
+        {
+            fileElem.click();
+            e.preventDefault(); // prevent navigation to "#"
+        }, false);
+    }
+    
+    //populate the birthdate chooser fields. It feels like there must be a better way. Alas...
+    var yearsArray = [];
+    for (var i = startYear; i < currentYear - minAge; i++)
+    {
+        yearsArray.push('<option value="' + i + '">' + i + '</option>');
+    }
+    $('#birthYear').html(yearsArray.join(''));
+    
+    var agesArray = [];
+    for(var i = minAge; i <= maxAge; i++)
+    {
+        agesArray.push('<option value="' + i + '">' + i + '</option>');
+    }
+     $('#filter_minAge').html(agesArray.join(''));
+     $('#filter_maxAge').html(agesArray.join(''));
+
+    $('#filter_maxAge').val(maxAge);
+    
+    //enforce validations on the registration form.
+    $("#registerForm").validate();
+    
+    //try and get the users data from the stored cookie if they
+    //have been here before. If so, log them in. If not, dont do anything.
+    var userData = getLoginCookie();
+    if (userData != null)
+    {
+        memberData = userData;
+        $('#login_name').val(userData.Name);
+        $('#login_password__c').val(userData.Password__c);
+        loginUser();
+    }
+    
+    //initiliaze the google map.
+    initialize();
+});
+
+//register some events for when the home page is created by the jQuery mobile framework.
+$('#home').live("pagecreate", function ()
+{
+    getActiveUsers(function(result)
+    {
+        if (result.success)
+        {
+            //add every fetched user to the all users list and then call the filtering
+            //to only display relevant records.
+            for (var i = 0; i < result.sObjects.length; i++)
+            {
+                allUsers['_' + result.sObjects[i].Id] = result.sObjects[i];
+            }
+            filterUserList();
+        }
+        else
+        {
+            showAlert(result.data);
+        }       
+    });
+        
+    //attach a handler to the search range slider. when it chanegs, recalculate who is shown on the map
+    //then filter the user list. the circle itself has an onchange handler to cause the refiltering of the user list, so 
+    //we dont need to call it here.
+    $("input#slider").live("change", function()
+    {
+        var miles = $(this).val() * 1609.344;
+        searchRadius.setRadius(miles);
+    });
+    
+    $('.searchFormElement').change(function(){
+        filterUserList();
+    });
+});
+
+$('#home').live("pageshow", function ()
+{
+    //call the resize method because its the best way to make sure the google map renders properly.
+    google.maps.event.trigger(map, 'resize');
+});
+
+//********** GOOGLE MAPPING FUNCTIONS *****************//
+
+//Create and init the google map. 
+function initialize()
+{
+    geocoder = new google.maps.Geocoder();
+    gDir = new google.maps.DirectionsService();
+    var latlng = new google.maps.LatLng(41, -87);
+    var myOptions = {
+        zoom: 4,
+        center: latlng,
+        mapTypeId: google.maps.MapTypeId.ROADMAP
+    };
+    map = new google.maps.Map(document.getElementById("map"), myOptions);
+}
+
+//Removes all markers and info windows from the existing map
+function clearOverlays()
+{
+    for (var marker in markers)
+    {
+        markers[marker].setMap(null);
+    }
+    markers = new Object();
+    s = new Object();
+}
+
+//Adds a point to the map. Creates an associated info window that will be displayed when the map point is clicked.
+function plotPoint(addressData)
+{
+    //create a new google map marker
+    marker = new google.maps.Marker(
+    {
+        position: new google.maps.LatLng(addressData.lat, addressData.lng),
+        map: map,
+        title: '_'+addressData.sfid,
+        animation: google.maps.Animation.DROP,
+        icon: addressData.icon
+    });
+    
+    //add it to the markers objected, keyed by the id of the member record it belongs to
+    markers['_' + addressData.sfid] = marker;
+    
+    //add marker to the the map
+    marker.setMap(map);
+
+    //create the info window and 
+    var infoWindowContent = '<div class="infoWindowContainer"><center><b>' + addressData.title + '</b></center>';
+    
+    if (addressData.sfid != null)
+    {
+        infoWindowContent += '<div id="profilePhoto_'+addressData.sfid+'" class="infoWindowProfilePicture">Profile Photo Loading</div>';
+        
+        if (activeUsers['_' + addressData.sfid].Bio__c != null)
+        {
+            var decoded = $("<div/>").html(activeUsers['_' + addressData.sfid].Bio__c).text();
+            infoWindowContent += decoded;
+        }
+        else
+        {
+            infoWindowContent += 'No bio available<br />';
+        }
+    }
+    infoWindowContent += '</div>';
+    var infoWindow = createInfoWindow(infoWindowContent);
+    infoWindows['_' + addressData.sfid] = infoWindow;
+    
+        
+    google.maps.event.addListener(marker, 'click', (function (marker)
+    {
+        return function ()
+        {
+            setActiveMarker(marker.title);
+        }
+    })(marker));
+}
+
+
+//creates a google maps info window object with the provided conent. and returns it. Does not attach it to the map.
+function createInfoWindow(content)
+{
+    var infowindow = new google.maps.InfoWindow(
+    {
+        content: content,
+        size: new google.maps.Size(50, 50)
+    });
+    return infowindow
+}
+
+function drawSearchRadius()
+{
+    getCurrentCoords(function (data)
+    {
+        memberData.latitude__c = data.coords.latitude;
+        memberData.longitude__c = data.coords.longitude;        
+
+        setMapCenter(data.coords.latitude, data.coords.longitude);
+        setMapZoom(10);
+    
+        //create search radius circle
+        searchRadius = new google.maps.Circle(
+        {
+            map: map,
+            radius: defaultSearchRadiusMeters,
+            fillColor: searchRadiusColor,
+            editable: false,
+            strokeWeight: 1,
+            center: new google.maps.LatLng(data.coords.latitude, data.coords.longitude)
+        });
+                
+        searchRadius.setMap(map);
+
+        google.maps.event.addListener(searchRadius, 'radius_changed', (function (searchRadius)
+        {
+            return function ()
+            {
+                filterUserList();
+            }
+        })(searchRadius));
+    });
+}
+
+//using google maps take a latitude and longitude and calculate the closes address, provide it to the callback function.
+function reverseGeoCode(lat, lng, callback)
+{
+    var latlng = new google.maps.LatLng(lat, lng);
+    geocoder.geocode(
+    {
+        'latLng': latlng
+    }, function (results, status)
+    {
+        if (status == google.maps.GeocoderStatus.OK)
+        {
+            if (results[1])
+            {
+                callback(results[1].formatted_address);
+            }
+        }
+        else
+        {
+            callback("Geocoder failed due to: " + status)
+        }
+    });
+}
+
+//sets the map center a provided latitude and longitude
+function setMapCenter(lat, lng)
+{
+    var point = new google.maps.LatLng(lat, lng);
+    map.setCenter(point);
+}
+
+//sets the zoomlevel of the map 1 -20
+function setMapZoom(zoomLevel)
+{
+    map.setZoom(zoomLevel);
+}
+
+function getDistance(srcLat, srcLng, dstLat, dstLng)
+{
+    var distance = Math.round(google.maps.geometry.spherical.computeDistanceBetween(new google.maps.LatLng(srcLat, srcLng), new google.maps.LatLng(dstLat, dstLng)) / 1609.344);
+    return distance;
+}
+
+
+//********** APEX REMOTING CALLS *****************//
+
+//serializes the register form and sends it to the remote method to creaet a member record.
+function registerUser()
+{
+    //make sure the form is valid
+    if (!$('#registerForm').valid())
+    {
+        return false;
+    }
+    
+    //show the loading message
+    $.mobile.showPageLoadingMsg();
+    
+    //serialze the form data
+    var formData = encodeURI($('#registerForm').serialize());
+ 
+    clicked_controller.registerUser(formData, function (result, event)
+    {
+        if (event.status)
+        {
+            if (result.success)
+            {
+                $('#registerResult').html(null);
+                $('#register').dialog('close');
+                setLoginCookie(result.sObjects[0]);
+                
+                getLoginCookie();
+                loginUser();
+            }
+            else
+            {
+                $('#registerResult').html(result.data);
+            }
+        }
+        else
+        {
+            $('#registerResult').html('Error Registering account');
+        }
+        $.mobile.hidePageLoadingMsg();
+    }, {
+        escape: true
+    });
+}
+
+//attempts to log in a user. If successul the login cookie is set, the 
+//memberData object is populaetd, the profile update form gets populated, and
+//the user interface is updated to reflect the login.
+function loginUser()
+{
+    $.mobile.showPageLoadingMsg();
+    var formData = $('#loginForm').serialize();
+    clicked_controller.loginUser(formData, function (result, event)
+    {
+        if (event.status)
+        {
+            if (result.success)
+            {
+                
+                memberData = result.sObjects[0];
+                
+                console.log(memberData);
+                
+                setLoginCookie(memberData);
+                $('#loginResult').html(null);
+                //set the data in the profile update form.
+                getCurrentCoords(function (data)
+                {
+                    memberData.Latitude__c = data.coords.latitude.toString();
+                    memberData.Longitude__c = data.coords.longitude.toString();                 
+                    drawSearchRadius();
+                    updateUser(function (data){});
+                });
+                for (key in memberData)
+                {
+                    $("#profileUpdateForm #" + key.toLowerCase()).val($("<div/>").html(memberData[key]).text());
+                }
+                $('.greetingPrompt').html('Hello ' + memberData.Name);
+                $('.regButton').hide();
+                $('.loginButton').hide();
+                $('.logoutButton').show();
+                $('.ui-navbar').show();
+                try
+                {
+                    $('#login').dialog('close');
+                }
+                catch (exception)
+                {
+                    //just means login box couldn't close because it hadn't init yet. No biggie.
+                }
+            }
+            else
+            {
+                $('#loginResult').html(result.data);
+            }
+        }
+        else
+        {
+            $('#loginResult').html('Error logging in');
+        }
+        $.mobile.hidePageLoadingMsg();
+    }, {
+        escape: true
+    });
+}
+
+//updates a user record with the data from the user profile form. returns the update result to the provided callback function.
+function updateUser(callback)
+{
+    var data = encodeURIComponent($.param( memberData ));
+    console.log(data);
+    
+    clicked_controller.updateUser(data, function (result, event)
+    {
+        if (event.status)
+        {
+            callback(result);
+        }
+    }, {
+        escape: true
+    });
+}
+
+//places a call using Twilio to the provided userid.
+function placeCall(calledId)
+{
+    $.mobile.showPageLoadingMsg();
+    clicked_controller.placeCall(memberData.Id, calledId, function (result, event)
+    {
+        if (event.status)
+        {
+            if (result.success)
+            {
+                $.mobile.changePage("#callNotice", "pop", false, false);
+            }
+            else
+            {
+                showAlert('Error placing call. ' + result.message);
+            }
+        }
+        else
+        {
+            showAlert('Error placing call. ' + event.message);
+        }
+        $.mobile.hidePageLoadingMsg();
+    }, {
+        escape: true
+    });
+}
+
+//attaches a photo to a member record as an attachment using html5 file API
+//and apex remoting.
+function uploadProfilePhoto(files)
+{
+    for (var i = 0, f; f = files[i]; i++)
+    {
+        try
+        {
+            if (f.size > 4194304)
+            {
+                showAlert('File too large. 4MB maximum limit.');
+                continue;
+            }
+            var reader = new FileReader();
+            showAlert('Setting reader onload');
+            // Closure to capture the file information.
+            reader.onload = (function (theFile)
+            {
+                return function (e)
+                {
+                    clicked_controller.UploadFile(e.target.result, theFile.name, memberData.Id, function (result, event)
+                    {
+                        if (event.status)
+                        {
+                            showAlert('Profile Photo Uploaded!');
+                        }
+
+                    }, {
+                        escape: true
+                    });
+                };
+            })(f);
+            reader.readAsDataURL(f);
+        }
+        catch (exception)
+        {
+            showAlert('Error uploading photo: ' + exception);
+        }
+    }
+}
+
+//get a users photo from their member record (the newest attachment) and
+//return it as base64 encoded data to the callback function.
+function getProfilePhoto(userid, callback)
+{
+    clicked_controller.getProfilePicture(userid, function (result, event)
+    {
+        if (!event.status)
+        {
+            showAlert('Error getting profile photo account');
+            
+        }
+        callback(result);
+    }, {
+        escape: true
+    });
+}
+
+//gets a list of all active users in the database. this should really support some kind of filtering, but 
+//it doesnt currently. returns fetche data to the callback functions
+function getActiveUsers(callback)
+{
+    $.mobile.showPageLoadingMsg();
+    clicked_controller.getActiveUsers(function (result, event)
+    {
+        if (event.status)
+        {
+            callback(result);
+        }
+        else
+        {
+            showAlert('Error logging in');
+        }
+                
+        $.mobile.hidePageLoadingMsg();
+    }, {
+        escape: true
+    });
+}
+//********** HELPER FUNCTIONS *****************//
+
+//gets a users stored cookie.
+function getLoginCookie()
+{
+    var userData = $.cookie('clicked');
+    return JSON.parse(userData);
+}
+
+//sets a users cookie to any provided data. Data will be converted to JSON for storage.
+function setLoginCookie(cookieContent)
+{
+    var userData = JSON.stringify(cookieContent, null, 2);
+    $.cookie('clicked', userData);
+    return userData;
+}
+
+function showAlert(message,cssClassName)
+{
+    $('.responseErrors').html(message); 
+}
+
+//sets the active map marker as the one belonging to the provided user id.
+//the active marker will bounce, their list item will expand, and their info window
+//will be displayed. Other info windows will be hidden and other list entries will collaps.
+//the is fired from clicking a users map marker, or from clicking their name in the list.
+function setActiveMarker(userId)
+{
+    $('.userData').slideUp();
+    $('#userData_' + userId).slideDown();
+    if (activeMarker != userId)
+    {
+        if (activeMarker != null)
+        {
+            infoWindows[activeMarker].close();
+            markers[activeMarker].setAnimation(null);
+        }
+        markers[userId].setAnimation(google.maps.Animation.BOUNCE);
+        infoWindows[userId].open(map, markers[userId]);
+        activeMarker = userId;
+        
+        getProfilePhoto(activeUsers[userId].Id, function (photoData)
+        {
+            if(photoData != null)
+            {
+                var profileHtml = '<center><img src=data:image/gif;base64,' + photoData + '  height="190" width=150"/></center>';
+                $('#profilePhoto'+userId).html(profileHtml);
+            }
+            else
+            {
+                $('#profilePhoto'+userId).html('No profile pic available<br />');
+            }
+    
+        }, 
+        {
+            escape: true
+        });
+    }
+}
+
+//using browser geolocation find the users current location and call the callback function 
+//with the data.
+function getCurrentCoords(callback)
+{
+    if (navigator.geolocation)
+    {
+        // timeout at 60000 milliseconds (60 seconds)
+        var options = {
+            timeout: 60000
+        };
+        navigator.geolocation.getCurrentPosition(callback, showAlert, options);
+    }
+    else
+    {
+        alert("Sorry, browser does not support geolocation!");
+    }
+}
+
+//clears a users data and resets the UI back to the unlogged in version.
+function logoutUser()
+{
+    $('.greetingPrompt').html('Hello Guest');
+    $('.regButton').show();
+    $('.loginButton').show();
+    $('.logoutButton').hide();
+    $('.ui-navbar').hide();
+    $('#btn-page a').buttonMarkup();
+    $('.headerButtons').controlgroup();
+    memberData = new Object();
+    $.mobile.changePage("#intro", {
+        transition: "slideup"
+    });
+}
+
+//formates an epoch time string as a nice human date.
+function getDateString(epochString)
+{
+    var thisDate = new Date(epochString);
+    var month = thisDate.getMonth() + 1;
+    var day = thisDate.getDate();
+    var year = thisDate.getFullYear();
+    return month + "/" + day + "/" + year;
+}
+
+//filters the list of users visible on the map by usig the seach radius size set by the user.
+function filterUserList()
+{
+    clearOverlays();
+    google.maps.event.trigger(map, 'resize');
+    var list = $("#contacts");
+    list.empty();
+    activeUsers.length = 0;
+    
+    var minAge = $('#filter_minAge').val();
+    var maxAge = $('#filter_maxAge').val();
+    var showMales = $('#males_filter').is(':checked');
+    var showFemales = $('#females_filter').is(':checked');
+    
+    for (var i in allUsers)
+    {
+        var isMale = true;
+        var isFemale = false;
+        if(allUsers[i].Gender__c.toLowerCase() != 'male')
+        {
+            isMale = false;
+            isFemale = true;
+        }
+        
+        if (searchRadius.getBounds().contains(new google.maps.LatLng(allUsers[i].Latitude__c, allUsers[i].Longitude__c)) && allUsers[i].Age__c >= minAge && allUsers[i].Age__c <= maxAge && (isMale == showMales || isFemale == showFemales))
+        {
+            activeUsers['_' + allUsers[i].Id] = allUsers[i];
+            var listItem = "<li><a accessKey='" + i + "' class='userLink' title='" + allUsers[i].Id + "'>" + allUsers[i].Name + "</a><div class='userData hidden' id='userData_" + i + "'><ul>";
+            listItem += "<li>Age: " + allUsers[i].Age__c + "</li>";
+            listItem += "<li>Gender: " + allUsers[i].Gender__c + "</li>";
+            listItem += "<li><a href='#home' data-role='button' data-icon='home' class='callButtons' onClick=placeCall(\'" + allUsers[i].Id + "\')>Call</a></li>";
+            listItem += "<li>Distance: About " + getDistance(memberData.latitude__c, memberData.longitude__c, allUsers[i].Latitude__c, allUsers[i].Longitude__c) + " Miles</li>";
+            listItem += "</ul></div></li>";
+            list.append(listItem);
+            var userIcon = mapMarker();
+            userIcon.title = allUsers[i].Name;
+            userIcon.lat = allUsers[i].Latitude__c;
+            userIcon.lng = allUsers[i].Longitude__c;
+            if (allUsers[i].Gender__c.toLowerCase() == 'male')
+            {
+                userIcon.icon = maleMarker ;
+            }
+            else
+            {
+                userIcon.icon = femaleMarker;
+            }
+            userIcon.sfid = allUsers[i].Id;
+            plotPoint(userIcon);
+        }
+    }
+    $('.userLink').click(function ()
+    {
+        setActiveMarker($(this).attr('accessKey'));
+    });
+    list.listview('refresh');
+    $('.callButtons').trigger("enhance");
+}
+//********** CUSTOM DATA TYPES (Objects/Classes) *****************//
+function mapMarker()
+{
+    var mapObject = new Object();
+    mapObject.title = 'My_Map_Marker';
+    mapObject.lat = 0;
+    mapObject.lng = 0;
+    mapObject.icon = null;
+    mapObject.sfid = null;
+    return mapObject;
+}    
+    </script>
+    
+    <!--- <script src="{!URLFOR($Resource.clicked, 'core-min.js')}" ></script> ---->
+    
+    </head>
+    <body>
+
+        <div data-role="page" id="intro" >
+            <div data-role="header" data-position="inline" class="titleBar"></div>
+            <div data-role="content">             
+                     <div class="header">Welcome to Clicked</div>
+                     The social meetup application to find singles around you who want to meet now! Create your profile, and start finding singles in your area. All your contact information is kept confidential on our servers so there is no risk! We take the hassel out of finding a date for valentines day or any day!
+            </div>
+            <footer data-role='footer' data-position='fixed' class="foot"></footer>
+        </div> 
+        
+        
+        <div data-role="page" id="home" >
+            <div data-role="header" data-position="inline"  class="titleBar"></div>
+            <div data-role="content">             
+                <div id="container">
+                    
+                    <div data-role="fieldcontain">
+                    
+                        <label for="slider">Search Radius (Miles)</label>
+                        <input type="range" name="slider" id="slider" value="20" min="5" max="1000" data-inline="true" class="searchFormElement"  />   
+                    
+                         <div style="clear:both" />
+                        <fieldset data-role="controlgroup" data-type="horizontal" data-inline="true" style="float:left;width:450px">
+                            <legend>Show</legend>
+                            <input type="checkbox" name="males_filter" id="males_filter" class="searchFormElement" checked="checked" />
+                            <label for="males_filter">Males</label>
+
+                            <input type="checkbox" name="females_filter" id="females_filter" class="searchFormElement" checked="checked" />
+                            <label for="females_filter">Females</label>                            
+                        </fieldset>
+                        
+                        <fieldset data-role="controlgroup" data-type="horizontal" data-inline="true"  style="float:left;width:650px">
+                            <legend>Age</legend>
+                            <label for="filter_minAge" class="select">Min</label>
+                                <select name="filter_minAge" id="filter_minAge" data-inline="true" class="searchFormElement"></select>
+                            <label for="filter_maxAge" class="select">Min</label>
+                                <select name="filter_maxAge" id="filter_maxAge" data-inline="true" class="searchFormElement"></select> 
+                            </fieldset>                           
+                    </div>
+                     <div style="clear:both" />   
+                                      
+                    <div id="map"></div>                       
+                    <div id="contactList">
+                        <ul id="contacts" data-role="listview" data-inset="true" data-filter="true" data-filter-placeholder="Search for a user by name"> </ul>
+                    </div>
+                </div>
+            </div>
+            <footer data-role='footer' data-position='fixed' class="foot"></footer>
+        </div> 
+
+        <div data-role="page" id="login" >
+            <div data-role="header"  data-position="inline"><center><h3>Login</h3></center></div>
+            <div data-role="content">
+                <form name="loginForm" id="loginForm">
+                    <div data-role="fieldcontain">
+                        <label for="login_name">Email</label>
+                        <input type="text" name="login_name" id="login_name" value=""  />
+
+                        <br/>
+                        <label for="login_password__c">Password</label>
+                        <input type="password" name="login_password__c" id="login_password__c" value="" autocomplete="false"  />
+                        
+                         <div id="loginResult" class="errorMessage"></div>
+                         <center><input type="button" name="authButton" id="authButton" value="Login" data-inline="true"/></center>      
+                         
+                                          
+                    </div>  
+                </form>          
+            </div>            
+        </div> 
+
+        <div data-role="dialog" id="callNotice" >
+            <div data-role="header"  data-position="inline"><center><h3>Calling....</h3></center></div>
+            <div data-role="content">
+                    Connecting you to your party! When your phone rings, answer it and well get you two in touch. <br /> <h3>Remember!</h3>
+                    <ul>
+                        <li>Introduce yourself</li>
+                        <li>Be polite</li>
+                        <li>Be friendly</li>
+                        <li>Ask them questions! Don't talk about yourself too much</li>
+                        <li>Keep it breif. I pay for all phone calls. Exchange your info if it's going well.</li>
+                        <li>Have fun!</li>
+                 </ul>           
+            </div>            
+        </div> 
+
+        <div data-role="dialog" id="logout" >
+            <div data-role="header"  data-position="inline"><center><h3>Logged Out</h3></center></div>
+            <div data-role="content">
+                    You are now logged out. Remember, you are still searchable if you don't deactivate your profile. This way other users can still find you even while you are away.
+            </div>            
+        </div> 
+                
+        <div data-role="page" id="register" >
+            <div data-role="header"  data-position="inline"><center><h3>Register</h3></center></div>
+            <div data-role="content">
+                <form name="registerForm" id="registerForm">
+                    <div data-role="fieldcontain">
+                        <label for="name">Username</label>
+                        <input type="text" name="name" id="name" value=""  class="required" minlength="5" maxlength="15" />
+                        
+                        <label for="email__c">Email</label>
+                        <input type="text" name="email__c" id="email__c" value=""  class="required email" />
+
+                        <label for="password__c">Password</label>
+                        <input type="password" name="password__c" id="password__c" value="" class="required" />
+
+                        <label for="gender__c">Gender</label>
+                        <select name="gender__c" id="gender__c">
+                            <option>Male</option>
+                            <option>Female</option>
+                        </select>              
+
+                       <br /><label for="birthDate">Birthdate</label>
+                        <fieldset data-role="controlgroup" data-type="horizontal" id="birthDate" data-inline="true" >
+                        <select name="birthDay" id="birthDay" data-inline="true">
+                            <option value="01">1</option>
+                            <option value="02">2</option>
+                            <option value="03">3</option>
+                            <option value="04">4</option>
+                            <option value="05">5</option>
+                            <option value="06">6</option>
+                            <option value="07">7</option>
+                            <option value="08">8</option>
+                            <option value="09">9</option>
+                            <option>10</option>
+                            <option>11</option>
+                            <option>12</option>
+                            <option>13</option>
+                            <option>14</option>
+                            <option>15</option>
+                            <option>16</option>
+                            <option>17</option>
+                            <option>18</option>
+                            <option>19</option>
+                            <option>20</option>
+                            <option>21</option>
+                            <option>22</option>
+                            <option>23</option>
+                           <option>24</option>
+                           <option>25</option>
+                           <option>26</option>
+                           <option>27</option>
+                           <option>28</option>
+                           <option>29</option>
+                           <option>30</option>
+                           <option>31</option>
+                                
+                        </select>
+ 
+                        <select name="birthMonth" id="birthMonth" data-inline="true">
+                            <option value="01">Jan</option>
+                            <option value="02">Feb</option>
+                            <option value="03">Mar</option>
+                            <option value="04">Apr</option>
+                            <option value="05">May</option>
+                            <option value="06">June</option>
+                            <option value="07">July</option>
+                            <option value="08">Aug</option>
+                            <option value="09">Sep</option>
+                            <option value="10">Oct</option>
+                            <option value="11">Nov</option>
+                            <option value="12">Dec</option>
+                         </select>   
+                            
+                        
+                        <select name="birthYear" id="birthYear" data-inline="true">
+                        
+                        </select>               
+                        </fieldset>
+                        <label for="phone_number__c">Phone Number</label>
+                        <input type="tel" name="phone_number__c" id="phone_number__c" value="" class="required phoneUS" />                             
+                        <div id="registerResult" class="errorMessage"></div>   
+                        <center><input type="button" name="registerButton" id="registerButton" value="Register" data-inline="true"/></center>      
+                         
+                                          
+                    </div>  
+                </form>          
+            </div>            
+        </div>         
+        <div data-role="page" id="profile" >
+            <div data-role="header" data-position="inline" class="titleBar"></div>
+            <div data-role="content">
+                    <form name="profileUpdateForm" id="profileUpdateForm">
+                    <div data-role="fieldcontain">
+
+                        <label for="name">Username</label>
+                        <input type="text" name="name" id="name" value="" />    
+                        
+                        <label for="phone_number__c">Phone Number</label>
+                        <input type="tel" name="phone_number__c" id="phone_number__c" value="" class="required phoneUS" />            
+ 
+                         <label for="email__c">Email Address</label>
+                        <input type="text" name="email__c" id="email__c" value="" class="required email" />   
+
+                        <label for="gender__c">Gender</label>
+                        <select name="gender__c" id="gender__c">
+                            <option>Male</option>
+                            <option>Female</option>
+                        </select>      
+                                                                                      
+                       <label for="bio__c">Bio</label>
+                       <textarea name="bio__c" id="bio__c"></textarea>
+                                               
+                    <label for="active__c">Profile Status</label>
+                    <select name="active__c" id="active__c" data-role="slider">
+                        <option value="true">Active</option>
+                        <option value="false">Inactive</option>
+                    </select> 
+                        
+                        <br />
+                        <div id="photoUpload">
+                            <label for="fileSelect">Profile Photo</label> 
+                            <input type="file" id="files" name="files" multiple="false"  onchange="uploadProfilePhoto(this.files)" style="opacity:0" /> 
+                            <input type="button" id="fileSelect" name="fileSelect" data-inline="true" value="Select Profile Photo"/>
+                        </div>
+                        <div class="errorMessage" id="noUploadMessage">Sorry, picture uploading not supported by this browser :( Try updating your browser or getting a different one. Check <a href="http://caniuse.com/#feat=fileapi" target="_blank">Supported Browser List</a></div>   
+                        
+                        
+                        <div id="updateResult"></div>   
+                        <center><input type="button" name="updateButton" id="updateButton" value="Update" data-inline="true"/></center>                             
+                    </div>
+                   </form>
+            </div>
+            <footer data-role='footer' data-position='fixed' class="foot"></footer>
+        </div>         
+    </body>   
+</apex:page>

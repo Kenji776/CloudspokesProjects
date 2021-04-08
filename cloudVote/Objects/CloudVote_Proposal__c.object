@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>An individual Proposal to vote on.</description>
+    <enableActivities>false</enableActivities>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <fields>
+        <fullName>CloudVote_Category__c</fullName>
+        <description>Which category does this vote belong to</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Which category does this vote belong to</inlineHelpText>
+        <label>Category</label>
+        <referenceTo>CloudVote_Category__c</referenceTo>
+        <relationshipLabel>CloudVote Proposals</relationshipLabel>
+        <relationshipName>CloudVote_Proposals</relationshipName>
+        <relationshipOrder>0</relationshipOrder>
+        <type>MasterDetail</type>
+        <writeRequiresMasterRead>false</writeRequiresMasterRead>
+    </fields>
+    <fields>
+        <fullName>Contact__c</fullName>
+        <description>Who created this proposal?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Who created this proposal?</inlineHelpText>
+        <label>Contact</label>
+        <referenceTo>Contact</referenceTo>
+        <relationshipLabel>CloudVote Proposals</relationshipLabel>
+        <relationshipName>CloudVote_Proposals</relationshipName>
+        <required>false</required>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Description__c</fullName>
+        <description>More details about this proposal</description>
+        <externalId>false</externalId>
+        <inlineHelpText>More details about this proposal</inlineHelpText>
+        <label>Description</label>
+        <length>32768</length>
+        <type>LongTextArea</type>
+        <visibleLines>5</visibleLines>
+    </fields>
+    <fields>
+        <fullName>Negative_Votes__c</fullName>
+        <description>How many negative votes has this proposal received?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>How many negative votes has this proposal received?</inlineHelpText>
+        <label>Negative Votes</label>
+        <summaryFilterItems>
+            <field>CloudVote_Vote__c.Vote__c</field>
+            <operation>equals</operation>
+            <value>Demote</value>
+        </summaryFilterItems>
+        <summaryForeignKey>CloudVote_Vote__c.CloudVote_Proposal__c</summaryForeignKey>
+        <summaryOperation>count</summaryOperation>
+        <type>Summary</type>
+    </fields>
+    <fields>
+        <fullName>Number_Of_Votes__c</fullName>
+        <description>How many votes total has this proposal received?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>How many votes total has this proposal received?</inlineHelpText>
+        <label>Number Of Votes</label>
+        <summaryForeignKey>CloudVote_Vote__c.CloudVote_Proposal__c</summaryForeignKey>
+        <summaryOperation>count</summaryOperation>
+        <type>Summary</type>
+    </fields>
+    <fields>
+        <fullName>Positive_Votes__c</fullName>
+        <description>How many positive votes has this proposal received?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>How many positive votes has this proposal received?</inlineHelpText>
+        <label>Positive Votes</label>
+        <summaryFilterItems>
+            <field>CloudVote_Vote__c.Vote__c</field>
+            <operation>equals</operation>
+            <value>Promote</value>
+        </summaryFilterItems>
+        <summaryForeignKey>CloudVote_Vote__c.CloudVote_Proposal__c</summaryForeignKey>
+        <summaryOperation>count</summaryOperation>
+        <type>Summary</type>
+    </fields>
+    <fields>
+        <fullName>Proposal_Admin__c</fullName>
+        <description>Who is the admin of this proposal. They will receive updates about this proposal, including creation notifications.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Who is the admin of this proposal. They will receive updates about this proposal, including creation notifications.</inlineHelpText>
+        <label>Proposal Admin</label>
+        <required>false</required>
+        <type>Email</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Proposal_Creator__c</fullName>
+        <description>Who created this proposal&apos;s email address (for workflow rules)</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Who created this proposal&apos;s email address (for workflow rules)</inlineHelpText>
+        <label>Proposal Creator</label>
+        <required>false</required>
+        <type>Email</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Score__c</fullName>
+        <description>What is the calculated score of this proposal?</description>
+        <externalId>false</externalId>
+        <formula>(  Positive_Votes__c  *  CloudVote_Category__r.CloudVote_Config__r.Positive_Vote_Score__c ) - (  Negative_Votes__c *  CloudVote_Category__r.CloudVote_Config__r.Positive_Vote_Score__c)</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <inlineHelpText>What is the calculated score of this proposal?</inlineHelpText>
+        <label>Score</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Status__c</fullName>
+        <description>What is the status of this idea?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>What is the status of this idea?</inlineHelpText>
+        <label>Status</label>
+        <picklist>
+            <picklistValues>
+                <fullName>New</fullName>
+                <default>true</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Approved</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Rejected</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Delivered</fullName>
+                <default>false</default>
+            </picklistValues>
+            <sorted>false</sorted>
+        </picklist>
+        <type>Picklist</type>
+    </fields>
+    <label>CloudVote Proposal</label>
+    <listViews>
+        <fullName>All</fullName>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Proposal Name</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>CloudVote Proposals</pluralLabel>
+    <searchLayouts/>
+    <sharingModel>ControlledByParent</sharingModel>
+</CustomObject>

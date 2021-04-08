@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Details for one particular ArtMash Picture</description>
+    <enableActivities>false</enableActivities>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <fields>
+        <fullName>Active__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Is this picture active and available on the site?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Is this picture active and available on the site?</inlineHelpText>
+        <label>Active</label>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>ArtMash_Contest__c</fullName>
+        <description>Which contest does this picture belong to?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Which contest does this picture belong to?</inlineHelpText>
+        <label>ArtMash Contest</label>
+        <referenceTo>ArtMash_Contest__c</referenceTo>
+        <relationshipLabel>Contest</relationshipLabel>
+        <relationshipName>ArtMash_Picture</relationshipName>
+        <relationshipOrder>0</relationshipOrder>
+        <type>MasterDetail</type>
+        <writeRequiresMasterRead>false</writeRequiresMasterRead>
+    </fields>
+    <fields>
+        <fullName>Current_Picture_Document_Id__c</fullName>
+        <description>The current picture document ID</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The current picture document ID</inlineHelpText>
+        <label>Current Picture Document Id</label>
+        <length>18</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Default_Text__c</fullName>
+        <defaultValue>&quot;Put caption here!&quot;</defaultValue>
+        <description>What is the default text that should appear in the textbox?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>What is the default text that should appear in the textbox?</inlineHelpText>
+        <label>Default Text</label>
+        <length>255</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Description__c</fullName>
+        <description>A short description of the image</description>
+        <externalId>false</externalId>
+        <inlineHelpText>A short description of the image</inlineHelpText>
+        <label>Description</label>
+        <length>300</length>
+        <type>LongTextArea</type>
+        <visibleLines>3</visibleLines>
+    </fields>
+    <fields>
+        <fullName>Font_Family__c</fullName>
+        <description>What font should the text box use?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>What font should the text box use?</inlineHelpText>
+        <label>Font Family</label>
+        <picklist>
+            <picklistValues>
+                <fullName>Arial</fullName>
+                <default>true</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Book Antiqua</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Comic Sans MS</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Courier</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Courier New</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>cursive</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Georgia</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Helvetica</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Lucida Console</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Monaco</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Palatino</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Palatino Linotype</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Times New Roman</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Verdana</fullName>
+                <default>false</default>
+            </picklistValues>
+            <sorted>false</sorted>
+        </picklist>
+        <type>Picklist</type>
+    </fields>
+    <fields>
+        <fullName>Font_Size__c</fullName>
+        <defaultValue>12</defaultValue>
+        <description>How large should the font be for this picture?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>How large should the font be for this picture?</inlineHelpText>
+        <label>Font Size</label>
+        <precision>2</precision>
+        <required>true</required>
+        <scale>0</scale>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Image_URL__c</fullName>
+        <externalId>false</externalId>
+        <formula>&quot;https://c.na9.content.force.com/servlet/servlet.ImageServer?id=&quot;+ Current_Picture_Document_Id__c +&quot;&amp;oid=&quot;+$Organization.Id</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <label>Image URL</label>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Maximum_Caption_Length__c</fullName>
+        <defaultValue>160</defaultValue>
+        <description>How long can a caption for this photo be?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>How long can a caption for this photo be?</inlineHelpText>
+        <label>Maximum Caption Length</label>
+        <precision>4</precision>
+        <required>true</required>
+        <scale>0</scale>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Text_Box_Height__c</fullName>
+        <description>How tall should the text box be?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>How tall should the text box be?</inlineHelpText>
+        <label>Text Box Height</label>
+        <length>4</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Text_Box_Left_Offset__c</fullName>
+        <description>How far from the left of the image should the text box be?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>How far from the left of the image should the text box be?</inlineHelpText>
+        <label>Text Box Left Offset</label>
+        <length>4</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Text_Box_Top_Offset__c</fullName>
+        <description>How far from the top of the image should the text box be?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>How far from the top of the image should the text box be?</inlineHelpText>
+        <label>Text Box Top Offset</label>
+        <length>4</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Text_Box_Width__c</fullName>
+        <description>How wide should the text box be?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>How wide should the text box be?</inlineHelpText>
+        <label>Text Box Width</label>
+        <length>4</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Text_Color__c</fullName>
+        <defaultValue>&quot;Black&quot;</defaultValue>
+        <description>Color to use for text in bubble. Can be a hexidecimal charcode or a text string.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Color to use for text in bubble. Can be a hexidecimal charcode or a text string.</inlineHelpText>
+        <label>Text Color</label>
+        <length>18</length>
+        <required>true</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <label>ArtMash Picture</label>
+    <listViews>
+        <fullName>All</fullName>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Name</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>ArtMash Picture</pluralLabel>
+    <searchLayouts/>
+    <sharingModel>ControlledByParent</sharingModel>
+</CustomObject>

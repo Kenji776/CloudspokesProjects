@@ -1,0 +1,159 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.1/jquery.min.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>
+<script src="shapey/js/shapey.min.js"></script>
+
+<title>Shapey.js Demo</title>
+<style>
+.code
+{
+	margin:15px;
+	font-family: Andale Mono, Lucida Console, Monaco, fixed, monospace; 
+	color: #000000; 
+	background-color: #eee;
+	font-size: 12px;
+	border: 1px dashed #999999;
+	line-height: 14px;
+	padding: 5px; 
+	overflow: auto; 
+	width: 95%;
+	white-space: pre-wrap; /* css-3 */
+	white-space: -moz-pre-wrap !important; /* Mozilla, since 1999 */
+	white-space: -pre-wrap; /* Opera 4-6 */
+	white-space: -o-pre-wrap; /* Opera 7 */
+	word-wrap: break-word; /* Internet Explorer 5.5+ */	
+	height:510px;
+}
+
+.shapey_label
+{
+	color:#ffffff;
+	font-family: Andale Mono, Lucida Console, Monaco, fixed, monospace; 
+	font-size: 12px;	
+}
+
+.comment
+{
+	color:#999;	
+}
+
+.prop
+{
+	color:#03F;
+}
+</style>
+<script>
+	$(function() {
+		 $('#container').shapey({
+			
+			//url to load shape data from. Must be on the same server, cross domain not supported.
+			//if cross domain is required, just add a callback param in the ajax call in shapey.js and ensure
+			//your returned json content is passed into it.
+			source: 'shapes.txt',
+			
+			//how many columns will the shapes be arranged into?
+			columns: 4,
+			
+			//can two shapes be merged together to create a new one?
+			mergeable: true,
+			
+			//should we require that shapes to be merged together have the same type (true) or should any shape merge with any other shape (false)?
+			typeMergeMatching: true,
+			
+			//should shapes that are merged together be destroyed? Can be true (both deleted), false (non deleted), 
+			//target (the shape that got dropped on), or source (the shape dragged)
+			destroyOnMerge: false,
+			
+			//the shape that should be used as the template for creation on merge. Can be source (the dragged shape), 
+			//or target (the shape that got another shape dropped on it).
+			mergeParent: 'target',
+			
+			//should we use the animations for growing a shape when a valid one is dragged over it, and exploding it when they are destroyed?
+			useAnimations: true
+		 });
+		 
+	});
+
+	function clickHandler(event,buttonData,parentShapeData)
+	{
+		console.log('Click Handler Called');
+		alert('You clicked button '+buttonData.id+' on shape ' +parentShapeData.id);
+	}
+	
+	
+	function mergeHandler(event,source,target)
+	{
+		console.log('Merge Handler Called');
+	}
+	
+	function cloneHandler(newShape,parent,secondParent)
+	{
+		console.log('Clone Handler Called');;	
+	}
+	
+	function destroyHandler(destroyedShape)
+	{
+		console.log('Destroy Handler Called');
+	}
+	
+	//create default shape JSON for demos
+	//console.log(shapey_shapeFactory());
+</script>
+</head>
+
+<body>
+
+    <div id="container" style="float:left; width:600px; border-style:solid; border-width:1px; margin-right:10px;">
+    
+    </div>
+    
+<h2>Sample Invocation of Shapey.js</h2>    
+<div id="codeView" style="float:left; width:800px;" class="code">   
+ $('#container').shapey({
+     <span class="comment">
+    //url to load shape data from. Must be on the same server, cross domain not supported.
+    //if cross domain is required, just add a callback param in the ajax call in shapey.js and ensure
+    //your returned json content is passed into it.</span>
+    source: <span class="prop">'shapes.txt'</span>,
+    
+     <span class="comment">
+    //how many columns will the shapes be arranged into?</span>
+    columns: <span class="prop">4</span>,
+    
+     <span class="comment">
+    //can two shapes be merged together to create a new one?</span>
+    mergeable: <span class="prop">true</span>,
+    
+     <span class="comment">
+    //should we require that shapes to be merged together have the same type (true)
+    //or should any shape merge with any other shape (false)?</span>
+    typeMergeMatching: <span class="prop">true</span>,
+    
+     <span class="comment">
+    //should shapes that are merged together be destroyed? Can be true (both deleted), false (non deleted), 
+    //target (the shape that got dropped on), or source (the shape dragged)</span>
+    destroyOnMerge: <span class="prop">false</span>,
+    
+     <span class="comment">
+    //the shape that should be used as the template for creation on merge. Can be source (the dragged shape), 
+    //or target (the shape that got another shape dropped on it). </span>
+    mergeParent: <span class="prop">'target'</span>,
+    
+     <span class="comment">
+    //should we use the animations for growing a shape when a valid one is dragged over it
+    //and exploding it when they are destroyed?</span>
+    useAnimations: <span class="prop">true</span>
+ });
+</div>
+    
+    <div style="clear:both" ></div>
+    <h2>Source JSON Data (Updated as you work)</h2>
+    <div id="shapeyJsonData" class="code">
+    
+    </div>
+</body>
+</html>

@@ -1,0 +1,22 @@
+<apex:page showHeader="false"  sidebar="false" title="partyForce" standardStylesheets="false">
+    
+    <center>
+        <span class="title">Upcoming Events</span>
+        <form id="form" onkeypress="if(event.keyCode == 13){getEventsList($('#searchBox').val());} return event.keyCode != 13;">
+            <div id="searchForm">
+            <input type="text" id="searchBox" name="search" maxlength="50" />
+            <input type="button" value="search" onClick="getEventsList($('#searchBox').val());" />
+            </div>
+            
+            <div style="clear:both"></div>
+            
+            <div id="searchResults"></div>
+        </form>
+     
+    </center>
+
+    <script>           
+       
+        getEventsList(' ');
+    </script>
+</apex:page>

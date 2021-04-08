@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>A stamp given to a contact for interacting with a sponsor</description>
+    <enableActivities>false</enableActivities>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <fields>
+        <fullName>Attendee__c</fullName>
+        <description>To whom does this stamp belong?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>To whom does this stamp belong?</inlineHelpText>
+        <label>Attendee</label>
+        <referenceTo>Attendance__c</referenceTo>
+        <relationshipLabel>Stamps</relationshipLabel>
+        <relationshipName>Stamps</relationshipName>
+        <relationshipOrder>1</relationshipOrder>
+        <type>MasterDetail</type>
+        <writeRequiresMasterRead>false</writeRequiresMasterRead>
+    </fields>
+    <fields>
+        <fullName>Event__c</fullName>
+        <description>Which event is this stamp related to?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Which event is this stamp related to?</inlineHelpText>
+        <label>Event</label>
+        <referenceTo>Event__c</referenceTo>
+        <relationshipLabel>Stamps</relationshipLabel>
+        <relationshipName>Stamps</relationshipName>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Sponsor__c</fullName>
+        <description>Which sponsor owns this stamp?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Which sponsor owns this stamp?</inlineHelpText>
+        <label>Sponsor</label>
+        <referenceTo>Sponsorship__c</referenceTo>
+        <relationshipLabel>Stamps</relationshipLabel>
+        <relationshipName>Stamps</relationshipName>
+        <relationshipOrder>0</relationshipOrder>
+        <type>MasterDetail</type>
+        <writeRequiresMasterRead>false</writeRequiresMasterRead>
+    </fields>
+    <fields>
+        <fullName>Stamp_Confirmed_Time__c</fullName>
+        <description>When was this stamp confirmed by the attendee?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>When was this stamp confirmed by the attendee?</inlineHelpText>
+        <label>Stamp Confirmed Time</label>
+        <required>false</required>
+        <type>DateTime</type>
+    </fields>
+    <fields>
+        <fullName>Stampforce_Code__c</fullName>
+        <description>What code is this stamp related to?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>What code is this stamp related to?</inlineHelpText>
+        <label>Stampforce Code</label>
+        <referenceTo>Stampforce_Code__c</referenceTo>
+        <relationshipLabel>Stamps</relationshipLabel>
+        <relationshipName>Stamps</relationshipName>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Status__c</fullName>
+        <description>What stage is this stamp in?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>What stage is this stamp in?</inlineHelpText>
+        <label>Status</label>
+        <picklist>
+            <picklistValues>
+                <fullName>Generated</fullName>
+                <default>true</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>Confirmed</fullName>
+                <default>false</default>
+            </picklistValues>
+            <sorted>false</sorted>
+        </picklist>
+        <type>Picklist</type>
+    </fields>
+    <label>Stamp</label>
+    <listViews>
+        <fullName>All</fullName>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <displayFormat>Stamp-{0000000}</displayFormat>
+        <label>Stamp Id</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Stamps</pluralLabel>
+    <searchLayouts/>
+    <sharingModel>ControlledByParent</sharingModel>
+</CustomObject>

@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Configurations for Spin SMS to connect to Twilio</description>
+    <enableActivities>false</enableActivities>
+    <enableEnhancedLookup>false</enableEnhancedLookup>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>false</enableHistory>
+    <enableReports>false</enableReports>
+    <fields>
+        <fullName>Active__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Is this the current active configuration?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Is this the current active configuration?</inlineHelpText>
+        <label>Active</label>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Contact_Matching__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Attempt to match SMS records to contacts based on the mobile phone number. This uses an extra SOQL query so you can disable it if you want to conserve queries.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Attempt to match SMS records to contacts based on the mobile phone number. This uses an extra SOQL query so you can disable it if you want to conserve queries.</inlineHelpText>
+        <label>Contact Matching</label>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Cost_Per_Message__c</fullName>
+        <defaultValue>00.02</defaultValue>
+        <description>How much is being charged per SMS message. Used for estimated monthly billing summaries.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>How much is being charged per SMS message. Used for estimated monthly billing summaries.</inlineHelpText>
+        <label>Cost Per Message</label>
+        <precision>7</precision>
+        <required>false</required>
+        <scale>2</scale>
+        <type>Currency</type>
+    </fields>
+    <fields>
+        <fullName>Incoming_Handler_Is_Registered__c</fullName>
+        <description>Is the currently specified incoming SMS handler registered with Twilio?</description>
+        <externalId>false</externalId>
+        <formula>If( Incoming_SMS_Handler__c ==  Twilio_Registered_SMS_URL__c, &quot;TRUE&quot;,&quot;FALSE&quot;)</formula>
+        <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+        <inlineHelpText>Is the currently specified incoming SMS handler registered with Twilio?</inlineHelpText>
+        <label>Incoming Handler Is Registered</label>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Incoming_SMS_Handler__c</fullName>
+        <description>What url should Twilio send incoming text message to?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>What url should Twilio send incoming text message to?</inlineHelpText>
+        <label>Incoming SMS Handler</label>
+        <required>false</required>
+        <type>Url</type>
+    </fields>
+    <fields>
+        <fullName>Integration_Token__c</fullName>
+        <defaultValue>$Organization.Id</defaultValue>
+        <description>A token that must be included in SMS creation requests originating from the web. This ensures that unauthorized 3rd parties cannot use your service to send messages.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>A token that must be included in SMS creation requests originating from the web. This ensures that unauthorized 3rd parties cannot use your service to send messages.</inlineHelpText>
+        <label>Integration Token</label>
+        <length>50</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Response_Message__c</fullName>
+        <description>The confirmation message response to send when we receive an incoming text</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The confirmation message response to send when we receive an incoming text</inlineHelpText>
+        <label>Response Message</label>
+        <required>false</required>
+        <type>TextArea</type>
+    </fields>
+    <fields>
+        <fullName>Sandbox_Account__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Is this account a Twilio Demo/Sandbox account?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Is this account a Twilio Demo/Sandbox account?</inlineHelpText>
+        <label>Sandbox Account</label>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Send_Confirmation_Response__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>When we receive an incoming message, should we reply with a confirmation message?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>When we receive an incoming message, should we reply with a confirmation message?</inlineHelpText>
+        <label>Send Confirmation Response</label>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Test_Message_Phone__c</fullName>
+        <description>Where should we try to send a test SMS message to check to make sure integration is working properly?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Where should we try to send a test SMS message to check to make sure integration is working properly?</inlineHelpText>
+        <label>Test Message Phone</label>
+        <length>12</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Twilio_API_Endpoint__c</fullName>
+        <defaultValue>&quot;https://api.twilio.com&quot;</defaultValue>
+        <description>The URL for the Twilio http endpoint (normally https://api.twilio.com)</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The URL for the Twilio http endpoint (normally https://api.twilio.com)</inlineHelpText>
+        <label>Twilio API Endpoint</label>
+        <required>true</required>
+        <type>Url</type>
+    </fields>
+    <fields>
+        <fullName>Twilio_API_Version__c</fullName>
+        <defaultValue>&quot;2008-08-01&quot;</defaultValue>
+        <description>The API version to use when interacting with Twilio</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The API version to use when interacting with Twilio</inlineHelpText>
+        <label>Twilio API Version</label>
+        <length>20</length>
+        <required>true</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Twilio_Accound_SID__c</fullName>
+        <description>The Account SID Provided by Twilio</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The Account SID Provided by Twilio</inlineHelpText>
+        <label>Twilio Accound SID</label>
+        <length>35</length>
+        <required>true</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Twilio_Auth_Token__c</fullName>
+        <description>The Auth Token provided by Twilio</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The Auth Token provided by Twilio</inlineHelpText>
+        <label>Twilio Auth Token</label>
+        <length>35</length>
+        <required>true</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Twilio_PIN__c</fullName>
+        <description>Your Twilio PIN</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Your Twilio PIN</inlineHelpText>
+        <label>Twilio PIN</label>
+        <length>10</length>
+        <required>false</required>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Twilio_Phone_Number__c</fullName>
+        <description>The phone number assigned to yo by Twilio for SMS transactions.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The phone number assigned to yo by Twilio for SMS transactions.</inlineHelpText>
+        <label>Twilio Phone Number</label>
+        <required>true</required>
+        <type>Phone</type>
+    </fields>
+    <fields>
+        <fullName>Twilio_Registered_SMS_URL__c</fullName>
+        <description>The current registered twilio SMS url</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The current registered twilio SMS url</inlineHelpText>
+        <label>Twilio Registered SMS URL</label>
+        <required>false</required>
+        <type>Url</type>
+    </fields>
+    <fields>
+        <fullName>Use_Token_Security__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Messages created through email services, buttons, or visual force requests must contain the security token specified on this config object.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Messages created through email services, buttons, or visual force requests must contain the security token specified on this config object.</inlineHelpText>
+        <label>Use Token Security</label>
+        <type>Checkbox</type>
+    </fields>
+    <label>Spin SMS Config</label>
+    <listViews>
+        <fullName>All</fullName>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <label>Spin SMS Name</label>
+        <type>Text</type>
+    </nameField>
+    <pluralLabel>Spin SMS Configs</pluralLabel>
+    <searchLayouts>
+        <customTabListAdditionalFields>Active__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Contact_Matching__c</customTabListAdditionalFields>
+        <customTabListAdditionalFields>Integration_Token__c</customTabListAdditionalFields>
+    </searchLayouts>
+    <sharingModel>ReadWrite</sharingModel>
+    <webLinks>
+        <fullName>Register_Inbound_Handler</fullName>
+        <availability>online</availability>
+        <description>Configure Twilio to send inbound messages to the page specified in the Incoming SMS Handler field.</description>
+        <displayType>button</displayType>
+        <linkType>javascript</linkType>
+        <masterLabel>Register Inbound Handler</masterLabel>
+        <openType>onClickJavaScript</openType>
+        <protected>false</protected>
+        <url>{!REQUIRESCRIPT(&quot;/soap/ajax/10.0/connection.js&quot;)} 
+{!REQUIRESCRIPT(&quot;/soap/ajax/10.0/apex.js&quot;)} 
+var myvar = sforce.apex.execute(&quot;SpinSMS&quot;,&quot;registerCallBackHandler&quot;,{}); 
+alert(myvar); 
+window.location.reload();</url>
+    </webLinks>
+    <webLinks>
+        <fullName>Send_Test_Message</fullName>
+        <availability>online</availability>
+        <displayType>button</displayType>
+        <linkType>javascript</linkType>
+        <masterLabel>Send Test Message</masterLabel>
+        <openType>onClickJavaScript</openType>
+        <protected>false</protected>
+        <url>{!REQUIRESCRIPT(&quot;/soap/ajax/10.0/connection.js&quot;)} 
+{!REQUIRESCRIPT(&quot;/soap/ajax/10.0/apex.js&quot;)} 
+var myvar = sforce.apex.execute(&quot;SpinSMS&quot;,&quot;triggerSendMessage&quot;, {targetPhone:&quot;{!Spin_SMS_Config__c.Test_Message_Phone__c}&quot;,message:&quot;Test Message&quot;, integrationToken:&quot;{!Spin_SMS_Config__c.Integration_Token__c}&quot;});
+window.alert(myvar);</url>
+    </webLinks>
+</CustomObject>

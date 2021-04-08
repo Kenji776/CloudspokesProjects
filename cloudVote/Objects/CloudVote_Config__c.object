@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <actionOverrides>
+        <actionName>Accept</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Clone</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Delete</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Edit</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>List</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>New</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>Tab</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <actionOverrides>
+        <actionName>View</actionName>
+        <type>Default</type>
+    </actionOverrides>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <enableActivities>false</enableActivities>
+    <enableFeeds>false</enableFeeds>
+    <enableHistory>true</enableHistory>
+    <enableReports>false</enableReports>
+    <fields>
+        <fullName>Active__c</fullName>
+        <defaultValue>false</defaultValue>
+        <description>Is this configuration active?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Is this configuration active?</inlineHelpText>
+        <label>Active</label>
+        <trackHistory>false</trackHistory>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>App_Description__c</fullName>
+        <defaultValue>&apos;Welcome to CloudVote! The mobile social voting application that allows users to create and vote on ideas.&apos;</defaultValue>
+        <description>A short description of the application and/or event to be shown on the home page.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>A short description of the application and/or event to be shown on the home page.</inlineHelpText>
+        <label>App Description</label>
+        <length>32768</length>
+        <trackHistory>false</trackHistory>
+        <type>LongTextArea</type>
+        <visibleLines>5</visibleLines>
+    </fields>
+    <fields>
+        <fullName>Application_Name__c</fullName>
+        <defaultValue>&apos;CloudVote&apos;</defaultValue>
+        <description>How should cloudVote refer to itself on the website. Users will see this name, and it will be how it is referred to. It should have the same name as your facebook application.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>How should cloudVote refer to itself on the website. Users will see this name, and it will be how it is referred to. It should have the same name as your facebook application.</inlineHelpText>
+        <label>Application Name</label>
+        <length>30</length>
+        <required>true</required>
+        <trackHistory>false</trackHistory>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Banner_Image_URL__c</fullName>
+        <defaultValue>&apos;http://edu.glogster.com/media/6/39/31/21/39312196.png&apos;</defaultValue>
+        <description>URL of an image to display as the banner on the home page screen.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>URL of an image to display as the banner on the home page screen.</inlineHelpText>
+        <label>Banner Image URL</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <type>Url</type>
+    </fields>
+    <fields>
+        <fullName>Facebook_App_ID__c</fullName>
+        <defaultValue>&apos;311596782188754&apos;</defaultValue>
+        <description>App Id for facebook login oAuth</description>
+        <externalId>false</externalId>
+        <inlineHelpText>App Id for facebook login oAuth</inlineHelpText>
+        <label>Facebook App ID</label>
+        <length>50</length>
+        <required>true</required>
+        <trackHistory>false</trackHistory>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Facebook_App_Secret__c</fullName>
+        <defaultValue>&apos;dee234a6400ef467cc993c6cfcbfce4f&apos;</defaultValue>
+        <description>Secret key for facebook login oAuth</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Secret key for facebook login oAuth</inlineHelpText>
+        <label>Facebook App Secret</label>
+        <length>50</length>
+        <required>true</required>
+        <trackHistory>false</trackHistory>
+        <type>Text</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Header_Image__c</fullName>
+        <description>Image for the top header bar</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Image for the top header bar</inlineHelpText>
+        <label>Header Image</label>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <type>Url</type>
+    </fields>
+    <fields>
+        <fullName>Idea_Admin__c</fullName>
+        <description>Who should be emailed when a new idea is created?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Who should be emailed when a new idea is created?</inlineHelpText>
+        <label>Idea Admin</label>
+        <referenceTo>User</referenceTo>
+        <relationshipName>CloudVote_Configs</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Ideas_Community__c</fullName>
+        <description>Which community will this config post ideas to and read ideas from?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Which community will this config post ideas to and read ideas from?</inlineHelpText>
+        <label>Ideas Community</label>
+        <referenceTo>Community</referenceTo>
+        <relationshipLabel>CloudVote Configs</relationshipLabel>
+        <relationshipName>CloudVote_Configs</relationshipName>
+        <required>false</required>
+        <trackHistory>false</trackHistory>
+        <type>Lookup</type>
+    </fields>
+    <fields>
+        <fullName>Negative_Vote_Score__c</fullName>
+        <defaultValue>10</defaultValue>
+        <description>How many points is a negative vote worth (removes from total idea score)?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>How many points is a negative vote worth (removes from total idea score)?</inlineHelpText>
+        <label>Negative Vote Score</label>
+        <precision>10</precision>
+        <required>true</required>
+        <scale>0</scale>
+        <trackHistory>false</trackHistory>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Negative_Voting_Enabled__c</fullName>
+        <defaultValue>true</defaultValue>
+        <description>Can users vote negatively on an idea to reduce it&apos;s score? If not, only up voting will be allowed.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Can users vote negatively on an idea to reduce it&apos;s score? If not, only up voting will be allowed.</inlineHelpText>
+        <label>Negative Voting Enabled</label>
+        <trackHistory>false</trackHistory>
+        <type>Checkbox</type>
+    </fields>
+    <fields>
+        <fullName>Positive_Vote_Score__c</fullName>
+        <defaultValue>10</defaultValue>
+        <description>How many points is a positive vote worth?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>How many points is a positive vote worth?</inlineHelpText>
+        <label>Positive Vote Score</label>
+        <precision>10</precision>
+        <required>true</required>
+        <scale>0</scale>
+        <trackHistory>false</trackHistory>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>Proposal_Threshold_Score__c</fullName>
+        <defaultValue>200</defaultValue>
+        <description>The score a proposal must meet in order to change the status to send email to admin</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The score a proposal must meet in order to change the status to send email to admin</inlineHelpText>
+        <label>Proposal Threshold Score</label>
+        <precision>10</precision>
+        <required>true</required>
+        <scale>0</scale>
+        <trackHistory>false</trackHistory>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <fields>
+        <fullName>jQuery_Mobile_Button_Theme__c</fullName>
+        <description>jQuery mobile theme to use for buttons</description>
+        <externalId>false</externalId>
+        <inlineHelpText>jQuery mobile theme to use for buttons</inlineHelpText>
+        <label>jQuery Mobile Button Theme</label>
+        <picklist>
+            <picklistValues>
+                <fullName>a</fullName>
+                <default>true</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>b</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>c</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>d</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>e</fullName>
+                <default>false</default>
+            </picklistValues>
+            <sorted>false</sorted>
+        </picklist>
+        <trackHistory>false</trackHistory>
+        <type>Picklist</type>
+    </fields>
+    <fields>
+        <fullName>jQuery_Mobile_Data_Theme__c</fullName>
+        <description>Which of the jQuery mobile themes should be used for the site?
+http://jquerymobile.com/test/docs/content/content-themes.html</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Which of the jQuery mobile themes should be used for the site?
+http://jquerymobile.com/test/docs/content/content-themes.html</inlineHelpText>
+        <label>jQuery Mobile Theme</label>
+        <picklist>
+            <picklistValues>
+                <fullName>a</fullName>
+                <default>true</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>b</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>c</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>d</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>e</fullName>
+                <default>false</default>
+            </picklistValues>
+            <sorted>false</sorted>
+        </picklist>
+        <trackHistory>false</trackHistory>
+        <type>Picklist</type>
+    </fields>
+    <fields>
+        <fullName>jQuery_Mobile_List_Theme__c</fullName>
+        <description>What theme should be used for the list items?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>What theme should be used for the list items?</inlineHelpText>
+        <label>jQuery Mobile List Theme</label>
+        <picklist>
+            <picklistValues>
+                <fullName>a</fullName>
+                <default>true</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>b</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>c</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>d</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>e</fullName>
+                <default>false</default>
+            </picklistValues>
+            <sorted>false</sorted>
+        </picklist>
+        <trackHistory>false</trackHistory>
+        <type>Picklist</type>
+    </fields>
+    <fields>
+        <fullName>jQuery_Mobile_NavBar_Theme__c</fullName>
+        <description>Which theme should be used for the bottom navigation bar?</description>
+        <externalId>false</externalId>
+        <inlineHelpText>Which theme should be used for the bottom navigation bar?</inlineHelpText>
+        <label>jQuery Mobile NavBar Theme</label>
+        <picklist>
+            <picklistValues>
+                <fullName>a</fullName>
+                <default>true</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>b</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>c</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>d</fullName>
+                <default>false</default>
+            </picklistValues>
+            <picklistValues>
+                <fullName>e</fullName>
+                <default>false</default>
+            </picklistValues>
+            <sorted>false</sorted>
+        </picklist>
+        <trackHistory>false</trackHistory>
+        <type>Picklist</type>
+    </fields>
+    <label>CloudVote Config</label>
+    <listViews>
+        <fullName>All</fullName>
+        <filterScope>Everything</filterScope>
+        <label>All</label>
+    </listViews>
+    <nameField>
+        <displayFormat>{0000}</displayFormat>
+        <label>CloudVote Config Name</label>
+        <trackHistory>false</trackHistory>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>CloudVote Configs</pluralLabel>
+    <searchLayouts/>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>

@@ -1,0 +1,96 @@
+<body>
+    
+    <div id="page">
+        <div id="header">
+            <div id="logo">
+                
+            </div>
+            <div id="controls">
+                <select name="Contest" id="Contest" class="input" style="width:200px;" onChange="loadPictures($('#Contest').val());">
+                    
+                </select>
+            </div>    
+        </div>  
+        
+        <div class="clear"></div>
+        
+        <div id="photoScroller">
+            <center>
+            <!-- This is the container for the carousel. -->
+            <div id = "carousel1">            
+
+            </div>
+            
+            <div id="picInfo">
+                <p id="title-text"></p>
+                <p id="alt-text"></p>
+            </div>
+                        <!-- Define left and right buttons. -->
+            <!----            
+            <input id="left-but"  type="button" value="Left" />
+            <input id="right-but" type="button" value="Right" />
+            ----->
+            </center>
+
+        </div>
+        
+        <div class="clear"></div>
+         
+        <div id="centerContent">
+            <div id="photoViewer">
+                <canvas id="pictureCanvas" width="450" height="400"> </canvas>  
+                 
+                 <img id="view" />  
+                      
+            </div>
+           
+            
+
+            <div id="textInput">
+                <form id="captionForm" name="captionForm">
+                    <textarea name="captionText" id="captionText" rows="15" cols="30" onKeyUp="trimCaption(this.value);setImage($('#pictureId').val(),false,$('#captionText').val());"></textarea>
+                    <br />                    
+                    <input type="hidden" name="pictureId" id="pictureId" />
+                    
+                    <input type="button" onClick="trimCaption($('#captionText').val());$('#submitConfirm').dialog('open');" value="Save" />
+                </form>         
+            </div>
+
+        </div>
+        
+       
+         
+
+        
+        
+        <div id="submitConfirm" title="You sure?">
+            <p>Are you are you want to submit your caption? It can't be changed once submitted!</p>
+            <div id="submitControls">
+                <input type="button" value="Yup" onClick="submitCaption();" />
+                <input type="button" value="Uh, Wait" onClick="$('#submitConfirm').dialog('close');" />
+            </div>
+            
+            <div id="progressbar"></div>
+            
+            
+            <div id="resultsMessage"></div>
+            <div id="sharePanel" style="display:none;">
+                <center>
+                    <a href="http://twitter.com/share" class="twitter-share-button" data-count="vertical">Tweet</a><script type="text/javascript" src="http://platform.twitter.com/widgets.js"></script>           
+                    <img src="http://2.bp.blogspot.com/_zS4IuTTavyc/Swm3yqaMJ5I/AAAAAAAAAO8/HppF-X4fLyU/s1600/picasa.png" onClick="uploadPicasa();" />
+                </center>
+            </div>
+        </div>
+        
+        <div id="shareOnPicasa" title="Upload to Picasa">
+            <p>To share this image on google picasa please configure your account to enable 'upload photos by email <a href="https://picasaweb.google.com/lh/settings" target="_blank">here</a> and then enter your private email address below</p>
+            <form id="picasaShare">
+                <center>
+                <input type="text" name="picasaEmail" id="picasaEmail" />
+                <input type="button" value="Share" onClick="setPicasaEmail();"/>
+                </center>
+            </form>
+        </div>
+      
+    </div>
+</body>

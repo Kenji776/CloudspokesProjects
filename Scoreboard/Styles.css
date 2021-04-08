@@ -1,0 +1,174 @@
+body
+{
+	margin:0px;
+	padding:0px;
+	font-family:Verdana, Geneva, sans-serif;
+	font-size:14px;
+	background-color:#000;
+}
+
+/* main container that holds all other displayed content. Controls height and width of the display box */
+.viewStateContainer
+{
+	position:relative;
+	width:95%;
+	border-style:solid;
+	border-width:thin;
+	display:block;
+	height:650px;
+	margin-left:auto;
+	margin-right:auto;
+	margin-top:45px;
+	-moz-border-radius: 15px;
+	border-radius: 15px;
+	background-color:#FFF;
+}
+
+	/*The header that will be displayed. Contains the content from config json Title attribute */
+	.viewStateHeader
+	{
+		width:100%;
+		text-align:center;
+		display:block;
+		padding:15px;
+		font-size:18px;
+		font-family:Century Gothic;
+		font-weight:bold;
+		
+	}
+	
+	/*Just another container to seperate the contents from the header and footers. No styling needed her */
+	.viewStatesContent
+	{
+			
+	}
+	
+	/* Container that holds content for a team (viewstate 1) */
+	#viewState2
+	{
+		padding:15px;	
+	}
+	
+		/*Div that contains the logo for the team. Ajust this based on requirments for maximum team logo size */
+		#viewState2-teamLogo
+		{
+			height:500px;
+			width:30%;
+			float:left;
+			overflow:hidden;
+		}
+		
+		/*Div that contains all the text data entries for the team. Groups text data together */
+		#viewState2-teamText
+		{
+			margin-left:20px;
+			height:500px;
+			width:65%;
+			float:left;
+		}
+		
+		/*Divs that contain text data about the team (name, and capatain, along with the labels for those items) */
+		.viewState2-textItem
+		{
+			display:inline;
+			float:left;
+			padding:15px;
+			width:200px;
+		}
+
+		/* Div that contains the text description of the team */
+		.viewState2-textDescription
+		{
+			display:inline;
+			float:left;
+			padding:15px;
+		}
+
+	/* Container that holds content for the winners reveal (viewstate 3) */
+	#viewState3
+	{
+		margin-left:auto;
+		margin-right:auto;
+		display:inline;
+	}
+	
+	/* Div that contains all the data about a team in the winners reveal */
+	.viewState3-teamListing
+	{
+		display:inline;
+		float:left;
+		padding:5px;
+		margin:15px;
+		height:500px;
+		width:21%;
+		margin-top:0px;
+		overflow:hidden;
+		text-align:center;
+		
+	}
+	
+	/* Div that contains the teams logo/image. Ajust this as required for maximum supported logo size */
+	.viewState3-teamListingLogoDiv
+	{
+		height:400px;
+		width:100%;
+		float:left;
+		overflow:hidden;
+		margin-bottom:15px;
+	}
+
+	/* Div that contains the teams logo/image. Ajust this as required for maximum supported logo size */
+	.viewState3-teamListingWinner
+	{
+		background-color:#0C0;
+		opacity: 0.2;
+	}
+	
+	/* Div that contains the sponsor images at the bottom of the view state container */	
+	.viewStateFooter
+	{
+		display:inline;
+		float:left;
+		height:75px;
+		width:79%;
+		position: absolute;
+		bottom: 0;
+		left:0;
+		
+	}
+	
+	/* Div that contains the cloud spokes logo */
+	.cloudSpokesLogo
+	{
+		display:inline;
+		float:right;	
+		height:75px;
+		width:20%;
+		position: absolute;
+		bottom: 0;
+		right:0;	
+	}
+	
+		/* Make the cloud spokes logo align right */
+		.cloudSpokesLogo img
+		{
+			float:right;	
+		}
+
+/* Helper classes */
+
+/*Causes content to break to the next line */
+.clear
+{
+	clear:both;	
+}
+
+.loser
+{
+	opacity:0.6;	
+}
+
+.winner
+{
+
+}

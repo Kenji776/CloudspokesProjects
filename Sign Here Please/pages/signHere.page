@@ -1,0 +1,107 @@
+<apex:page standardController="Quote__c" extensions="signHereController" sidebar="false" standardStylesheets="false" renderAs="{!renderAs}">
+<head>
+<style>
+@page {
+
+margin : .5in;
+}
+.businessLogo
+{
+    display:block;
+}
+.bodyText, .signatureText, .headerText
+{
+    font-face:arial;
+    font-size:11px;
+}
+
+span
+{
+    margin-top:15px;
+}
+#quoteTable
+{
+    width:50%;
+    padding:5px;
+    margin:5px;
+}
+</style>
+</head>
+<body>
+
+<apex:outputText value="{0,date,MM'/'dd'/'yyyy}">
+    <apex:param value="{!currentDate}" /> 
+</apex:outputText>  
+<br/>
+<apex:outputText value="{!BusinessLogo}" escape="false" />
+
+<span class="headerText">
+<p>
+{!AccountName}<br/>
+{!AccountContactName}<br/>
+{!AccountAddress}<br/>
+</p>
+</span>
+
+<span class="bodyText">
+<p>
+Thank you for allowing {!BusinessName} to provide your company with a Uniform Program.   We
+sincerely appreciate your business and look forward to serving you and your employees. 
+</p>
+
+<p>
+Our goal is for you to become a loyal {!BusinessName} customer.  We know that loyalty is built one successful service visit at a time.  {!BusinessName} will strive to exceed your expectations each time we service you.  
+We have selected {!BusinessContactName} to be your Service Sales Representative.
+A {!BusinessName} Partner will be in touch with you shortly to arrange the details of installing your Uniform Program.
+</p>
+
+<p>
+Additionally, our Customer Service team is available to answer any questions you may have.  
+Please call {!BusinessPhone} between the hours of 8 a.m. and 5 p.m., Monday through Friday.
+If you have a request or question after normal business hours, you can leave a voice message
+at the same number. We will return all calls on the next business day. 
+</p>
+
+
+<p>
+{!BusinessName} believes we provide essential solutions to customers like you.  Allowing {!BusinessName} to provide these essential solutions for your company,
+allows you to focus on your business and to demonstrate your commitment to the satisfaction and well-being of your employees and customers.  Below is a complete list of the products and services {!BusinessName} provides:
+</p>
+<apex:outputText rendered="{!(!quoteLineItems.empty)}">
+<table id="quoteTable">
+    <tr>
+        <th>Product</th>
+        <th>Quantity</th>
+        <th>Style</th>
+    </tr>
+    <apex:repeat var="lineItems" value="{!quoteLineItems}">
+        <tr>
+            <td>{!lineItems.Product_C__r.Product_Name__c}</td>
+            <td>{!lineItems.Quantity__c}</td>
+            <td>{!lineItems.Style__c}</td>
+        </tr>
+    </apex:repeat>
+</table>
+</apex:outputText>
+
+<p>
+To learn more about these services, please contact us at {!BusinessPhone}. 
+Again, thank you for this opportunity to serve you.
+</p>
+
+</span>
+<span class="signatureText">
+Sincerely, <br/>
+{!BusinessContactName} <br/>
+{!BusinessContactTitle} <br/>
+{!BusinessName} <br/>
+</span>
+
+<span class="terms">
+<p>
+<apex:outputText value="{!terms}" escape="false" />
+</p>
+</span>
+
+</body>
+</apex:page>

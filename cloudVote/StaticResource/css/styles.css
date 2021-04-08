@@ -1,0 +1,41 @@
+    #responseErrors
+    {
+        text-align:center;
+        color:red;
+    }
+    
+    .ui-disabled
+    {
+        cursor:default;
+    }
+    
+    #proposalHeader
+    {
+        text-align:center;
+        width:100%;
+        font-size: 16px;
+        text-shadow: 0 -1px 1px black;
+        font-weight:bold;
+    }
+    #proposalScore
+    {
+        margin-top:10px;
+        width:100%;
+        height: 30px;
+        padding-top:10px;
+       -moz-border-radius: 15px;
+        border-radius: 15px;        
+        text-align:center;
+        font-weight:bold;
+        color: white;
+        border: 1px solid #222;
+        text-shadow: 0 -1px 1px white;
+        background-color:black;
+        background-image: -webkit-gradient(linear,left top,left bottom,from(#555),to(#333));
+       
+    }
+    
+    #voteControls
+    {
+        margin:10px;
+    }

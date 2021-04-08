@@ -1,0 +1,11 @@
+<apex:page controller="knowledge" renderAs="PDF"> 
+<head>
+  <style>
+    @page {
+      size:landscape;
+    }
+  </style> 
+</head> 
+   <apex:outputText value="{!pdf}" escape="false"/>
+</apex:page>
+              

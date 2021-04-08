@@ -1,0 +1,5 @@
+{!REQUIRESCRIPT("/soap/ajax/10.0/connection.js")} 
+{!REQUIRESCRIPT("/soap/ajax/10.0/apex.js")} 
+
+console.log(document.location.href); 
+var result = sforce.apex.execute("favLinks","createLink", {url: document.location.href, name: document.title});

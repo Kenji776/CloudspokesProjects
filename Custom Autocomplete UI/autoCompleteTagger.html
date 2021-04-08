@@ -1,0 +1,200 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/themes/flick/jquery-ui.css" />
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
+<script src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8.23/jquery-ui.min.js"></script>
+<script>
+$(document).ready(function() {
+	
+	$('input').autoTagger({
+		source: 'http://herokory.herokuapp.com/autocomplete', //where is the source json. Do not include trailing slash 
+		enhanceUI: true, //enhance the UI elements using jQuery UI and a few custom UI add ons
+		placeHolderText: 'test',
+		resultHandler: function(data) //what to do with the data it gets back after the user clicks submit.
+		{
+			//simple function call that takes a div and uses the resulting search data
+			//to create a table and puts it in the div.
+			$('#searchResults').flexiResultTable({
+				data: data
+			})	
+		}
+	});
+});
+
+var autoTagger_searchTerms = new Object();
+
+(function( $ ) {
+	$.fn.autoTagger = function(options) {
+	    // Create some defaults, extending them with any options that were provided
+		var settings = $.extend( {
+		  'source' : '',
+		  'resultHandler' : function() {console.log('data fetched, but no callback provided. Please provide one by passing a function as the resultHandler param in the plugin invocation')},
+		  'enhanceUI' : true,
+		  'placeHolderText' : 'Enter Keyword'
+		}, options);
+	
+		return this.each(function() {
+			if($(this).attr('id') == null)
+			{
+					var id = Math.floor( Math.random()*99999 );
+					$(this).attr('id','autoComplete_'+id) 
+			}
+			
+			if($(this).attr('resultContainer') == null)
+			{
+				html = '<div class="autoTagger_chickletsContainer" id="chicklets_'+$(this).attr('id')+'"></div>';
+				$(this).after(html);
+				$(this).attr('resultContainer','chicklets_'+$(this).attr('id'));
+			}
+			
+			autoTagger_searchTerms[$(this).attr('id')] = new Array();
+			
+			$(this).bind('keyup', {myOptions: options}, function(event) { 
+				var value = $(this).val();
+				if(value.length != 0)
+				{
+					$(this).removeClass('autoTagger_placeholder');
+					//get the JSON content from the location specified by the user.	
+					$.ajax({
+					  url: event.data.myOptions.source+'/autoTagger_populateSearchTerms/'+$(this).val(),
+					  crossDomain: true,
+					  dataType: 'jsonp',
+					  jsonp: 'autoTagger_populateSearchTerms',
+					  cache: true,
+					  type: 'get'
+					});
+				}
+			}).bind('focus', {myOptions: options}, function(event){
+				$(this).val(null);
+				$(this).addClass('autoTagger_placeholder');
+			}).bind('blur'), {myOptions: options}, function(event){
+				if($(this).val().length == 0)
+				{
+					$(this).val(event.data.myOptions.placeHolderText);	
+				}
+			};
+			
+		});
+	};	
+})( jQuery );
+
+function autoTagger_populateSearchTerms(data)
+{
+	var terms = new Array();
+	for(key in data)
+	{
+		var object = new Object;
+		object.value = data[key].value;
+		object.label = data[key].value + ' ' + data[key].resultSize;
+		object.count = data[key].resultSize;
+		terms.push(object);
+	}
+	$("input").autocomplete({ 
+		source: terms, 
+		minLength: 0,
+		select: function(event, ui){
+			if($.inArray(ui.item.value, autoTagger_searchTerms[$(this).attr('id')]) == -1)
+			{
+				autoTagger_searchTerms[$(this).attr('id')].push(ui.item.value);
+				html = '<div class="autoTagger_chicklet" relatedTo="'+$(this).attr('id')+'" value="'+ui.item.value+'"><button class="autoTagger_closeButton">Remove</button><div class="autoTagger_closeButtonLabel"> '+ui.item.value+'</div><div class="autoTagger_closeButtonCount">('+ui.item.count+')</div>';
+				$('#'+$(this).attr('resultContainer')).append(html);
+				$( ".autoTagger_closeButton" ).button({
+					icons: {
+						primary: "ui-icon-close"
+					},
+					text: false	
+				}).bind('click', {value: ui.item.value, id: $(this).attr('id')}, function(event,ui){
+					event.preventDefault(); 
+					
+					autoTagger_searchTerms[event.data.id] = jQuery.grep(autoTagger_searchTerms[event.data.id], function(value) {
+					  return value != event.data.value;
+					});
+					
+					$('.autoTagger_chicklet[value='+event.data.value+'][relatedTo='+event.data.id+']').remove();
+	
+				});
+				$(this).val(null);					
+				$(this).focus();
+			}
+			return false;			
+		}
+	});
+}
+
+</script>
+
+<style>
+	.autoTagger
+	{
+		background-color:#eeeeee;
+		border-radius: 3px;
+		color: #000;
+		font-style:normal;		
+		outline:none;
+		padding:3px;
+		width:151px;
+	}
+	.autoTagger_placeholder
+	{
+		color: #b5b5b5;
+		font-style:italic;
+	}
+	.autoTagger_chickletsContainer
+	{
+		width:350px;
+	}	
+	
+	.autoTagger_chicklet
+	{
+		background-color:#eeeeee;
+		border-radius: 3px;
+		color: #000;
+		font-style:normal;		
+		outline:none;
+		padding: 3px;
+		padding-left:5px;
+		padding-right:5px;
+		display:inline-block;
+		margin:5px;
+		text-transform:capitalize;
+		height:25px;
+	}
+	.autoTagger_closeButton {
+	   font-size:10px !important;
+	   width:17px !important;
+	   height:17px !important;
+	   margin-right:5px;
+	   margin-top:5px;
+	   margin-bottom-5px;
+	   display:block;
+	   float:left;
+	}
+	.autoTagger_closeButtonLabel
+	{
+		text-transform:capitalize;	
+		margin-top:3px;
+		margin-right:3px;
+		float:left;
+		color: #000000;
+
+	}
+	.autoTagger_closeButtonCount
+	{
+		margin-top:3px;
+		margin-right:3px;
+		float:right;
+		color: #9a9a9a;
+	}	
+</style>
+</head>
+
+<body>
+
+<form name="autoCompleter">
+	<input type="text" class="autoTagger" />
+</form>
+</body>
+</html>

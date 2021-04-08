@@ -1,0 +1,121 @@
+<apex:page controller="chatterSwagger" tabStyle="Chatter_Swagger_Scorecard__c" action="{!loadUserInfo}">
+    <style>
+        #swaggerPage
+        {
+             margin-top: 10px;
+            margin-bottom: 6px;
+            font-family: Arial,sans-serif;
+            font-size: 15px;
+            font-weight: normal;
+            line-height: 18px;
+        }
+        #swaggerScoreContainer
+        {
+            display:inline;
+            width:175px;
+            height:200px;
+            background-image:url({!URLFOR($Resource.chatterSwagger, 'img/score_bubble.png')});
+            background-repeat: no-repeat;  
+            float:left;
+            margin:15px;
+            
+        }
+        
+        #swaggerScoreText
+        {
+            margin-left: auto;
+            margin-right:auto;
+            font-size: 70px;
+            margin-top:30px;
+            color:white;
+            font-family: 'DINBold',Arial,sans-serif;
+            text-shadow: 0px -1px 0px rgba(0, 0, 0, 0.5);
+            text-align:center;
+        }
+        #profileImage
+        {
+            display:inline;
+             float:left;
+             text-align:center;
+             width: 200px;
+             margin:15px;
+        }
+        
+        #profileText
+        {
+             display:inline;
+             float:left;       
+             text-align:left;
+             width:300px;
+             margin:15px;
+        }
+        
+        .img
+        {
+            float:left;
+        }
+        
+        .textDetails
+        {
+            color:#666666;
+        }
+        .titleText
+        {
+            font-size: 20px;
+            margin-top:30px;
+            color:black;
+            font-family: 'DINBold',Arial,sans-serif;
+              
+        }
+    </style>
+    <apex:pageBlock title="Chatter Swagger" id="swaggerPage">
+        <apex:pageBlockSection columns="1">
+            <apex:pageBlockSectionItem >
+                  <div id="swaggerScoreContainer">
+                      <div id="swaggerScoreText">{!scoreCard.Swagger__c}</div>
+                  </div>
+                    
+                    <div id="profileImage">
+                        <img src=" {!scoreCard.Chatter_User__r.FullPhotoUrl}"  />
+
+                   </div>       
+                   <div id="profileText">
+                         <span class="titleText">{!scoreCard.Chatter_User__r.firstname} {!scoreCard.Chatter_User__r.lastname}</span><br />
+                         <span class="textDetails">{!scoreCard.Chatter_User__r.title}</span>
+                         <p>{!scoreCard.Chatter_User__r.aboutme}</p>
+                         
+                         <p class="textDetails">{!scoreCard.Chatter_User__r.Country}, {!scoreCard.Chatter_User__r.State}, {!scoreCard.Chatter_User__r.City}</p>
+                   </div>                            
+         </apex:pageBlockSectionItem>
+          
+        </apex:pageBlockSection>
+        
+        <apex:pageBlockSection title="Influential About">
+                   <apex:pageBlockTable title="Influential About" value="{!influentialAbout}" var="i" rows="5">
+                       <apex:column headerValue="Topic"  value="{!i.topic}" />
+                       <apex:column headerValue="Type"  value="{!i.topicType}" />
+                       <apex:column headerValue="Swagger"  value="{!i.swagger}" />
+                    
+                   </apex:pageBlockTable>        
+        </apex:pageBlockSection>
+        
+        <apex:pageBlockSection title="People who influence me">
+                   <apex:pageBlockTable title="Influential About" value="{!influentialUsers}" var="i" rows="5">
+                       <apex:column headerValue="Person"  value="{!i.topic}" />
+                       <apex:column headerValue="Type"  value="{!i.topicType}" />
+                       <apex:column headerValue="Swagger"  value="{!i.swagger}" />
+                    
+                   </apex:pageBlockTable>          
+        </apex:pageBlockSection>
+
+        <apex:pageBlockSection title="People who I influence">
+                   <apex:pageBlockTable title="Influential About" value="{!influentialTo}" var="i" rows="5">
+                       <apex:column headerValue="Person"  value="{!i.topic}" />
+                       <apex:column headerValue="Type"  value="{!i.topicType}" />
+                       <apex:column headerValue="Swagger"  value="{!i.swagger}" />
+                    
+                   </apex:pageBlockTable>          
+        </apex:pageBlockSection>                 
+    </apex:pageBlock>
+
+</apex:page>

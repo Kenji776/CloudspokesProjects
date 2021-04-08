@@ -1,0 +1,3 @@
+<apex:page controller="knowledge" contentType="text/plain/#test.txt"> 
+   <apex:outputText value="{!csv}"/>
+</apex:page>

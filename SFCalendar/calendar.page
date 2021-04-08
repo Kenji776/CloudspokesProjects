@@ -1,0 +1,223 @@
+<apex:page standardStylesheets="false" expires="1" cache="false" showHeader="false" sidebar="false" standardController="Events__c">
+
+<html>
+<head>
+<!-----------------
+Copyright 2010 Daniel Llewellyn
+This program is distributed under the terms of the GNU General Public License
+--------------->
+
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
+
+<link rel='stylesheet' type='text/css' href="{!URLFOR($Resource.CalendarResources,'theme.css')}" />
+<link rel='stylesheet' type='text/css' href="{!URLFOR($Resource.CalendarResources,'fullcalendar.css')}" />
+<script type='text/javascript' src="{!URLFOR($Resource.CalendarResources,'fullcalendar.min.js')}"></script>
+<script type="text/javascript" src="{!URLFOR($Resource.CalendarResources,'dragresize.js')}"></script>
+
+
+<script type='text/javascript'>
+    var jsonString;
+    var allEvents;
+    var visibleClasses = '';
+    var events;
+    $(document).ready(function()
+    {
+        
+        var date = new Date();
+        var d = date.getDate();
+        var m = date.getMonth();
+        var y = date.getFullYear();
+
+        $('#calendar').fullCalendar({
+            theme: true,
+            header: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'month,agendaWeek,agendaDay'
+            },
+            editable: false,			
+            events: "calendarjsonresponder", //YOU HAVE HAVE TO PUT YOUR FULL URL HERE TO YOUR RESPONDER!  
+            loading: function(isLoading, view)
+            {
+                if(isLoading)
+                {
+                $("#lightbox, #lightbox-panel").fadeIn(300); 
+                }
+                if(!isLoading)
+                {
+                    events = $('#calendar').fullCalendar('clientEvents');
+                    filterEvents(document.getElementById('filterType').value, document.form.filterCriteria.value);
+                    $("#lightbox, #lightbox-panel").fadeOut(300);
+                }
+            },
+            
+            eventRender: function(event, element) 
+            {
+                var newdiv = document.createElement('div');
+                newdiv.setAttribute('id', 'NoticeDiv_'+event.id);
+                newdiv.setAttribute('class', 'drsElement');
+                document.getElementById("Body").appendChild(newdiv);
+                document.getElementById('NoticeDiv_'+event.id).innerHTML = '<div class="drsMoveHandle" id="TitleBar_'+event.id+'"></div>';
+            },  
+                      
+            eventClick: function(event, jsEvent, view ) 
+            {
+
+                showMessage(event, jsEvent, view )
+            }
+            
+            
+        });
+     updateVisible(document.form.classesToShow);});   
+
+    function showMessage(event, jsEvent, view)
+    {
+        document.getElementById("NoticeDiv_"+event.id).style.left = jsEvent.pageX+'px';+'px';
+        document.getElementById("NoticeDiv_"+event.id).style.top = jsEvent.pageY+'px';
+        document.getElementById("NoticeDiv_"+event.id).innerHTML = '<div id="TitleBar_'+event.id+'" class="drsMoveHandle">'+event.title+'<img src="http://images.fpitesters.com/shared/application_close_fade.png" id="closeButton_'+event.id+'" name="closeButton_'+event.id+'" onmouseover=\'javascript:roll_over("closeButton_'+event.id+'", "http://images.fpitesters.com/shared/application_close.png");\' onmouseout= \'javascript:roll_over("closeButton_'+event.id+'", "http://images.fpitesters.com/shared/application_close_fade.png");\' onClick="javascript:hideMessage(\''+event.id+'\');" ></div> \
+                                                          Start: ' + $.fullCalendar.formatDate(event.start, "h:mm tt") +'<br> \
+                                                          End: '+ $.fullCalendar.formatDate(event.end, "h:mm tt")+'<br> \
+                                                          Client: '+event.client+'<br> \
+                                                          All Day: '+event.allDay+'<br> \
+                                                          Status: '+event.status+'<br> \
+                                                          Test: '+event.test+'<br> \
+                                                          PM: '+event.PM+'<br> \
+                                                          PA: '+event.PA+'<br> \
+                                                          Location: '+event.Location+'<br> \
+                                                          L/R: '+event.LRIndicator+'<br><br> \
+                                                          <center><a href="'+event.linkurl+'" target=\'_blank\'>'+event.linkurl+'</a></center>';
+          $("#NoticeDiv_"+event.id).slideDown('fast', function()
+          {
+          });   
+
+        
+    }
+    
+    function hideMessage(id)
+    {
+                  $("#NoticeDiv_"+id).slideUp('fast', function()
+                  {
+                  });
+                          
+    }
+ 
+    
+    function roll_over(img_name, img_src)
+    {
+        document[img_name].src = img_src;
+    }
+
+    function updateVisible(classNames)
+    {
+         visibleClasses='';
+         for(var i=0; i<classNames.length; i++)
+         {
+             if(classNames[i].checked)
+             {
+                 visibleClasses += classNames[i].value;
+             }    
+         }     
+    }
+    function filterEvents(filterField, filterValue)
+    {
+        var matchesFilter = -1;
+        var matchesClass = -1;
+        
+        for(var i=0; i<events.length; i++)
+        {
+            try
+            {
+                //alert('Finding '+events[i].status.toLowerCase()+'. In: '+visibleClasses.toLowerCase()+'. Result: '+visibleClasses.toLowerCase().indexOf(events[i].status.toLowerCase()));
+    
+                matchesFilter = events[i][filterField].toLowerCase().indexOf(filterValue.toLowerCase());
+                matchesClass = visibleClasses.toLowerCase().indexOf(events[i].status.toLowerCase());
+            }         
+            catch(e)
+            {
+                //Sometimes they will try and filter on a value that an event object doesn't have a value for.
+                //in that case, just say that it passes the event filter. It can still fail the class filter though.
+                matchesFilter = 1;
+            }    
+            
+            if((matchesFilter != -1 && filterValue.length > 0 && matchesClass != -1) || (filterValue.length < 1 && matchesClass != -1))
+            {
+                  $('.'+events[i].id).slideDown('fast', function()
+                  {
+                  
+                  });
+            }
+            else
+            {
+                  $('.'+events[i].id).slideUp('fast', function()
+                  {
+                  
+                  });           
+            }
+            
+              
+        }
+    }  
+    function jumpToDate(dateString)
+    {
+        var gotoDate = dateString;
+
+        gotoDate = $.fullCalendar.parseDate( gotoDate  )
+        if(gotoDate == 'Invalid Date')
+        {
+            alert('Please enter a valid date in MM/DD/YYYY format');    
+        }
+        else
+        {
+            $('#calendar').fullCalendar( 'gotoDate', gotoDate  )
+        }
+    }
+</script>
+
+</head>
+<body id="Body">
+
+    
+<div id='calendar'></div> 
+   
+<div id="lightbox-panel">  
+<h2>Calendar Data Loading</h2>  
+<p><img src="http://images.fpitesters.com/portal/ajax-loader2.gif" /></p>  
+<p align="center">    
+</p>  
+</div><!-- /lightbox-panel -->  
+   
+ <div id="lightbox"> </div>
+<!-- /lightbox --> 
+
+    <div id="NoticeDiv" class="drsElement">
+        <div id="TitleBar" class="drsMoveHandle"></div>
+    </div>
+    
+    <form name="form" id="form" method="post">
+        Show Only Events where 
+        <select name="filterType" id="filterType">
+            <option value="client">Client</option>
+            <option value="title">Title</option>
+            <option value="test">Test</option>
+            <option value="PA">PA</option>
+            <option value="PM">PM</option>
+            <option value="LRIndicator">Local or Remote</option>
+            <option value="Location">Location</option>
+        </select>
+         Is 
+        <input name="filterCriteria" id="filterCriteria" onkeyup="javascript:filterEvents(filterType.value,this.value,form.classesToShow);" /> 
+        
+        and status is    
+        <LABEL FOR="confirmed">Confirmed: <input type="checkbox" name="classesToShow" value=".Confirmed" id="confirmed" checked="checked" onclick="javascript:updateVisible(form.classesToShow);filterEvents(filterType.value,filterCriteria.value);"/></LABEL> 
+        <LABEL FOR="pending">Pending: <input type="checkbox" name="classesToShow" value=".Pending" id="pending" checked="checked" onclick="javascript:updateVisible(form.classesToShow);filterEvents(filterType.value,filterCriteria.value);"/> </LABEL>
+        <LABEL FOR="canceled">Canceled: <input type="checkbox" name="classesToShow" value=".Canceled" id="canceled" checked="checked" onclick="javascript:updateVisible(form.classesToShow);filterEvents(filterType.value,filterCriteria.value);"/></LABEL><br />
+        
+    </form>
+<form name="jumpDate">
+Jump To Date (MM/DD/YYYY)<input name="JumpTo" id="JumpTo" type="text" />  
+<input type="button" onclick="javascript:jumpToDate(JumpTo.value)" value="Jump to date" />
+</form>        
+</body>
+</html>
+
+</apex:page>

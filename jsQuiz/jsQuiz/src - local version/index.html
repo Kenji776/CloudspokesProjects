@@ -1,0 +1,298 @@
+<apex:page controller="jsQuiz" standardStylesheets="false" showHeader="false" sidebar="false">
+    <LINK REL="StyleSheet" HREF="styles.css" type="text/css" MEDIA="screen" />
+    <LINK REL="StyleSheet" HREF="jquery-ui.css" TYPE="text/css" MEDIA="screen" />
+    <LINK REL="StyleSheet" HREF="jquery-linedtextarea.css" type="text/css" MEDIA="screen" />
+    <script src="jquery.js"></script>
+    <script src="jquery-ui.js"></script>
+    <script src="jquery-linedtextarea.js"></script>
+
+    <script type="text/javascript">        
+        //where to go when the person is done with the quiz
+        var finishUrl = 'http://www.cloudspokes.com';
+        
+        //do you want to show the question answer data when an answer is submmited? (if false, just loads next question without a notice)
+        var showQuestionAnswerDialog = true;
+        
+        //do you want to sho the quiz start notification so the timer doesnt start until the person is ready? (if false, the will start immediatly after the data loads)
+        var showQuizStartNotice = true;
+        
+        var questions = new Object();
+        var currentQuestionIndex = 0;
+        var runningSeconds = 0;
+        var timerInterval;
+        
+        
+        //this function is responsible for getting the JSON string. You can replace with anything you want. Just pass your JSON string to the handleJsonResponse(JsonData) function
+        //and it will handle it from there.
+        
+        function getJson()
+        {         
+            try
+            {   
+                //this just returns a JSON string. Replace it with any way you want for retreiving JSON, including just a javascript variable. watch your quotes/double quotes though. 
+				$.getJSON('jsonContent.txt', function(data)
+				{
+					questions = data;
+					
+                    if(!showQuizStartNotice)
+                    {
+                        loadNextQuestion(0);
+                    }  						
+				});     
+            }
+            catch(ex)
+            {
+                showMessage(ex, 'Error Getting Question JSON');
+            }                   
+                         
+        }
+        function hanldeAnswerSubmission(answerObject)
+        {
+            //the answerObject contanis all the original data from the question as well as the 'answer' property, and 'runningSeconds' property.
+            try
+            {                       
+                if(showQuestionAnswerDialog)
+                {
+                    var list = $('#questionAnswerData');
+					list.empty();
+                    for(key in answerObject)
+                    {
+                        if(key != 'Question__c')
+                        {
+                            $(list).append('<li><b>'+ key +'</b>: '+answerObject[key] +'</li>');
+                        }
+                    }                                        
+                    $('#questionAnswerNotice').dialog('open');
+                }
+            }    
+            catch(ex)
+            {
+                showMessage(ex, 'Error Handling Answer Data');
+            }            
+        }
+        
+        function submitAnswer()
+        {
+            try
+            {
+                clearTimeout(timerInterval);
+                
+                var answerObject = new Object();
+                answerObject = questions.records[currentQuestionIndex];
+                answerObject.answer = $('#questionContainer').val().replace(/\s/g,'');
+                answerObject.runningSeconds = runningSeconds;
+                
+                hanldeAnswerSubmission(answerObject);
+                $('#questionContainer').val(null);
+                $('#questionContainer').fadeOut(function(){            
+                    currentQuestionIndex++;
+        
+                    $( "#progressBar" ).progressbar( "value" ,Math.ceil(parseInt(currentQuestionIndex+1,10)/questions.records.length*100));
+                    if(currentQuestionIndex == questions.records.length)
+                    {
+                        $('#endNotice').dialog('open');
+                         $('#submitAnswerButton').hide();
+                         
+                    }
+                    else
+                    {
+                        if(!showQuestionAnswerDialog)
+                        {
+                            loadNextQuestion(currentQuestionIndex);
+                        }
+                    }
+                });
+            }    
+            catch(ex)
+            {
+                showMessage(ex, 'Error Submitting Answer');
+            }              
+        }
+        
+        function loadNextQuestion(questionIndex)
+        {
+            try
+            {
+                var question = questions.records[questionIndex].Question__c;
+                $('#questionContainer').val(question);
+                $('#languageLabel').html('Language: '+questions.records[questionIndex].Language__c);
+                $('#progressBarLabel').html('Question '+parseInt(questionIndex+1, 10)+' of '+questions.records.length);    
+                    
+                $('#questionContainer').fadeIn(function(){
+                    runningSeconds=0;             
+                });
+                
+                timerInterval = setInterval("incrimentRunningTimer();",1000); 
+            }    
+            catch(ex)
+            {
+                showMessage(ex, 'Error Loading Question' + questionIndex);
+            }             
+        }
+        
+        function showMessage(ex, title)
+        {
+            console.log(ex);
+            $('#infoNotice').html('Error Details: ' + ex.message);
+            $('#infoNotice').dialog( "option" , 'title' , title );
+            $('#infoNotice').dialog('open');
+        
+        }
+        
+        //method for ajusting the display timer to show the time elapsed since the timer started.
+        function incrimentRunningTimer()
+        { 
+            try
+            {      
+                runningSeconds++;
+                var timer = secondsToTime(runningSeconds)
+                $('#timerDisplay').html( pad2(timer.h) +':' +  pad2(timer.m)  + ':' +  pad2(timer.s) );
+            } 
+            catch(ex)
+            {
+               showMessage(ex, 'Error Incrimenting Timer');
+            }         
+        }
+    
+        //formats a number for display in the timer. Pads with a leading 0 if needed.
+        function pad2(number) {
+             return (number < 10 ? '0' : '') + number
+        }
+
+        //converts a number of seconds into its hour, minute, and second equivilent (decimal time)
+        function secondsToTime(secs)
+        {
+            try
+            {
+                var hours = Math.floor(secs / (60 * 60));
+                
+                var divisor_for_minutes = secs % (60 * 60);
+                var minutes = Math.floor(divisor_for_minutes / 60);
+            
+                var divisor_for_seconds = divisor_for_minutes % 60;
+                var seconds = Math.ceil(divisor_for_seconds);
+                
+                var obj = {
+                    "h": hours,
+                    "m": minutes,
+                    "s": seconds
+                };
+                return obj;
+            } 
+            catch(ex)
+            {
+               showMessage(ex, 'Error Incrimenting Timer');
+            }            
+        }
+            
+        $(document).ready(function() {
+            try
+            {   
+				getJson();
+				                    
+                $('#quizStartNotice').dialog({
+                    autoOpen: showQuizStartNotice,
+                    modal: true,
+                    height: 150,
+                    width: 300                 
+                }) 
+                
+                $('#infoNotice').dialog({
+                    autoOpen: false,
+                    modal: true,
+                    height: 250,
+                    width: 300                 
+                }) 
+                
+                $('#questionAnswerNotice').dialog({
+                    autoOpen: false,
+                    modal: true,
+                    height: 250,
+                    width: 500                 
+                })
+                 
+                $('#endNotice').dialog({
+                    autoOpen: false,
+                    modal: true,
+                    height: 150                 
+                }) 
+                                                      
+                $('#questionText').tabs();
+                
+                $('#questionInfo').tabs();
+                
+                $( "#progressBar" ).progressbar({
+                    value: 0
+                });         
+                
+                $( "button" ).button(); 
+                
+                $( "#startQuizButton").click(function(){
+                    $('#quizStartNotice').dialog('close');
+                    loadNextQuestion(0);
+                });
+                
+                $( "#submitAnswerButton" ).click(function(){
+                    submitAnswer();
+                });
+    
+                $( "#loadNextQuestion").click(function(){
+                    loadNextQuestion(currentQuestionIndex);
+                    $('#questionAnswerNotice').dialog('close');
+                });
+                            
+                $( "#finishButton").click(function(){
+                    window.location = finishUrl;
+                });
+                
+                $("#questionContainer").linedtextarea();                                                         
+            } 
+            catch(ex)
+            {
+               showMessage(ex, 'Error Initializing Form');
+            } 
+        });        
+    </script>
+    
+    <div class="pageHeader">CloudSpokes Javascript Skills Assessment Interface<br/>By Kenji776</div>
+    <div id="container">
+        <div id="questionText">
+            <textarea id="questionContainer" class="lined" rows="25"  wrap="off" style="width:99%;height:99%;">
+            Question Loading...
+            </textarea>
+        </div>
+        
+        <div id="questionInfo">
+            <div id="progressBarLabel" class="itemLabel">Question 0 of 0</div>
+            <div id="progressBar"></div>
+            
+            <div id="timerLabel" class="itemLabel">Question Time</div>
+            <div id="timerDisplay">00:00:00</div>
+            
+            <div id="languageLabel" class="itemLabel">Language: ---</div>
+            
+            <div id="submitAnswer">
+                <button name="submitAnswerButton" id="submitAnswerButton">Submit Answer</button>
+            </div>
+        </div>
+    
+        <div id="infoNotice" title="Error Occured"></div>
+
+        <div id="quizStartNotice" title="Get Ready!">
+            <p>Get ready to begin the simple CloudSpokes programming quiz. Once you press start the quiz will begin.</p>
+            <center><button id="startQuizButton">Start</button></center>
+        </div>
+                
+        <div id="questionAnswerNotice" title="Question Answered!">
+            <div id="questionAnswerData">
+            	<ul id="questionAnswerData">
+                </ul>
+            </div>
+            <center><button id="loadNextQuestion">Next Question</button></center>
+        </div>
+        <div id="endNotice" title="Finished!">
+            <p>Thanks! Your quiz is complete.</p>
+            <center><button id="finishButton" name="finishButton">Finish</button></center>
+       </div>
+    </div>
+</apex:page>

@@ -1,0 +1,10 @@
+<apex:page standardController="Contact">
+    <c:vf_gauge minVal="0"
+        maxVal=""
+        currentVal="" 
+        backgroundColor="blue"
+        fontColor="red"
+        title="my awesome gauge"
+        link="http://www.google.com"
+        animate="false"/>
+</apex:page>

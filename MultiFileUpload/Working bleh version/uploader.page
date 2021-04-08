@@ -1,0 +1,7 @@
+<apex:page id="uploader">
+   
+    <c:uploader objId="{!$CurrentPage.Parameters.id}"
+          showExisting="true"
+          showFileName="true"/> 
+         
+</apex:page>

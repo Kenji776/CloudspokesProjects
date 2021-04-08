@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Objects>
+	<Object type="QwikScore_Question_Answer__c" id="a0FU00000008h9G">
+		<field id="Answer_Text__c">1</field>
+	</Object>
+	<Object type="QwikScore_Question_Answer__c" id="a0FU00000008h9F">
+		<field id="Answer_Text__c">2</field>
+	</Object>
+	<Object type="QwikScore_Question_Answer__c" id="a0FU00000008h9E">
+		<field id="Answer_Text__c">3</field>
+	</Object>
+	<Object type="QwikScore_Question_Answer__c" id="a0FU00000008h9D">
+		<field id="Answer_Text__c">4</field>
+	</Object>	
+</Objects>
+
+
+
+Format is
+
+<?xml version="1.0" encoding="utf-8"?>
+<Objects>
+	<Object type="[Object Type]" id="[Record Id To Update]">
+		<field id="[Fieldname]">[Value]</field>
+	</Object>	
+</Objects>
+
+You can include multiple fields per object to update.
+You can include multiple objects to update
+You may not specify different kinds of objects. The first object the record type of the rest
+Attributes must be passed in the order they appear in in the example. EX Type then Id. Rearranging them will break the app.

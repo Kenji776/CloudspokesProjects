@@ -1,0 +1,18 @@
+trigger createSwaggerFromStatus on User (after insert, after update) 
+{
+  list<user> createSwaggerFromUsers = new list<user>();
+  
+  for(User u : trigger.new)
+  {
+    User oldUser = Trigger.oldMap.get(u.ID);
+    if(u.currentStatus != oldUser.currentStatus)
+    {
+      createSwaggerFromUsers.add(u);
+    }
+      
+  }
+  if(!createSwaggerFromUsers.isEmpty())
+  {
+    chatterSwagger.createSwagger(createSwaggerFromUsers,  'Id', 'currentStatus');
+  }
+}

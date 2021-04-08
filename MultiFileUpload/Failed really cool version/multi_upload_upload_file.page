@@ -1,0 +1,2 @@
+<apex:page controller="multiFileUpload" action="{!attachToObject}" contentType="application/x-JavaScript; charset=utf-8" showHeader="false" standardStylesheets="false" sidebar="false">{!result}
+</apex:page>

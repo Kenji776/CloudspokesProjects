@@ -1,0 +1,28 @@
+<apex:page showHeader="false" sidebar="false" title="partyForce" standardStylesheets="false">
+<div id="credits">
+    <div class="dataBlock">
+         <span class="title">Dan Llewellyn - Programmer</span>
+         <p><img src="{!URLFOR($Resource.partyForce, 'images/dan.gif')}" style="float:left; margin:5px;" /> Responsible for cobbling this mess together.  I am the 23 year old lead (read: only) programmer and application administrator at a small company in MN, USA. I work with Apex, Visualforce, Coldfusion, SQL, lots of Javascript hacking, and have been known to play with some C# here and there. Also field calls for end user support from time to time (sigh).</p>
+
+         <p>Programming however is only my second love. I started out as a systems guy. I went to school for telecommunication and graduated Deans list in 2007. I am also a Microsoft Certified Systems Administrator, A+ (got that when I was 16, way back in the day XD), and an Adobe Certified Expert (ACE) in Coldfusion 8. I’ve been getting more and more into programming though, since that is what my job mostly requires, and while I’ve never gone to school for it, I seem to have somewhat of a knack for it.</p>
+    
+        <p>You can check out my blog at <a href="http://iwritecrappycode.wordpress.com/">http://iwritecrappycode.wordpress.com/</a> <br />
+        
+        Or follow me on Twitter! @Kenji776</p>
+    </div>
+    
+    <div class="dataBlock">
+        <span class="title">Tanner Peck - Designer</span>
+        
+        <img src="{!URLFOR($Resource.partyForce, 'images/tanner_peck.jpg')}" width="150" height="200"  style="float:right;margin:5px;" />
+        
+<p>I am an adaptive artist from Minnesota who enjoys pairing creativity with functionality, and 
+it was my job to help make PartyForce a visually appealing application. </p>
+
+<p>Earning a Visual and Creative Arts Advanced Diploma at Sheridan Institute of Advanced Learning, I was able to expand my knowledge from drawing to other mediums.  I practice web design, digital imaging, and photography.  When I have time, I like to unwind by painting traditionally. </p>
+
+<p>Right now I work small freelance jobs and am interested in projects of any size or a long-term position.  If you are interested or want to see more, send me an email at tannerpants@gmail.com! </p>
+        
+    </div>
+</div>
+</apex:page>

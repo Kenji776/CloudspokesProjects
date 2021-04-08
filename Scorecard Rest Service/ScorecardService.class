@@ -1,0 +1,541 @@
+/*****************************************
+Name: ScordcardService
+Created By: Daniel Llewellyn
+Created Date: July 26, 2011
+Description: Apex Rest Service that supports the following operations
+
+	GET /Challenge_Participant__c ID
+		Returns JSON Payload with answer and scorecard information. If participant already
+		has a scorecard, existing card and answers are returned. If not, a blank card is provided
+		that can be updated. Answer templates are also created. A 'surveyId' attribute must be passed
+		and the 'createScorecard' must be passed and set to true to create a new scorecard and
+		blank answer templates. Scored cards may not be updated.
+		
+	PUT /Challenge_Participant__c ID
+		Update the existing scorecard with values passed in the URL. May optionally set the related 
+		scorecard's scored flag to true if the 'setScored' attribute in the URL is present and is set to true.
+		Cards may not have their scored attribute unset. Scored cards cannot be updated.
+		
+		This method can also take an XML payload in the text of the request which can update many records at once.
+		For more details and sample XML see the comments above the method itself.
+			
+******************************************/
+@RestResource(urlMapping='/v.9/scorecard/*') 
+global with sharing class ScorecardService 
+{
+
+	/*********************************************
+	Get scorecard and associated answers by participation ID. Returns single JSON element containing
+	scorecard information and a JSON array of the associated answers. If a scorecard for the given participation
+	ID is not found, one is created on the fly and assigned to the participant
+	
+	Params
+		scoreCardFields: fields to get for this scorecard
+		ansFields: fields to get for the associated answers
+		ansLimit: maximum number of related answers to get
+		ansOrderby: field to sort releated answers by
+		
+		IF YOU WANT IT TO CREATE A NEW SCORECARD AND ANSWERS IF ONE DOES NOT EXIST YOU MUST PASS IN THESE VALUES!!!
+		
+		createScorecard: a true/false value. If no scorecard is found for the given participationId and this flag is set to true
+		           and the surveyId param has been passed, a new scorecard will be created and returned.
+		surveyId: an option ID to pass. If there is no scorecard found for the participant, and the createScorecard attribute is
+		          true a scorecard for the given participant will be created for this survey.
+	*********************************************/
+	@HttpGet
+	global static Map<String, list<QwikScore_Question_Answer__c>> doGet(RestRequest req, RestResponse res) 
+	{
+
+		Map<String, list<QwikScore_Question_Answer__c>> returnMap = new Map<String, list<QwikScore_Question_Answer__c>>();
+		list<QwikScore_Question_Answer__c> answers = new list<QwikScore_Question_Answer__c>();
+		String scoreCardJson = '{"Success":"True","Message":"Query Ran Successfully",';
+		try
+		{  	
+			// see if a username was part of the uri
+			String participationId = req.requestURI.substring(req.requestURI.lastIndexOf('/')+1);
+			 
+			if (isValidId(participationId)) 
+			{
+				String thisId = Id.valueOf(participationId);
+
+			    // default fields to return for the scorecard
+			    String scoreCardFields = 'id, name, scored__c ';
+				
+				//if they passed in custom fields to use for the scorecard, then use those instead
+				if (req.params.containsKey('scoreCardFields')) scoreCardFields = req.params.get('scoreCardFields');
+				
+				// get the score card details
+				list<QwikScore_Scorecard__c> scoreCard = Database.query('select ' + scoreCardFields + ' from QwikScore_Scorecard__c where Challenge_Participant__c = \''+participationId+'\' limit 1');
+				
+				//if there is no score card for this particpant, create one. Otherwise, just set the reference the queried scorecard
+				QwikScore_Scorecard__c thisCard;
+				if(scoreCard.isEmpty() && 
+					req.params.containsKey('createScorecard') &&
+					req.params.get('createScorecard').toLowerCase() == 'true' && 
+					req.params.containsKey('surveyId') &&
+					isValidId(req.params.get('surveyId')))
+				{
+					thisCard = new QwikScore_Scorecard__c();
+					thisCard.QwikScore_Survey__c = req.params.get('surveyId');
+					thisCard.Challenge_Participant__c = participationId;
+					insert thisCard;
+					
+					//now create the answer templates using the functionality in the qwikscore class
+					qwikScore qS = new qwikScore();
+					qS.createAnswerTemplates(thisCard.id, thisCard.QwikScore_Survey__c);
+				}
+				else if(!scoreCard.isEmpty())
+				{
+					thisCard = scoreCard[0];
+				}
+				
+				if(thisCard != null)
+				{
+					for (String fieldName : scoreCardFields.split(','))
+					{
+						scoreCardJson += '"'+fieldName.trim()+'": "' + thisCard.get(fieldName.trim()) +'",';
+					}
+					scoreCardJson = scoreCardJson.substring(0,scoreCardJson.length()-1);
+					scoreCardJson += '}'; 
+		    
+		    		
+				    // default fields to return 
+				    String ansFields = 'id, name, IsAnswered__c, Weighted_Score__c, Answer_Value__c,  Question__r.Question_Text__c, Question__r.QwikScore_Question_Group__c, Question__r.Question_Weight__c, Question__r.Question_Type__c, Question__r.Sequence_Number__c';
+				    // default query limit   
+				    String ansLimit = 'limit 100';   
+				    // default order by
+				    String ansOrderby = '';      
+				    // default where clause
+				    String ansWhere = 'where QwikScore_Scorecard__c = \'' + thisCard.id + '\''; 
+	    	    
+		    		
+				    // set the fields to return
+				    if (req.params.containsKey('ansFields')) ansFields = req.params.get('ansFields');
+				    // set the limit for records to return
+				    if (req.params.containsKey('ansLimit')) ansLimit = 'limit ' + req.params.get('ansLimit'); 
+				    // set the order by
+				    if (req.params.containsKey('ansOrderby')) ansOrderby = 'order by ' + req.params.get('ansOrderby');
+	    				
+					
+				
+					answers = Database.query('select ' + ansFields + ' from QwikScore_Question_Answer__c ' + ansWhere + ' ' + ansOrderby + ' ' + ansLimit);
+				
+				}
+				else
+				{
+					throw new customException('Could not find scorecard and createCard was set to false or invalid SurveyId specifed');
+				}	
+				returnMap.put(scoreCardJson,answers);
+			}
+			else
+			{
+				throw new customException('Invalid participation Id specified. Please ensure you have provided a valid Id for a Challenge_Participant__c object.');
+			}
+				
+		} 
+		catch(Exception e)
+		{
+			string errorJson = '{"Success:" "false", "Message:" "'+e.getMessage()+'"}';
+			returnMap.put(errorJson,answers);
+		}
+
+		return returnMap; 
+	}
+
+	/*******************************************
+	Update a question answer. This has two modes of operation Single question update mode
+	is automatically selected if a valid question ID is not passed in the URL. EX
+	
+	https://na12.salesforce.com/services/apexrest/v.9/scorecard/a0FU00000008h9G
+	
+	would invoke the single update method. Whereas
+	
+	https://na12.salesforce.com/services/apexrest/v.9/scorecard/
+	
+	would invoke the bulk update method.
+	
+	Either version can take a ?setScored=true attribute in the URL to mark the scorecard as complete.
+	
+	Single question update: 
+		Updates one question answer at a time. 
+		Include the question ID in the URL and any fields to update as well.
+		Non updateable fields are automatically removed. Optionally you may pass
+		a special setScored attribute. When set to true, it will mark the survey
+		as being scored and complete.
+		(just because all other fields on that object are either formula or fields that should not be changed)
+		
+		EXAMPLE CALL
+		
+		https://na12.salesforce.com/services/apexrest/v.9/scorecard/a0FU00000008h9G?Answer_Text__c=1&setScored=true
+		
+	Bulk question update
+		Updated multiple questions at a time. 
+		Include a simple XML data structure in the text portion of the PUT request
+		that contains the questions to be updated (a sample XML file is included with this package)
+		Currently the only updateable field on a question object is the answer_text__c 
+		(just because all other fields on that object are either formula or fields that should not be changed)
+		
+
+		EXAMPLE XML
+
+		<?xml version="1.0" encoding="utf-8"?>
+		<Objects>
+			<Object type="QwikScore_Question_Answer__c" id="a0FU00000008h9G">
+				<field id="Answer_Text__c">1</field>
+			</Object>
+			<Object type="QwikScore_Question_Answer__c" id="a0FU00000008h9F">
+				<field id="Answer_Text__c">2</field>
+			</Object>
+			<Object type="QwikScore_Question_Answer__c" id="a0FU00000008h9E">
+				<field id="Answer_Text__c">3</field>
+			</Object>
+			<Object type="QwikScore_Question_Answer__c" id="a0FU00000008h9D">
+				<field id="Answer_Text__c">4</field>
+			</Object>	
+		</Objects>			
+	********************************************/	
+	@HttpPut
+	global static map<String,String> doPut(RestRequest req, RestResponse res) 
+	{    
+		String answerId = req.requestURI.substring(req.requestURI.lastIndexOf('/')+1);
+		string updateResult = 'Waiting to run';
+		map<String,String> returnMap = new map<String,String>();
+
+		
+
+
+					
+		returnMap.put('Success','True');
+		
+		try
+		{ 
+			if(!isValidId(answerId) && answerId.length() == 0)
+			{
+				returnMap.put('Method','Bulk');
+				updateResult = updateObjectsFromXml(req,res);			
+			}
+			else
+			{
+				returnMap.put('Method','Single');
+				updateResult = updateSingleAnswer(req,res);
+			}
+				
+			returnMap.put('Update Result', updateResult);
+			if(updateResult != 'All records updated successfully. ' && updateResult != 'All records updated successfully. Survey set to scored. No further changes allowed')
+			{
+				returnMap.put('Success','False');
+			}		  
+		}  
+		catch(Exception e)
+		{
+			returnMap.put('Error',e.getMessage());
+		}	
+		
+		return returnMap; 	
+	}
+
+	public static string updateObjectsFromXml(RestRequest req, RestResponse res)
+	{
+		string returnMessage = 'All records updated successfully. ';
+		
+		try
+		{
+			String xml = req.requestBody.toString().trim();
+			system.debug(xml);
+			list<sObject> updateList = parseUpdateXML(xml);
+			
+			//before we update we need to make sure this card is not scored
+			
+			list<QwikScore_Question_Answer__c> thisAns = [select QwikScore_Scorecard__r.Scored__c,
+															     QwikScore_Scorecard__c 
+														   from QwikScore_Question_Answer__c 
+
+														   where id = :updateList[0].Id];
+			if(thisAns[0].QwikScore_Scorecard__r.Scored__c)
+			{
+				throw new customException('Scored cards may not be updated');
+			}
+																	   
+			update updateList;
+
+			if(req.params.containsKey('setScored') && req.params.get('setScored').toLowerCase() == 'true')
+			{
+				QwikScore_Scorecard__c thisCard = new QwikScore_Scorecard__c(Id=thisAns[0].QwikScore_Scorecard__c);
+				thisCard.Scored__c = true;
+				update thisCard;	
+				returnMessage += 'Survey set to scored. No further changes allowed';				
+			}
+				
+		}
+		catch(Exception e)
+		{
+			returnMessage = e.getMessage();
+		}
+		return returnMessage;
+	}
+
+	public static string updateSingleAnswer(RestRequest req, RestResponse res)
+	{
+			String answerId = req.requestURI.substring(req.requestURI.lastIndexOf('/')+1);
+			
+		    // get a map of all field in the member__c custom object
+		    Map<String, Schema.SObjectField> sObjectFieldsMap = Schema.SObjectType.QwikScore_Question_Answer__c.fields.getMap();
+		    // don't let them update the following fields -- use all lowercase for comparison
+		    Set<String> noUpdateFields = new Set<String>{'Answer_Value__c,QwikScore_Scorecard__c,Weighted_Score__c,Answer_Value__c,IsAnswered__c'};
+			
+			string returnMessage = 'All records updated successfully. ';
+			
+						
+			try
+			{
+				QwikScore_Question_Answer__c qa = new QwikScore_Question_Answer__c(Id=id.ValueOf(answerId));
+				
+			
+				for (String key : req.params.keySet()) 
+				{
+	    			// only add params if they are valid field on the object and not on the no-update list
+	    			if (sObjectFieldsMap.containsKey(key) && !noUpdateFields.contains(key.toLowerCase()))
+		      		qa.put(key,req.params.get(key)); 
+		  		}
+		  		
+	
+		  		
+		  				
+				list<QwikScore_Question_Answer__c> thisAns = [select QwikScore_Scorecard__r.Scored__c,
+																     QwikScore_Scorecard__c 
+															   from QwikScore_Question_Answer__c 
+															   where id = :qa.Id];
+				
+				if(thisAns.isEmpty())
+				{
+					throw new customException('Could not locate answer with Id' + qa.Id);
+				}
+				
+				if(thisAns[0].QwikScore_Scorecard__r.Scored__c)
+				{
+					throw new customException('Scored cards may not be updated');
+				}
+				
+				update qa;
+				if(req.params.containsKey('setScored') && req.params.get('setScored').toLowerCase() == 'true')
+				{
+					QwikScore_Scorecard__c thisCard = new QwikScore_Scorecard__c(Id=thisAns[0].QwikScore_Scorecard__c);
+					thisCard.Scored__c = true;
+					update thisCard;
+					returnMessage += 'Survey set to scored. No further changes allowed';					
+				}				
+			}
+			catch(Exception e)
+			{
+				returnMessage = e.getMessage();
+			}
+			
+			return returnMessage; 		
+	}
+	
+	/*******************************************
+	Used to create a list of sObjects ready for updating from 
+	XML data that would likely be passed in a request
+	
+	This method is pretty cool actually. You can pass it some XML
+	formated in the way outlined previously and it will get you a list
+	of objects ready for update. I think they all have to be of the same type
+	though.
+	*******************************************/
+    public static list<sObject> parseUpdateXML(String Xml)
+    {
+    	
+    	map<Id,sObject> updates = new map<Id,sObject>();  
+    	xml = xml.trim();
+    	Xmlstreamreader reader = new Xmlstreamreader(xml);
+
+        Id lastId;
+        string fieldName;
+		Map<String, Schema.SObjectType> gd = Schema.getGlobalDescribe();
+		Schema.SobjectType oType;
+
+        while (reader.hasNext()) 
+        {
+        	if (reader.getEventType() == XmlTag.START_ELEMENT && reader.getLocalName().toLowerCase() == 'object')
+        	{
+        		if(oType == null)
+        		{
+        			oType = gd.get(reader.getAttributeValueAt(0));
+        		}
+        		
+        		sObject thisObject;
+        		if(reader.getAttributeLocalName(1) == 'id')
+        		{
+        			
+					thisObject= oType.newSObject(reader.getAttributeValueAt(1));
+        		}
+        		
+        		if(thisObject != null)
+        		{
+        			updates.put(thisObject.id,thisObject);
+        			lastId = thisObject.id;
+        		}
+        	}
+        	else if(reader.getEventType() == XmlTag.START_ELEMENT && reader.getLocalName().toLowerCase() == 'field')
+        	{
+        		fieldName = reader.getAttributeValueAt(0);
+        		sObject thisObject = updates.get(lastId);
+        		reader.next();
+        		thisObject.put(fieldName,getDecodedString(reader));
+        		updates.put(thisObject.id,thisObject); 
+        	}
+        	    
+            reader.next();
+        }
+        
+        return updates.values();
+                	
+    }
+	
+	/*******************************************
+	Test to see if a given string is a valid id
+	********************************************/
+	public static Boolean isValidId(String s) 
+	{
+		Id validId;
+		try 
+		{
+		   validId = s;
+		   return true; 
+		} 
+		catch (Exception ex) 
+		{
+		    return false;
+		}
+	}	
+
+    public class customException extends Exception {}
+
+    @isTest 
+    public static void unitTests()
+    {
+		DateTime dT = System.now();
+    	Date timeout = date.newinstance(dT.year(), dT.month(), dT.day());
+        	
+        QwikScore__c thisSurvey = new QwikScore__c();
+        thisSurvey.name = 'Test Survey';
+        thisSurvey.Active__c = true;
+        thisSurvey.Survey_Description__c = 'a test survey';
+        
+        insert thisSurvey;
+        
+        QwikScore_Question_Group__c thisGroup = new QwikScore_Question_Group__c();
+        thisGroup.name = 'Group 1';
+        thisGroup.Group_Weight__c = 100;
+        thisGroup.QwikScore_Survey__c = thisSurvey.id;
+        thisGroup.Sequence_Number__c = 1;
+        
+        insert thisGroup;
+        
+        QwikScore_Question__c thisQuestion = new QwikScore_Question__c();
+        thisQuestion.Question_Text__c = 'test question1';
+        thisQuestion.Question_Type__c = 'Numeric';
+        thisQuestion.Question_Weight__c = 100;
+        thisQuestion.QwikScore_Question_Group__c = thisGroup.id;
+        
+        insert thisQuestion;
+        
+        Challenge__c thisChallenge = new Challenge__c();
+        thisChallenge.name = 'Test Challenge';
+        thisChallenge.Start_Date__c = timeout;
+        thisChallenge.End_Date__c = timeout;
+        thisChallenge.Winner_Announced__c = timeout;
+        
+        insert thisChallenge;
+        
+        Member__c thisMember = new Member__c();
+        thisMember.Name = 'Test Guy';
+        thisMember.Email__c = 'test@test.com';
+        thisMember.Username__c = 'none';
+        insert thisMember;
+        
+        Challenge_Participant__c thisPart = new Challenge_Participant__c();
+        thisPart.Member__c = thisMember.id;
+        thisPart.Challenge__c = thisChallenge.id;
+        thisPart.Score__c = 50;
+        thisPart.Points_Awarded__c = 50;
+        thisPart.Money_Awarded__c = 15.0;
+        insert thisPart;
+  
+		QwikScore_Scorecard__c thisCard = new QwikScore_Scorecard__c();
+		thisCard.QwikScore_Survey__c = thisSurvey.id;
+		thisCard.Challenge_Participant__c = thisPart.Id;
+		insert thisCard;
+			
+		//now create the answer templates using the functionality in the qwikscore class
+		qwikScore qS = new qwikScore();
+		qS.createAnswerTemplates(thisCard.id, thisSurvey.id);
+		
+		list<QwikScore_Question_Answer__c> question = [select id from QwikScore_Question_Answer__c where QwikScore_Scorecard__c = :thisCard.id];
+  		
+  		
+  		String XML = 		'<?xml version="1.0" encoding="utf-8"?>'+
+								'<Objects>'+
+									'<Object type="QwikScore_Question_Answer__c" id="'+question[0].id+'">'+
+										'<field id="Answer_Text__c">1</field>'+
+									'</Object>'+
+								'</Objects>';	      
+
+                
+        RestRequest req = new RestRequest(); 
+        RestResponse res = new RestResponse();
+ 
+        req.requestURI = 'https://na12.salesforce.com/services/apexrest/v.9/scorecard/';
+        req.httpMethod = 'GET';
+        
+        doGet(req,res);
+               
+        req.requestURI = 'https://na12.salesforce.com/services/apexrest/v.9/scorecard/'+thisPart.id;
+        req.httpMethod = 'GET';
+        
+        doGet(req,res);
+ 
+        req.requestURI = 'https://na12.salesforce.com/services/apexrest/v.9/scorecard/'+thisPart.id+'?surveyId='+thisSurvey.id;
+        req.httpMethod = 'GET';
+        
+        doGet(req,res);
+
+        req.requestURI = 'https://na12.salesforce.com/services/apexrest/v.9/scorecard/'+thisPart.id+'?surveyId=FAILFAILFAIL';
+        req.httpMethod = 'GET';
+        
+        doGet(req,res);
+                       
+        req.requestURI = 'https://na12.salesforce.com/services/apexrest/v.9/scorecard/';
+        req.httpMethod = 'PUT'; 
+        req.requestBody = blob.valueOf(XML);
+               
+        doPut(req,res);
+ 
+        req.requestURI = 'https://na12.salesforce.com/services/apexrest/v.9/scorecard/'+question[0].id+'?Answer_Text__c=4';
+        req.httpMethod = 'PUT';        
+     
+     	doPut(req,res);
+ 
+        req.requestURI = 'https://na12.salesforce.com/services/apexrest/v.9/scorecard/'+question[0].id+'?setScored=true';
+        req.httpMethod = 'PUT';        
+     
+     	doPut(req,res);
+
+        req.requestURI = 'https://na12.salesforce.com/services/apexrest/v.9/scorecard/'+question[0].id;
+        req.httpMethod = 'PUT';        
+     
+     	doPut(req,res);
+     	
+        req.requestURI = 'https://na12.salesforce.com/services/apexrest/v.9/scorecard/?setScored=true';
+        req.httpMethod = 'PUT';        
+     	req.requestBody = blob.valueOf(XML);
+     	doPut(req,res);        	               
+    }        	
+    
+
+
+    public static String getDecodedString(Xmlstreamreader reader)
+    {
+        return EncodingUtil.urlDecode(reader.getText(), 'UTF-8').trim();
+    }    
+}

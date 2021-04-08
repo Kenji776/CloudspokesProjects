@@ -1,0 +1,6 @@
+{"TITLE":"Kenji776 Dynamic Scoreboard Entry",
+"REFRESH":5.0,
+"AD":"ads.json",
+"CURRENTVIEW":1.0,
+"POWEREDBY":"css/PoweredBy.gif",
+"LOGO":"css/cloudSpokesLogo.gif"}

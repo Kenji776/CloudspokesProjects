@@ -1,0 +1,133 @@
+<apex:page standardController="Account" extensions="MoveAttachments_Con">
+    <apex:includeScript value="{!URLFOR($Resource.jQuery, 'js/jquery-1.6.2.min.js')}"/>
+    <apex:includeScript value="{!URLFOR($Resource.jQuery, 'js/jquery-ui-1.8.16.custom.min.js')}"/>
+    <apex:stylesheet value="{!URLFOR($Resource.jQuery, 'css/ui-lightness/jquery-ui-1.8.16.custom.css')}"/>
+    <script>
+        $j = jQuery.noConflict();
+        $j(function(){
+             $j('[id$=library]').hide();
+             uncheckAll();
+        });
+        
+        function checkAttachments(val){
+             $j('[id$=attachment]').find(':checkbox').attr("checked", val);
+        }
+        
+        function checkLibraries(val){
+             $j('[id$=library]').find(':checkbox').attr("checked", val);
+        }
+        
+        function showLibrary(){
+            if($j('[id$=attachment]').find(':checked').length>0){
+                $j('[id$=attachment]').hide('hide');
+                $j('[id$=library]').show('show');
+            }
+            else{
+                alert('Please select some values.');
+            }
+        }
+        
+        function showAttachment(){
+            $j('[id$=library]').hide('hide');
+            $j('[id$=attachment]').show('show');
+        }
+        
+        function copyAttachment(){
+             if(validateLibSelection()){
+                copy();
+            }
+        }
+        
+        function moveAttachment(){
+            if(validateLibSelection()){
+                move();
+            }
+        }
+        
+        function validateLibSelection(){
+            if($j('[id$=library]').find(':checked').length>0){
+                return true;
+            }
+            else{
+                alert('Please select a library first.');
+                return false
+            }
+        }
+        
+        function uncheckAll(){
+            $j("input:checked").attr("checked", false);
+        }
+        
+    </script>
+    <style>
+       
+        .hideMe{
+            width:45%;
+            float:left;
+        }
+    </style>
+    <apex:form >
+    <apex:sectionHeader title="Some Account" subtitle="Create Content From Attachment"/>
+           <apex:actionFunction action="{!copyAttachment}" name="copy" reRender="d"/>
+           <apex:actionFunction action="{!moveAttachment}" name="move" reRender="d"/>
+           <apex:outputPanel rendered="{!showBlock }">
+                <apex:pageBlock id="attachment">
+                    <apex:facet name="header">
+                        <div style="font-size:16px;padding:5px;font-weight:bold;text-align:center">
+                            <img src="/img/icon/accounts24.png" style="margin-right:10px"/>
+                            <span>Select Attachments</span>
+                        </div>
+                    </apex:facet>
+                        
+                    <apex:pageBlockTable value="{!attachmentWrapperList}" var="att">
+                        <apex:column >
+                            <apex:facet name="header"><input type="checkbox" onclick="checkAttachments(this.checked)"/></apex:facet> 
+                            <apex:inputCheckbox value="{!att.isChecked}"/>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">Name</apex:facet> 
+                            <img src="/img/icon/accounts16.png" /> {!att.attachmentObj.Name}
+                        </apex:column>
+                        <apex:column value="{!att.attachmentObj.ContentType}"/>
+                    </apex:pageBlockTable>
+                    <apex:outputPanel style="margin-top:10px;padding:10px;" layout="block">
+                        <center>
+                            <apex:commandButton value="Cancel" action="{!cancel}" style="width:80px;" title="Cancel and go back to main page"/>
+                            <apex:commandButton value="Next" id="nxt" reRender="nxt" onclick="showLibrary()"  style="margin-left:10px;width:80px;" title="Go to Library Selection Page"/>
+                         </center>
+                    </apex:outputPanel>
+                </apex:pageBlock>
+    
+                <apex:pageBlock id="library">
+                    <apex:facet name="header">
+                        <div style="font-size:16px;padding:5px;font-weight:bold;text-align:center">
+                            <img src="/img/content/workspace24.png" style="margin-right:10px"/>
+                            <span>Select Libraries</span>
+                        </div>
+                    </apex:facet>
+                    <apex:pageBlockTable value="{!libraryWrapperList}" var="lib">
+                        <apex:column >
+                            <apex:facet name="header"><input type="checkbox" onclick="checkLibraries(this.checked)"/></apex:facet> 
+                            <apex:inputCheckbox value="{!lib.isChecked}"/>
+                        </apex:column>
+                        <apex:column >
+                            <apex:facet name="header">Name</apex:facet> 
+                            <img src="/img/content/workspace16.png" /> {!lib.libraryObj.Name}
+                        </apex:column>
+                        <apex:column value="{!lib.libraryObj.Description}"/>
+                    </apex:pageBlockTable>
+                    <apex:outputPanel layout="block" style="margin-top:10px;padding:10px;">
+                        <center>
+                            <apex:commandButton value="Previous" id="prev" reRender="prev" onclick="showAttachment()" style="width:80px;" title="Go back to Attachment Selection page"/>
+                            <apex:commandButton value="Copy" onclick="copyAttachment()" reRender="d" style="margin-left:10px;width:80px;" title="Copies the Attachment to Library"/>
+                            <apex:commandButton value="Move" onclick="moveAttachment()" reRender="d" style="margin-left:10px;width:80px;" title="Copies the Attachmnet to Library and deletes it from Attachment"/>
+                            <apex:commandButton value="Cancel" action="{!cancel}" style="margin-left:10px;width:80px;" title="Cancel and go back to Main page"/>
+                        </center>
+                    </apex:outputPanel>
+                </apex:pageBlock>
+            </apex:outputPanel>
+            <apex:pageBlock rendered="{!NOT(showBlock)}" title="No Attachment to Move">
+                <apex:outputText style="margin-bottom:20px" value="There are not attachment present for the current record"/>
+            </apex:pageBlock>
+    </apex:form>
+</apex:page>

@@ -1,0 +1,20 @@
+{
+  "totalMatches":3,
+  "searchResults":[
+    {
+      "title":"Acme Industrial",
+      "description":"lorem ipsum",
+      "starRating":5
+    },
+    {
+      "title":"World Wide Pants",
+      "description":"lorem ipsum",
+      "starRating":4
+    },
+    {
+      "title":"General Lee's Widgets",
+      "description":"lorem ipsum",
+      "starRating":3
+    }
+  ]
+}

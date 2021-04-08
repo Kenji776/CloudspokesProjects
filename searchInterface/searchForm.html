@@ -1,0 +1,583 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Search Interface</title>
+
+<link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.9.0/themes/flick/jquery-ui.css" />
+<link rel="stylesheet" href="css/jquery.multiselect.css" />
+<link rel="stylesheet" href="css/demo_table_jui.css" />
+<style>
+body {
+    font-size: 12px;
+	width:100%;
+}
+
+#searchFormContainer
+{
+	width:95%;
+	height:270px;
+}
+
+#results
+{
+	width:95%;
+	height:200px;
+}
+.search_category
+{
+	float:left;
+	padding:15px;
+}
+
+.clear
+{
+	clear:both;	
+	margin-top:5px;
+}
+
+.inline
+{
+	display:inline-block;	
+}
+
+</style>
+<script type="text/javascript" language="javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+<script type="text/javascript" language="javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.10.0/jquery-ui.min.js"></script>
+<script type="text/javascript" language="javascript" src="js/jquery.multiselect.min.js"></script>
+<script type="text/javascript" language="javascript" src="js/jquery.dataTables.js"></script>
+<script>
+	
+	
+	searchForm = new Object();
+	searchForm.formId = 'searchForm';
+	$(function() {
+
+		
+	    $( '#searchFormContainer' ).accordion({
+		  heightStyle: "fill"
+		});
+	    
+		
+		$( '#'+searchForm.formId+' .buttonGroup' ).buttonset();
+				
+
+		$.each($('#'+searchForm.formId+' select[multiple="multiple"]'),function(index,value){
+			$(value).multiselect({
+			   selectedText: "# of # selected"
+			});
+
+
+			$(value).bind("multiselectclick", function(event, ui){										
+				$.each( $('select[parent="'+$(value).attr('id')+'"]'),function(index,value){
+					searchForm.setSelectOptions(value);		
+					$(value).multiselect('refresh');					
+				});	
+			});	
+
+							
+		});	
+
+		$.each($('#'+searchForm.formId+' select'),function(index,value){		
+			$(value).button();
+			searchForm.setSelectOptions(value);
+			if($(value).attr('multiple'))
+			{
+				$(value).multiselect('refresh');
+			}
+		});
+
+
+		$.each($('#'+searchForm.formId+' select[enchanceType="slider"]'),function(index,value){
+			$(value).button();
+			var sliderValues = searchForm.setSelectOptions(value);
+			var isRange = false;
+			
+			var select = $(value);
+			if(select.attr('range') && select.attr('range') == 'true')
+			{		
+				isRange = true;
+			}
+			var valuemin = valuemax = 0;
+			
+			var slider = $( "<div id='slider' ></div>" ).insertAfter( select ).slider({
+			  min: Math.min.apply(null, sliderValues),
+			  max: Math.max.apply(null, sliderValues),
+			  range: isRange,
+			  values: [Math.min.apply(null, sliderValues),Math.max.apply(null, sliderValues)],			  
+			  slide: function( event, ui ) {
+
+				valuemin = ui.values[0];
+				valuemax = ui.values[1];
+				$(this).next().val(valuemax);
+				$(this).prev().val(valuemin);	
+				
+				$(select).val(ui.values[0]);		
+				$('#'+$(select).attr('id')+'_max').val(ui.values[1]);	  
+			  }
+			});
+			
+			if(isRange)
+			{
+				var sliderMax = $(select).clone().insertAfter( select ).attr('id',$(select).attr('id')+'_max').val(Math.max.apply(null, sliderValues));
+			}
+						
+			$( select ).change(function(event,ui) {
+				if(isRange && $(select).val() <= $('#'+$(select).attr('id')+'_max').val())
+				{
+  					$(slider).slider( "option", "values", [ $(select).val(), $(slider).slider("values")[1] ] );
+				}
+				else
+				{
+					event.preventDefault();
+					$(select).val($(slider).slider("values")[0]);
+				}
+			});	
+
+			$('#'+$(select).attr('id')+'_max').change(function(event,ui) {
+				if($(select).val() <= $('#'+$(select).attr('id')+'_max').val())
+				{
+  					$(slider).slider( "option", "values", [ $(slider).slider("values")[0], $('#'+$(select).attr('id')+'_max').val() ] );
+				}
+				else
+				{
+					event.preventDefault();
+					$('#'+$(select).attr('id')+'_max').val($(slider).slider("values")[1]);	
+				}
+			});
+			
+			console.log($(slider).slider("values"));						
+		});	
+		
+		$.each($('#'+searchForm.formId+' input[enhanceType="autocomplete"]'),function(index,value){
+			console.log(value);
+			$( value )
+			// don't navigate away from the field on tab when selecting an item
+			.bind( "keydown", function( event ) {
+			if ( event.keyCode === $.ui.keyCode.TAB &&
+				$( this ).data( "autocomplete" ).menu.active ) {
+			  event.preventDefault();
+			}
+			})
+			.autocomplete({
+			minLength: 0,
+			source: function( request, response ) {
+			  // delegate back to autocomplete, but extract the last term
+			  response( $.ui.autocomplete.filter(
+				searchForm.getLocations(), extractLast( request.term ) ) );
+			},
+			focus: function() {
+			  // prevent value inserted on focus
+			  return false;
+			},
+			select: function( event, ui ) {
+			  var terms = split( this.value );
+			  // remove the current input
+			  terms.pop();
+			  // add the selected item
+			  terms.push( ui.item.value );
+			  // add placeholder to get the comma-and-space at the end
+			  terms.push( "" );
+			  this.value = terms.join( ", " );
+			  return false;
+			}
+			});
+		});
+		$.each($('#search_submit'),function(index,value){	
+			console.log($(value).attr('icon'));
+			$(value).button({icons: {
+					primary: $(value).attr('icon')
+				}
+			});
+		});
+						
+		$('#search_submit').click(function(event,ui){
+			event.preventDefault();
+			
+			searchForm.buildQueryString(searchForm.formId);
+			
+			var dataObject = searchForm.createDemoResult(100);
+			
+			searchForm.buildResultsTable(dataObject);
+		});
+		
+	});
+	
+	searchForm.setSelectOptions = function(field)
+	{	
+		var parentFieldValues = new Array();
+		
+		if($('#'+$(field).attr('parent')))
+		{
+			try
+			{
+				var parentFieldValues = $($('#'+$(field).attr('parent'))).multiselect("getChecked").map(function(){
+				   return this.value;	
+				}).get();	
+			}
+			catch(ex)
+			{}
+		}
+		try
+		{
+			var values = window.searchForm[$(field).attr('source')](parentFieldValues);
+			var selectOptions = new Array();
+			
+			if($.isArray(values))
+			{
+				$.each(values,function(index,value){
+					selectOptions.push('<option value="'+value+'">'+value+'</option>');
+				});			
+			}
+			else
+			{
+				$.each(values,function(index,value){
+					selectOptions.push('<option value="'+index+'">'+value+'</option>');
+				});
+			}
+			$(field).html(selectOptions.join(''));
+
+		}
+		catch(ex)
+		{
+			$(field).html('<option val="err">Error Getting Field Values ' + ex.message+'</option>');		
+		}
+		return values;
+	}
+	
+	//function for getting demographic options. Can be hard coded or retreived via query. Just return an object using the values as the keys and the labels as the values
+	//you would probably want to replace this with some kind of dynamic data source, like a javascript/apex remoting query result
+	searchForm.getDemoGraphics = function()
+	{
+		var returnValues = new Object();
+		
+		returnValues['18-30 Caucasian'] = '18-30 Caucasian';
+		returnValues['18-30 Hispanic'] = '18-30 Hispanic';
+		returnValues['18-30 All'] = '18-30 All';
+		returnValues['19-49 All'] = '19-49 All';
+		
+		return returnValues;
+	}
+
+	//function for getting the location sub options. Can be hard coded or retreived via query. Just return an object using the values as the keys and the labels as the values
+	//you would probably want to replace this with some kind of dynamic data source, like a javascript/apex remoting query result
+	searchForm.getCountries = function(locationType)
+	{
+		var returnValues = new Object();
+
+			returnValues['usa'] = 'United States';
+			returnValues['can'] = 'Canada';
+			returnValues['mex'] = 'Mexico';
+				
+		return returnValues;	
+	}
+
+	//function for getting the location sub options. Can be hard coded or retreived via query. Just return an object using the values as the keys and the labels as the values
+	//you would probably want to replace this with some kind of dynamic data source, like a javascript/apex remoting query result
+	searchForm.getStates = function(countryArray)
+	{
+		var returnValues = new Object();
+
+		if($.inArray("usa", countryArray) > -1)
+		{
+			returnValues['mn'] = 'Minnesota';
+			returnValues['ca'] = 'California';
+			returnValues['ny'] = 'New York';
+				
+		}
+
+		if($.inArray("mex", countryArray) > -1)
+		{
+			returnValues['ag'] = 'Aguascalientes';
+			returnValues['cp'] = 'Campeche';
+			returnValues['yc'] = 'Yucatan';
+				
+		}
+
+		if($.inArray("can", countryArray) > -1)
+		{
+			returnValues['ab'] = 'Alberta';
+			returnValues['bc'] = 'British Columbia';
+			returnValues['on'] = 'Ontario';
+				
+		}				
+		return returnValues;	
+	}
+
+	//function for getting the cities dependent on the selected states. Can be hard coded or retreived via query. Just return an object using the values as the keys and the labels as the values
+	//you would probably want to replace this with some kind of dynamic data source, like a javascript/apex remoting query result
+	searchForm.getCities = function(stateArray)
+	{
+		var returnValues = new Object();
+		
+		
+		if($.inArray("mb", stateArray) > -1)
+		{
+			returnValues['mn'] = 'Minneapolis';
+			returnValues['ca'] = 'St. Cloud';
+			returnValues['ny'] = 'St. Paul';
+				
+		}
+
+		if($.inArray("ny", stateArray) > -1)
+		{
+			returnValues['ag'] = 'Brooklyn';
+			returnValues['cp'] = 'New York';
+			returnValues['yc'] = 'Buffalo';
+				
+		}
+
+		if($.inArray("ca", stateArray) > -1)
+		{
+			returnValues['ab'] = 'San Francisco';
+			returnValues['bc'] = 'Oakland';
+			returnValues['on'] = 'Fresno';
+				
+		}				
+		return returnValues;	
+	}	
+	
+	//demo function for generating postal codes. Again, probably want to query for these, or maybe hard code a list.
+	searchForm.getPostalCodes = function(cityArray)
+	{
+		var returnValues = new Array();
+		
+		for(var i = 0; i <= 20; i++)
+		{
+			returnValues.push(Math.floor(Math.random()*90000) + 10000);		
+		}
+		return returnValues;		
+	}
+	//function for getting frequency options. Can be hard coded or retreived via query. Just return an array of numerics. 
+	searchForm.getFrequencies = function()
+	{
+		var returnValues = new Array();
+		
+		for(var i = 0; i <= 100; i++)
+		{
+			returnValues.push(i);		
+		}
+		return returnValues;			
+	}
+
+	//function for getting rating options. Can be hard coded or retreived via query. Just return an array of numerics.
+	searchForm.getRatings = function()
+	{
+		var returnValues = new Array();
+		
+		for(var i = 1; i <= 5; i++)
+		{
+			returnValues.push(i);		
+		}
+		return returnValues;			
+	}
+
+	//function for getting rating options. Can be hard coded or retreived via query. Just return an array of numerics.
+	searchForm.getLocations = function()
+	{
+		var returnValues = new Array();
+		
+		for(var i = 0; i <= 50; i++)
+		{
+			returnValues.push(randomWord(5));		
+		}
+		return returnValues;			
+	}
+				
+	searchForm.buildQueryString = function(formId)
+	{
+	    // get all the inputs into an array.
+		var $inputs = $('#'+searchForm.formId+' :input');
+	
+		// not sure if you wanted this, but I thought I'd add it.
+		// get an associative array of just the values.
+		var values = {};
+		$inputs.each(function() {
+			if($(this).attr('sfFieldName'))
+			{
+				values[$(this).attr('sfFieldName')] = $(this).val();
+			}
+		});
+		
+		console.log(JSON.stringify(values));
+	}
+	
+	searchForm.buildResultsTable = function(dataObject)
+	{
+		$('#results').empty();
+		var tableHtml = '<table cellpadding="0" cellspacing="0" border="0" class="display" id="example"><thead><tr>';
+		
+		$.each(dataObject[0],function(index,value){
+			tableHtml += '<td>'+value.label+'</td>';
+		});
+		
+		tableHtml += '</tr></thead><tbody>';
+		
+		$.each(dataObject,function(index,value){
+			tableHtml += '<tr>';
+			$.each(value,function(index,value){
+				tableHtml += '<td>'+value.value+'</td>';
+			});			
+			tableHtml += '</tr>';
+		});
+		tableHtml += '</table>';
+		$('#results').html(tableHtml);
+
+		$('#example').dataTable({
+			 "bJQueryUI": true,
+			  "sPaginationType": "full_numbers"	
+		});		
+	}
+	
+	searchForm.createDemoResult = function(numRows)
+	{
+		var demoResult = new Array();
+		
+		for(var i = 0; i <= numRows; i++)
+		{
+			var thisRow = new Object();
+			thisRow['itemName'] = new Object();
+			thisRow['itemName'].name = 'name';
+			thisRow['itemName'].label = 'Item Name';
+			thisRow['itemName'].value = randomWord(Math.random() * 10);
+
+			thisRow['description__c'] = new Object();
+			thisRow['description__c'].name = 'description';
+			thisRow['description__c'].label = 'Description';
+			thisRow['description__c'].value = randomWord(Math.random() * 10);			
+
+			thisRow['city__c'] = new Object();
+			thisRow['city__c'].name = 'city__c';
+			thisRow['city__c'].label = 'City';
+			thisRow['city__c'].value = randomWord(Math.random() * 10);	
+
+			thisRow['zip__c'] = new Object();
+			thisRow['zip__c'].name = 'zip__c';
+			thisRow['zip__c'].label = 'Postal Code';
+			thisRow['zip__c'].value = Math.random() * 5;						
+		
+			demoResult.push(thisRow);
+		}
+		
+		return demoResult;	
+	}
+
+	function randomWord(length)
+	{
+	  chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
+	  pass = "";
+	  for(x=0;x<length;x++)
+	  {
+		i = Math.floor(Math.random() * 62);
+		pass += chars.charAt(i);
+	  }
+	  return pass;
+	}
+	
+	Array.prototype.max = function() {
+	  return Math.max.apply(null, this)
+	}
+	
+	Array.prototype.min = function() {
+	  return Math.min.apply(null, this)
+	}
+
+    function split( val ) {
+      return val.split( /,\s*/ );
+    }
+    function extractLast( term ) {
+      return split( term ).pop();
+    }	
+</script>
+
+
+</head>
+
+<body>
+
+<form id="searchForm" onsubmit="return false;" action="" method="post">
+	<div id="searchFormContainer">
+        <h3>Basics</h3>
+        <div>
+            <div id="search_gender" class="search_category buttonGroup">
+                <label>Gender</label>
+                <input type="radio" id="input_gender_male" name="input_gender" sfFieldName ="gender__c"/><label for="input_gender_male" >Male</label>
+                <input type="radio" id="input_gender_female" name="input_gender" sfFieldName ="gender__c"/><label for="input_gender_female" >Female</label>
+                <input type="radio" id="input_gender_both" name="input_gender" sfFieldName ="gender__c"/><label for="input_gender_both">Both</label>
+            </div>
+            
+            <div id="search_demographics" class="search_category">
+                <label for="search_demographics_input">Demographics</label>
+                <select id="search_demographics_input" name="search_demographics_input" multiple="multiple" source="getDemoGraphics" sfFieldName="demographics__c"></select>
+            </div>
+        </div>
+        
+        <h3>Location</h3>
+        <div>
+            <div id="search_location" class="search_category">
+            	<div class="inline">
+                    <label for="search_location_country_input">Country</label>
+                    <select id="search_location_country_input" name="search_location_country_input" multiple="multiple" source="getCountries" sfFieldName="country__c"></select>
+ 				</div>
+                
+                <div class="inline">
+                    <label for="search_location_state_input">State</label>
+                    <select id="search_location_state_input" name="search_location_state_input" multiple="multiple" source="getStates" sfFieldName="state__c" parent="search_location_country_input" ></select>                
+				</div>
+				<div class="inline">
+                    <label for="search_location_city_input">City</label>
+                    <select id="search_location_city_input" name="search_location_city_input" multiple="multiple" source="getCities" sfFieldName="city__c" parent="search_location_state_input"></select>  
+				</div>
+				<div class="inline">
+                    <label for="search_location_postalCode_input">Postal Code</label>
+                    <select id="search_location_postalCode_input" name="search_location_postalCode_input" multiple="multiple" source="getPostalCodes" sfFieldName="postalCode__c" parent="search_location_city_input"></select>  
+                 </div> 
+                 
+                <div class="clear"></div>
+                
+                <div class="inline">                               
+                    <label for="search_location_detail_input">Location Detail</label>
+                    <input type="text" id="search_location_detail_input" name="search_location_detail_input"/> 
+            	</div>
+
+                <div class="inline">                               
+                    <label for="search_location_id_input">Location Ids</label>
+                    <input type="text" id="search_location_id_input" name="search_location_id_input" enhanceType="autocomplete" multiple="multiple" sfFieldName="location__c" source="getLocations"/> 
+            	</div>                
+            </div>    
+        </div>
+        
+        <h3>Advanced</h3>
+        
+        <div>
+            <div id="search_frequency" class="search_category">
+                <label>Frequency</label>
+                <select id="search_frequency_input" name="search_frequency_input" source="getFrequencies" enchanceType="slider" range="true" sfFieldName="frequency__c"></select>
+            </div> 
+        
+            <div id="search_ratings" class="search_category">
+                <label>Ratings</label>
+                <select id="search_ratings_input" name="search_ratings_input" source="getRatings" enchanceType="slider" range="true" sfFieldName="rating__c"></select>
+            </div> 
+        
+            <div id="search_ratings_secondary" class="search_category">
+                <label>Secondary Ratings</label>
+                <select id="search_ratings_secondary_input" name="search_ratings_secondary_input" source="getRatings" enchanceType="slider" range="true" sfFieldName="secondary_rating__c"></select>
+            </div>  
+        </div>  
+        
+        <h3>Other</h3>
+        <div>
+        	 <p>Add as many other fields here as you'd like</p>
+        </div>
+        
+ 	</div>            
+    <button value="Search" id="search_submit" icon="ui-icon-circle-triangle-e" >Search</button>
+</form>
+
+<div id="results">
+</div>
+
+
+</body>
+</html>

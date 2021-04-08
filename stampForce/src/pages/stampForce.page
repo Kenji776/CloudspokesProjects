@@ -1,0 +1,264 @@
+<apex:page standardStylesheets="false" showHeader="false" sidebar="false" controller="stampForce" >
+<head>
+	<link rel="stylesheet" href="http://code.jquery.com/mobile/1.0b2/jquery.mobile-1.0b2.min.css" />
+	<link rel="stylesheet" href="{!URLFOR($Resource.stampforce, 'css/styles.min.css')}" />
+	<script src="{!URLFOR($Resource.stampforce, 'js/jquery-1.6.2.min.js')}"></script>
+	<script src="{!URLFOR($Resource.stampforce, 'js/jquery.mobile-1.0b2.min.js')}"></script>
+	<script src="{!URLFOR($Resource.stampforce, 'js/plugins.js')}"></script>
+	<script src="{!URLFOR($Resource.stampforce, 'js/core.min.js')}"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+</head>
+<body> 
+<div data-role="page" id="login">
+
+    <div data-role="header">
+        <h1>Stampforce Event Stamp Collection - Login</h1>
+    </div>
+
+    <div data-role="content">
+        <form method="get" id="login-form" class="dataForm">
+            <ul>
+                <li><label for="login-email">Email</label></li>
+                <li><input type="text" name="login-email" id="login-email" class="required email" minlength="4" maxlength="35" /></li>
+                
+                <li><label for="login-password">Password</label></li>
+                <li><input type="password" name="login-password" id="login-password" class="required" minlength="4" maxlength="25" /></li>
+                
+                <li><div id="loginResult" class="error"></div></li>
+                
+                <li><input type="button" id="login-submit" name="login-submit" value="Login"/></li>
+            </ul>
+            
+        </form>
+    </div>
+
+    <div data-role="footer" class="footer"></div>
+</div>
+
+
+<div data-role="page" id="events">
+
+    <div data-role="header">
+        <h1>Event List</h1>
+    </div>
+
+    <div data-role="content">
+      <div id="events-list" data-role="collapsible-set">
+
+          
+      </div>
+    </div>
+
+    <div data-role="footer" class="footer"></div>
+</div>
+
+<div data-role="page" id="stamps">
+
+    <div data-role="header">
+        <h1>View Collected Stamps</h1>
+    </div>
+
+    <div data-role="content">
+        <p>All the stamps you have, and have yet to get</p>
+        <p>
+            <div id="stampList">
+            
+            </div>
+        </p>
+        <ul>
+            <li><div id="getResult" class="error"></div></li>
+        </ul>
+        <p><a href="#events">Back To Events</a></p>
+    </div>
+
+    
+    <div data-role="footer" class="footer"></div>
+</div>
+
+<div data-role="page" id="createStamp">
+
+    <div data-role="header">
+        <h1>Create New Stamp Code</h1>
+    </div>
+
+    <div data-role="content">
+        <form method="get" id="create-form" class="dataForm">
+            <ul>
+                <li><div id="createCompanyName" class="title"></div></li>
+                <li><div id="createStampOutput" class="title"></div></li>      
+                <li><div id="qrcodeGen"></div></li>                                                        
+                <li><center><input type="button" id="create-submit" name="create-submit" value="Create New Stamp Code"  /></center></li>
+                
+            </ul>
+            
+        </form>        
+    </div>
+   <p><a href="#events">Back To Events</a></p>
+   <div data-role="footer" class="footer"></div>
+</div>
+
+<div data-role="page" id="register">
+
+    <div data-role="header">
+        <h1>Register for Event</h1>
+    </div>
+
+    <div data-role="content">
+         <p><div id="register-eventData"></div></p>
+         <form method="get" id="register-form" class="dataForm">
+            <ul>                                                          
+                <li><input type="button" id="register-submit" name="register-submit" value="Register for This Event"  /></li>
+                <li><div id="regiserResult"></div></li>
+            </ul>
+            
+        </form>
+        <p><a href="#events">Back To Events</a></p>
+    </div>
+
+    <div data-role="footer" class="footer"></div>
+</div>
+
+
+<div data-role="page" id="addStamp">
+
+    <div data-role="header">
+        <h1>Add a Stamp</h1>
+    </div>
+
+    <div data-role="content">
+         <form method="get" id="redeem-form" class="dataForm">
+            <ul>    
+                <li>Enter your stamp code provided to you by a sponsor to redeem it for a stamp</li>
+                <li><input type="text" id="redeem-code" name="redeem-code" class="required" minlength="4" maxlength="15" /></li>                                                          
+                <li><input type="button" id="redeem-submit" name="redeem-submit" value="Redeem Stamp Code"  /></li>
+                <li><div id="redeemStampOutput"></div></li>
+            </ul>
+            
+        </form>
+        <p><a href="#events">Back To Events</a></p>
+    </div>
+
+    <div data-role="footer" class="footer"></div>
+</div>
+
+<div data-role="page" id="giveStamp">
+
+    <div data-role="header">
+        <h1>Give an Attendee a Stamp</h1>
+    </div>
+
+    <div data-role="content">
+         <form method="get" id="give-form" class="dataForm">
+            <ul>    
+                <li>Enter an attendee ID to give them a stamp directly</li>
+                <li><input type="text" id="give-code" name="give-code" class="required" minlength="4" maxlength="15" /></li>                                                          
+                <li><input type="button" id="give-submit" name="give-submit" value="Give Stamp"  /></li>
+                <li><div id="giveStampOutput"></div></li>
+            </ul>
+            
+        </form>
+        <p><a href="#events">Back To Events</a></p>
+    </div>
+
+    <div data-role="footer" class="footer"></div>
+</div>
+
+<div data-role="page" id="signup">
+
+    <div data-role="header">
+        <h1>Register with StampForce</h1>
+    </div>
+
+    <div data-role="content">
+        <p>To being using StampForce you must first register. Enter your information below to get started!</p>
+        <form method="get" id="signup-form" class="dataForm">
+            <ul>
+                <li><label for="signup-email">Email</label></li>
+                <li><input type="text" name="signup-email" id="signup-email" class="required email" maxlength="35" /></li>
+
+                <li><label for="signup-firstname">Firstname</label></li>
+                <li><input type="text" name="signup-firstname" id="signup-firstname"  class="required" maxlength="15" /></li>
+
+                <li><label for="signup-lastname">Lastname</label></li>
+                <li><input type="text" name="signup-lastname" id="signup-lastname"  class="required" maxlength="12" /></li>
+                                                
+                <li><label for="signup-password">Password</label></li>
+                <li><input type="password" name="signup-password" id="signup-password" class="required" maxlength="25" /></li>
+
+                <li><label for="signup-phone">Phone</label></li>
+                <li><input type="text" name="signup-phone" id="signup-phone"  class="required" maxlength="12" /></li>
+
+                <li><label for="signup-company">Company</label></li>
+                <li><input type="text" name="signup-company" id="signup-company" maxlength="25" /></li>
+                
+                <li><div id="signupResult" class="error"></div></li>
+                                                                
+                <li><input type="button" id="signup-submit" name="signup-submit" value="Register"  /></li>
+            </ul>
+            
+        </form>
+    </div>
+
+    <div data-role="footer" class="footer"></div>
+</div>
+
+<div data-role="page" id="signup-success">
+
+    <div data-role="header">
+        <h1>Registration Successfull!</h1>
+    </div>
+
+    <div data-role="content">
+         <p>Your account has been created. You may now <a href="#login">Login</a> and begin collecting stamps and earning prizes!</p>
+    </div>
+
+    <div data-role="footer" class="footer"></div>
+</div>
+
+<div data-role="page" id="forgotPassword">
+
+    <div data-role="header">
+        <h1>Forgot Password</h1>
+    </div>
+
+    <div data-role="content">
+        <p>If you have forgotten your password, just enter the email address you used to register with us and we will send you a reminder.</p>
+        <form method="get" id="forgotPassword-form">
+            <ul>
+                <li><label for="forgotPassword-email">Email</label></li>
+                <li><input type="text" id="forgotPassword-email" name="forgotPassword-email" /></li>
+                
+                <li><input type="button" id="forgotPassword-submit" name="forgotPassword-submit" value="Send Reminder" /></li>
+            </ul>
+            
+        </form>
+    </div>
+
+    <div data-role="footer" class="footer"></div>
+</div>
+
+<div data-role="page" id="qrCode">
+
+    <div data-role="header">
+        <h1>Attendance QR Code</h1>
+    </div>
+
+    <div data-role="content">
+        <div class="title">
+            <p>For events which support QR code scanning to distribute stamps, you may simply display this code to the scanner.</p>
+            <div id="qrcode"></div>
+        </div>
+    </div>
+     <p><a href="#events">Back To Events</a></p>
+	<div data-role="footer" class="footer"></div>
+</div>
+
+
+</body>
+<script>
+	var footerString = '<h4>Stampforce by Appirio & Kenji776<br><a href="#signup">Register</a> | <a href="#login">Login</a></h4>';
+	$('.footer').html(footerString);
+</script>
+
+
+</apex:page>

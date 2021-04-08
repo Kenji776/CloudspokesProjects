@@ -1,0 +1,262 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Untitled Document</title>
+
+<style>
+	body
+	{
+		background-color: #6498c8;
+		margin: 0px;
+		padding: 0px;
+	}
+	
+	#container
+	{
+		background-color: #6498c8;
+		color:#FFF;
+		width:1200px;
+		height:800px;
+		font-family: Trebuchet, sans-serif;
+		font-size:12px;
+		margin-left: auto;
+		margin-right:auto;
+		
+	}
+	
+	#logo
+	{
+		width: 660px;
+		height: 70px;
+		margin-left:auto;
+		margin-right:auto;
+		text-align:center;
+		
+		background-image:url(img/TopBnnr.gif);
+		background-repeat:no-repeat;
+	}
+	
+	#content
+	{
+		width: 	1100px;
+		margin-left: auto;
+		margin-right:auto;
+	}
+
+	#uiContent
+	{
+		width: 745px;
+		height: 510px;
+		float:left;
+	}
+	
+	#descriptionText
+	{
+		width: 285px;
+		height: 510px;
+		float:left;	
+	}
+	
+	#descriptionTextBox
+	{
+		width: 280px;
+		height:475px;		
+		margin-left: auto;
+		margin-right:auto;
+		margin-top:20px;
+		background-color:#d9e5f1;
+		color:#000;
+		padding: 5px;
+		line-height:1.55em;
+		-moz-box-shadow: 0 0 5px 5px #888;
+		-webkit-box-shadow: 0 0 5px 5px#888;
+		box-shadow: 0 0 5px 5px #888;	
+	}
+	
+	#imageSelect
+	{
+		width: 500px;
+		height: 135px;
+		float:left;
+		margin:10px;	
+	}
+	
+	#imageGallery
+	{
+		width:	100%;
+		height: 130px;
+	}
+	
+	#imageGallery img
+	{
+		margin:10px;
+		display:inherit;
+		float:left;
+	}
+	#imageDisplay
+	{
+		width: 420px;
+		height:320px;
+		margin:15px;
+		float:left;
+	}
+
+	#imageCaption
+	{
+		width: 250px;
+		height:320px;
+		margin:15px;
+		float:left;
+	}
+	
+	#imageCaption img
+	{
+		display:block;
+		margin:15px;
+	}
+	
+	#imageCaption textarea
+	{
+		width:230px;
+		height: 200px;
+		border-style:solid;
+		border-width:8px;
+		margin-left:auto;
+		margin-right:auto;
+		display:block;
+		text-align:center;
+	}	
+	
+	#footer
+	{
+		margin-top:55px;
+		width: 98%;
+		height: 120px;
+		margin-left: auto;
+		margin-right:auto;
+		
+	}
+	
+	#sponsoredBy
+	{
+		width: 187px;
+		height:93px;
+		background-image: URL(img/sponsor.gif);
+		float:left;
+		margin:10px;
+	}
+	
+	#createdBy
+	{
+		width: 187px;
+		height:93px;
+		background-image: URL(img/created.gif);
+		float:left;	
+		margin:10px;
+	}
+	
+	#submissionWinner
+	{
+		width: 210px;
+		height:93px;
+		background-image: URL(img/winner.gif);
+		float:left;		
+		margin:10px;
+	}
+	
+	#legal
+	{
+		float:right;
+		width:220px;
+		margin-right:130px;
+	}
+	
+	#submitButton
+	{
+		display:block;
+		background:url(img/BttnSubmit.gif);
+		background-repeat:no-repeat;
+		width:180px;
+		height:50px;
+		margin-left:auto;
+		margin-right:auto;
+		margin-top:15px;
+	}
+	.clear
+	{
+		clear:both;
+	}
+</style>
+</head>
+
+<body>
+
+    <div id="container">
+    	<div id="logo">Logo</div>
+        
+    	<div id="content">
+        
+            
+            
+            <div id="uiContent">
+                <div id="imageSelect">
+                	<img src="img/01selectanimage.gif" />
+                    
+                    <div id="imageGallery">
+                    	<img src="img/mansmall.jpg" />
+                        
+                        <img src="img/womansmall.jpg" />
+                        
+                        <img src="img/cloudSmall.jpg" />
+                    </div>
+                </div>
+                
+                <div class="clear"></div>
+                
+                <div id="imageDisplay">
+                	<img src="img/womanLarge.jpg" />
+                </div>
+                
+                <div id="imageCaption">
+                	<img src="img/02addyourcaption.gif" />
+                	
+                    <textarea name="caption">add your caption</textarea>
+                    
+                	<div id="submitButton"></div>
+                </div>
+                               
+            </div>
+            
+            <div id="descriptionText">
+            	<div id="descriptionTextBox">
+                	<h3>What is Pop Art?</h3>
+                    <p>
+                    	American Pop Art was a product of the social revolution of the 1960's. It associated itself
+                        with everyday images of the populate that connected people, instead of the esoteric and closed
+                        word of the more classical predeccessprs. It's strongly linked with the reise and globalization of
+                        pop music and youth culture, epitomized by Elvis and the Beatles. Pop art was brash and fun and 
+                        represented innovation without contraint and showed the power of connection people in a more open
+                        way.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="clear"></div>
+            
+            <div id="footer">
+            	<div id="sponsoredBy"></div>
+                
+                <div id="createdBy"></div>
+                
+                <div id="submissionWinner"></div>
+                
+                <div id="legal">
+                  <p>&copy; 2011 Appirio Inc. All rights reserved</p></div>
+            	
+            </div>
+    	</div>        
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,31 @@
+{
+    "total_count": 24,
+    "entries": [
+        {
+            "type": "folder",
+            "id": "192429928",
+            "sequence_id": "1",
+            "etag": "1",
+            "name": "Stephen Curry Three Pointers"
+        },
+        {
+            "type": "file",
+            "id": "818853862",
+            "sequence_id": "0",
+            "etag": "0",
+            "name": "Warriors.jpg"
+        }
+    ],
+    "offset": "<param queryParam='offset' default='10'>",
+    "limit": "<param queryParam='limit' default='2'>",
+    "order": [
+        {
+            "by": "type",
+            "direction": "<param queryParam='dir' default='DSC'>"
+        },
+        {
+            "by": "name",
+            "direction": "ASC"
+        }
+    ]
+}

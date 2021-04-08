@@ -1,0 +1,5 @@
+Package Name: VF Gauge
+Install URL: https://login.salesforce.com/packaging/installPackage.apexp?p0=04tE0000000PcPN
+Version Name: Contest Release
+Version Number: 1.0
+Password: E19{qm5?

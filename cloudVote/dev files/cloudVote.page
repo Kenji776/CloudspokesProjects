@@ -1,0 +1,193 @@
+<body>
+<div data-role="page" id="home" class="dataPage" data-theme="{!config.jQuery_Mobile_Data_Theme__c}">
+        <div data-role="header" class="ui-bar ui-bar-{!config.jQuery_Mobile_Data_Theme__c}">
+            <center><img src="{!config.Header_Image__c}" /></center>
+        </div>
+        
+        <center>
+        <img src="{!config.Banner_Image_URL__c}" id="bannerImage" align="center" />
+ 
+        <p>
+            <div id="introText">{!config.App_Description__c}</div>
+        </p>
+        </center>
+        <footer data-role='footer' data-position='fixed' class='foot'></footer>
+</div> 
+ 
+<div data-role="page" id="login" class="dataPage" data-theme="{!config.jQuery_Mobile_Data_Theme__c}">
+        <div data-role="header"  class="ui-bar ui-bar-{!config.jQuery_Mobile_Data_Theme__c}">
+            <center><img src="{!config.Header_Image__c}" /></center>
+        </div>
+        
+        <p>Logging in with Facebook is a fast easy way to sign in to {!config.Application_Name__c}. Simply authorize the application and you will be able to being voting on, commenting on, and creating proposals. </p>
+        
+       <div id="connectWithFBPanel">
+           <div id="connectFB"><a href="#" data-role="button" data-icon="gear" onClick="fb_login();" data-theme="{!config.jQuery_Mobile_Button_Theme__c}" id="fbConnectButton">Login With Facebook</a> </div> 
+           <div id="connectFBDone"><a href="#" data-role="button" data-icon="check" data-theme="{!config.jQuery_Mobile_Button_Theme__c}" id="fbConnectButtonDone"> Logged in with Facebook!</a> </div>
+            
+       </div>
+        <footer data-role='footer' data-position='fixed' class="foot"></footer>
+</div> 
+
+<div data-role="page" id="categories" class="dataPage" data-theme="{!config.jQuery_Mobile_Data_Theme__c}"> 
+    <div data-role="header"  class="ui-bar ui-bar-{!config.jQuery_Mobile_Data_Theme__c}">
+        <center><img src="{!config.Header_Image__c}" /></center>
+    </div>    
+    <div data-role="content">
+        <p>
+            <div id="categoryList"></div>
+        </p>
+    </div>       
+    <footer data-role='footer' data-position='fixed' class="foot"></footer>
+</div>
+
+<div data-role="page" id="proposals" class="dataPage" data-theme="{!config.jQuery_Mobile_Data_Theme__c}"> 
+    <div data-role="header"  class="ui-bar ui-bar-{!config.jQuery_Mobile_Data_Theme__c}" data-position="inline">
+         <a href="#categories" data-role="button" data-icon="arrow-l" >Back</a><center><img src="{!config.Header_Image__c}" /></center>
+    </div>    
+    <div data-role="content">
+        <p>
+            <div id="proposalList"></div>
+        </p>
+    </div>       
+    <footer data-role='footer' data-position='fixed' class="foot"></footer>
+</div>
+
+
+<div data-role="page" id="add" class="dataPage" data-theme="{!config.jQuery_Mobile_Data_Theme__c}"> 
+    <div data-role="header"  class="ui-bar ui-bar-{!config.jQuery_Mobile_Data_Theme__c}" data-position="inline">
+        <center><img src="{!config.Header_Image__c}" style="float:left" /></center>
+    </div>    
+    <div data-role="content">
+        <p >
+            <form name="addForm">
+                <p>Create a proposal for others to vote on</p>
+                <div data-role="fieldcontain" class="ui-hide-label">
+
+                        <label for="proposalNameInput">Proposal Name</label>
+                        <input type="text" name="proposalNameInput" id="proposalNameInput" placeholder="Name For Your Proposal"  data-theme="{!config.jQuery_Mobile_Button_Theme__c}" />
+
+                        <label for="proposalCategoryInput">Category</label>
+                        <select name="proposalCategoryInput" id="proposalCategoryInput" placeholder="Name For Your Proposal"  data-theme="{!config.jQuery_Mobile_Button_Theme__c}" >
+                        
+                        </select>
+
+
+                        <label for="proposalDescriptionInput">Describe your proposal</label>
+                        <textarea name="proposalDescriptionInput" id="proposalDescriptionInput" placeholder="Please describe your proposal. Be as detailed as possible to expedite approval."  data-theme="{!config.jQuery_Mobile_Button_Theme__c}" />      
+                        
+                        <br />
+                        <center><input type="button" name="Submit Proposal" id="submitProposal" value="Submit Proposal" data-inline="true" data-icon="check"  data-theme="{!config.jQuery_Mobile_Button_Theme__c}" onClick="createProposal();" /></center>          
+                </div>
+            </form>
+            
+        </p>
+    </div>       
+    <footer data-role='footer' data-position='fixed' class="foot"></footer>
+</div>
+
+<div data-role="page" id="proposal" class="dataPage" data-theme="{!config.jQuery_Mobile_Data_Theme__c}"> 
+    <div data-role="header"  class="ui-bar ui-bar-{!config.jQuery_Mobile_Data_Theme__c}" data-position="inline">
+       <a href="#proposals" data-role="button" data-icon="arrow-l" >Back</a><center><img src="{!config.Header_Image__c}" /></center>
+    </div>    
+    <div data-role="content">
+        <p>
+            <div id="proposalData" data-role="collapsible">
+                <div id="proposalHeader">Header</div>
+                <p>
+                <div id="voteControls">
+                    <div data-role="controlgroup" style="width:150px;float:left">
+                    <a href="#" data-role="button" onClick="castProposalVote('Promote');" data-theme="{!config.jQuery_Mobile_Button_Theme__c}" data-icon="arrow-u" id="promoteButton">Promote</a>
+                    <apex:outputText rendered="{!config.Negative_Voting_Enabled__c}"><a href="#" data-role="button" onClick="castProposalVote('Demote');" data-theme="{!config.jQuery_Mobile_Button_Theme__c}" data-icon="arrow-d"  id="demoteButton"  >Demote</a> </apex:outputText>    
+                    <div id="proposalScore">0</div>        
+                    
+                    
+                    </div>
+                    
+                    <div id="proposalDescription" style="float:left; margin-left:15px; margin-top:5px;">
+                        I am some placeholder text about this proposal.
+                    </div>
+                    
+                    
+                    <div id="proposalCreatedBy" style="clear:both">
+                        Created by placeholder text
+                    </div>
+                </div>
+                </p>
+            </div>
+            
+            <div id="votes" data-role="collapsible" data-collapsed="true">
+                <h3>Voters</h3>
+                <div id="voterImages"></div>
+            </div>
+
+             <div style="clear:both"></div>
+            <div id="comments" data-role="collapsible" data-collapsed="true">
+                <h3>Comments</h3>
+                <div id="addComment">
+                        <center>
+                        <textarea name="addCommentInput" id="addCommentInput" placeholder="Comment on this proposal"  data-theme="{!config.jQuery_Mobile_Button_Theme__c}" />      
+                        
+                        <br />
+                        <input type="button" name="Comment" id="submitProposal" value="Comment" data-inline="true" data-icon="plus"  data-theme="{!config.jQuery_Mobile_Button_Theme__c}" onClick="addComment();" /></center>                
+                </div>
+               <div style="clear:both"></div>
+                <div id="commentsContianer" style="width:95%; margin:10px;">
+                
+                </div>
+            </div>
+                        
+            <div style="clear:both"></div>
+            
+            <a href="#" data-role="button" onClick="shareProposal();" data-theme="{!config.jQuery_Mobile_Button_Theme__c}" id="sharePropOnFbButton" name="sharePropOnFbButton">Share this on Facebook</a>
+        </p>
+    </div>      
+     
+    <footer data-role='footer' data-position='fixed' class="foot"></footer>
+</div>
+
+
+<div data-role="page" id="about" data-theme="{!config.jQuery_Mobile_Data_Theme__c}"> 
+    <div data-role="header"  class="ui-bar ui-bar-{!config.jQuery_Mobile_Data_Theme__c}">
+        <center><img src="{!config.Header_Image__c}" /></center>
+    </div>    
+    <div data-role="content">
+        <p>
+            <h2><center> {!config.Application_Name__c} was developed by Kenji776 and CloudSpokes.com</center></h2><br />
+            {!config.Application_Name__c} is built on Salesforce force.com sites, using Apex, VisualForce and jQuery Mobile. Thanks in part to @Superfell for help with JSON parsing madness.<br />
+            Contact: <a href="mailto:Kenji776@gmail.com@example.com?Subject=Dude%20You%20Are%20Awesome!">Kenji776@gmail.com</a> or <a href="https://twitter.com/#!/Kenji776">@Kenji776</a> on twitter.<br />
+            Check out <a href="http://iwritecrappycode.wordpress.com/">my blog</a> too!
+        </p>
+    </div>       
+    <footer data-role='footer' data-position='fixed' class="foot" ></footer>
+</div>
+
+<div data-role="page" id="propCreated">  
+        <div data-role="header" data-theme="d" data-position="inline">
+            <h1>Proposal Created!</h1>
+
+        </div>
+
+        <div data-role="content" data-theme="c">
+            <h1>Success</h1>
+            <p>Your proposition has been created and is awaiting approval. As soon as it has been approved for voting it will be available for voting. You will receive an email when your proposal has been approved.</p> 
+        </div>
+</div>
+ 
+ <div data-role="page" id="propShared">  
+        <div data-role="header" data-theme="d" data-position="inline">
+            <h1>Proposal Shared!</h1>
+
+        </div>
+
+        <div data-role="content" data-theme="c">
+            <h1>Success</h1>
+            <p>You have shared this proposition on your facebook wall. Maybe you can get your friends to vote on it too and make an impact!</p> 
+        </div>
+</div>
+
+
+
+
+
+</body>

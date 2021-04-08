@@ -1,0 +1,89 @@
+{
+    "searchName": "Widget Search",
+    "searchEndpoint": "screener_results.json",
+    "searchCriteraSections": [
+        {
+            "sectionName": "Section 1",
+            "sectionHelpText": "We gonna chung ipsizzle fizzle sit amizzle",
+            "searchCriteria": [
+                {
+                    "criteriaType": "text",
+                    "criteriaName": "keyword",
+                    "criteriaLabel": "Keyword Search"
+                },
+                {
+                    "criteriaType": "checkbox",
+                    "criteriaName": "checkbox1",
+                    "criteriaLabel": "Include Sponge Cake"
+                },
+                {
+                    "criteriaType": "checkbox",
+                    "criteriaName": "checkbox2",
+                    "criteriaLabel": "Include Dirt Cake"
+                }
+            ]
+        },
+        {
+            "sectionName": "Section 2",
+            "sectionHelpText": "We gonna chung ipsizzle fizzle sit amizzle",
+            "searchCriteria": [
+                {
+                    "criteriaType": "radio",
+                    "criteriaName": "radio1",
+                    "criteriaValues": [
+                        {
+                            "id": "r1",
+                            "label": "Radio Choice 1"
+                        },
+                        {
+                            "id": "r2",
+                            "label": "Radio Choice 2"
+                        },
+                        {
+                            "id": "r3",
+                            "label": "Radio Choice 3"
+                        }
+                    ]
+                },
+                {
+                    "criteriaType": "slider",
+                    "criteriaName": "slider1",
+                    "criteriaLabel": "Hardness Factor",
+                    "minValue": 0,
+                    "maxValue": 50000
+                }
+            ]
+        },
+        {
+            "sectionName": "Section 3",
+            "sectionHelpText": "We gonna chung ipsizzle fizzle sit amizzle",
+            "searchCriteria": [
+                {
+                    "criteriaType": "dropmenu",
+                    "criteriaName": "LOV1",
+                    "criteriaValues": [
+                        {
+                            "id": "d1",
+                            "label": "Menu Choice 1"
+                        },
+                        {
+                            "id": "d2",
+                            "label": "Menu Choice 2"
+                        },
+                        {
+                            "id": "d3",
+                            "label": "Menu Choice 3"
+                        }
+                    ]
+                },
+                {
+                    "criteriaType": "slider",
+                    "criteriaName": "slider2",
+                    "criteriaLabel": "coefficient of friction",
+                    "minValue": 0,
+                    "maxValue": 50000
+                }
+            ]
+        }
+    ]
+}

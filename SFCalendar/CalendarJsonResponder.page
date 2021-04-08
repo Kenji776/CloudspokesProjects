@@ -1,0 +1,8 @@
+<apex:page controller="getJsonEvents"  action="{!getEvents}"
+contentType="application/x-JavaScript; charset=utf-8" showHeader="false" standardStylesheets="false" sidebar="false">
+{!result}
+<!-----------------
+Copyright 2010 Daniel Llewellyn
+This program is distributed under the terms of the GNU General Public License
+--------------->
+</apex:page>

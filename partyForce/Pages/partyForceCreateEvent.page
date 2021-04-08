@@ -1,0 +1,118 @@
+<apex:page showHeader="false" sidebar="false" title="partyForce" standardStylesheets="false">
+  <form id="form">
+    <p>Create a new event so people can find it and attend!</p>
+    <ul class="formList">
+      <div class="dataBlock">
+        <li>
+          <label>Event Name:</label>
+          <input type="text" name="name" maxlength="30"  class="required"  minlength="2" />
+        </li>
+        <li>
+          <label>Start:</label>
+          <input type="text" name="start" id="Start_Date__c" class="required dtpicker" minlength=""  />
+        </li>
+        <li>
+          <label>End:</label>
+          <input type="text" name="end" id="End_Date__c"   class="required  dtpicker" minlength="5"  />
+        </li>
+        <li>
+          <label>Location Name</label>
+          <input type="text" name="Location_Name__c" maxlength="30" class="required"  minlength="3"  />
+        </li>
+        <li>
+          <label>Access Type</label>
+          <select name="Access_Type__c">
+            <option>Invite Only</option>
+            <option>Open to the public</option>
+          </select>
+        </li>
+        <li>
+          <label>Bring Your Own Booze?</label>
+          <select name="BYOB__c"><option value="true">Yup!</option><option value="false">Nah</option></select>
+        </li>        
+      </div>
+      <div class="dataBlock">
+        <li>
+          <label>Address</label>
+          <input type="text" name="address__c" maxlength="30" class="required"  minlength="5"  />
+        </li>
+        <li>
+          <label>City:</label>
+          <input type="text" name="city__c" maxlength="30"  class="required"  minlength="2" />
+        </li>
+        <li>
+          <label>State:</label>
+          <input type="text" name="state__c" maxlength="2"  class="required" minlength="2"  />
+        </li>
+        <li>
+          <label>Host</label>
+          <select name="host__c" id="host__c">
+          </select>
+        </li>
+        <li>
+          <label>Max Attendees</label>
+          <input type="text" name="Max_Attendees__c" class="required number" minlength="1" maxlength="5" />
+        </li>
+        <li>
+          <label>Parking Available</label>
+          <select name="Parking_Available__c"><option value="true">Yup!</option><option value="false">Nah</option></select>
+        </li>
+        <li>
+          <label>Dress Code</label>
+          <select name="Dress_Code__c">
+                <option>Black Tie</option>
+                <option>Formal</option>
+                <option>Black Tie Optional</option>
+                <option>Creative Black Tie</option>
+                <option>Semi-Formal</option>
+                <option>Cocktail Attire</option>
+               <option> Informal</option>
+                <option>Festive Attire</option>
+                <option>Dressy Casual</option>
+                <option>Casual</option>
+           </select>
+        </li>        
+      </div>
+      <div style="clear:both"></div>
+      <li>
+        <label>Description</label>
+        <textarea name="Location_Name__c" rows="5" cols="50" class="required" maxlength="1000"></textarea>
+      </li>
+      <li>
+        <label>Image URL</label>
+        <input type="text" name="Image__c" size="50" />
+      </li>
+      <li>
+        <input type="button" id="submit" name="submit" value="submit"  onClick="registerNewEvent();"/>
+      </li>
+    </ul>
+    <input type="hidden" name="CreatedBy__c" id="CreatedBy__c"  />
+  </form>
+  <div id="statusResult">
+    <div id="statusDiv">test</div>
+  </div>
+  <script>
+         
+        if('Id' in userData)
+        {
+             $("<option/>").val(userData.AccountId).text(userData.Account.Name).appendTo("#host__c");
+             $("#CreatedBy__c").val(userData.Id);
+             $('.dtpicker').datetimepicker({
+             dateFormat: "yy-mm-dd" ,
+             timeFormat: "hh:mm:ss" });
+        }
+        else
+        {
+            loadPage('partyForce/partyForceNotAuthed');
+        }
+ 
+       
+         $( "#statusResult" ).dialog({
+                autoOpen:false,
+                show: "blind",
+                hide: "explode"
+            }); 
+           
+         
+     </script>
+</apex:page>

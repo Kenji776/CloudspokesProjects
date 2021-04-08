@@ -1,0 +1,54 @@
+public class clicked_test
+{
+    @isTest
+    public static void test_clicked_controller()
+    {
+        //set the form data for creating our test user
+        string testRegisterData = 'name=TestDude&email__c=whatedsfasd%2540sdfasd.com&password__c=fasdfasdfasd&gender__c=Male&birthDay=01&birthMonth=01&birthYear=1945&phone_number__c=432-324-62341';
+        string loginString = 'login_name=TestDude&login_password__c=fasdfasdfasd';
+        //register the user
+        clicked_controller.remoteObject userReg = clicked_controller.registerUser(testRegisterData);        
+        system.assertEquals(userReg.success,true);
+        
+        //login the user
+        clicked_controller.remoteObject userLogin = clicked_controller.loginUser(loginString);
+        system.assertEquals(userLogin.success,true);
+
+        clicked_controller.remoteObject userLoginBadPass = clicked_controller.loginUser(loginString+'bad');
+        system.assertEquals(userLoginBadPass.success,false);
+                
+        clicked_controller.remoteObject failLogin = clicked_controller.loginUser('jibdfadfs=blah');
+        system.assertEquals(failLogin.success,false);
+        
+        
+        string updateUserString = 'email__c=newemail@nowhere.com&Id='+userReg.data;
+        
+        clicked_controller.remoteObject userUpdates = clicked_controller.updateUser(updateUserString);
+        system.assertEquals(userUpdates.success,true);
+
+        clicked_controller.remoteObject userUpdatesFail = clicked_controller.updateUser('ifail=derp');
+        system.assertEquals(userUpdatesFail.success,false);
+                
+        clicked_controller.remoteObject getUsers = clicked_controller.getActiveUsers();
+        system.assertEquals(getUsers.success,true);
+        
+        
+        clicked_controller.remoteObject placeCall =  clicked_controller.placeCall(userReg.data, userReg.data);
+        system.assertEquals(placeCall.success,true);
+
+        clicked_controller.remoteObject placeCallFail =  clicked_controller.placeCall('badid', userReg.data);
+        system.assertEquals(placeCallFail.success,false);        
+        
+        String attachmentData =  clicked_controller.getProfilePicture(userReg.data);
+        
+        PageReference indexPage= Page.clicked_returnTwilML;
+        indexPage.getParameters().put('callid',placeCall.data);
+
+        system.test.setCurrentPageReference(indexPage);
+        clicked_Controller   Ctlr = new clicked_Controller();
+        Ctlr.getTwilML();
+        
+        clicked_controller.remoteObject uploadfile = clicked_controller.UploadFile('junkdatathiswouldbeabadfilethisisntevenbase64atall', 'my file', userReg.data);
+        
+    }
+}
